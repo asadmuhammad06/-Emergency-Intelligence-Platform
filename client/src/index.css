@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #080d1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet Custom Overrides */
+.leaflet-container {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  background-color: #080d1a !important;
+}
+
+.custom-popup .leaflet-popup-content-wrapper {
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid #1e293b;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: #0f172a;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 8px 10px;
+  line-height: 1.4;
+}
+
+.custom-leaflet-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Custom Marker Pulsing */
+.custom-sos-marker, .custom-hospital-marker, .custom-roadblock-marker, .custom-hub-marker, .custom-waypoint-marker {
+  background: transparent;
+  border: none;
+}

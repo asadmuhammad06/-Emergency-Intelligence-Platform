@@ -1,0 +1,10 @@
+{
+  "name": "crisismap-pakistan-root",
+  "version": "1.0.0",
+  "description": "CrisisMap — Pakistan Emergency Intelligence Platform",
+  "scripts": {
+    "server": "cd server && node index.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build"
+  }
+}

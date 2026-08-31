@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.local
+
+# Logs
+*.log
