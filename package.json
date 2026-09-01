@@ -6,5 +6,8 @@
     "server": "cd server && node index.js",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
   }
 }
