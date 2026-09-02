@@ -1,3 +1,4 @@
+// Data: live API submission; community-reported records are stored and streamed by the server.
 import React, { useState, useEffect } from 'react';
 import {
   X,
@@ -22,7 +23,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { submitCitizenReport, setHighlightedCoords } = useCrisis();
+  const { submitCitizenReport, setHighlightedCoords, activeRegion } = useCrisis();
 
   const [reportText, setReportText] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('+92 300 1234567');
@@ -30,26 +31,6 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReport, setSubmittedReport] = useState<any>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Quick prompt templates
-  const presets = [
-    {
-      title: "🆘 Trapped Victims (Urdu/English)",
-      text: "12 people trapped on roof near Dhok Kala Khan Rawalpindi, water rising rapidly over ground floor!"
-    },
-    {
-      title: "🚧 Road Blocked (Faizabad)",
-      text: "Islamabad Expressway near Faizabad submerged under 4.5ft water. Light vehicles drowned, road is completely blocked!"
-    },
-    {
-      title: "💧 Water Shortage (Sector I-9)",
-      text: "Peenay ka saaf paani khatam ho gaya hai Sector I-9 katchi abadi me. 300+ logon ko dehydration ka khatra."
-    },
-    {
-      title: "🏥 Hospital Surge (Holy Family)",
-      text: "Holy Family Hospital emergency ward flooded, capacity reached 92%, acute shortage of clean water."
-    }
-  ];
 
   // Dynamic client-side NLP preview
   const [previewCategory, setPreviewCategory] = useState('RESCUE_NEEDED');
@@ -92,7 +73,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const createdReport = await submitCitizenReport(reportText, undefined, phoneNumber);
+      const createdReport = await submitCitizenReport(reportText, activeRegion.center, phoneNumber);
       setSubmittedReport(createdReport);
 
       setTimeout(() => {
@@ -111,7 +92,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
       <div className="bg-[#0e1628] border border-red-500/40 rounded-2xl w-full max-w-xl flex flex-col shadow-[0_0_50px_rgba(239,68,68,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
@@ -161,26 +142,6 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-            {/* Presets */}
-            <div>
-              <label className="block text-[11px] font-bold font-mono text-slate-400 uppercase mb-1.5">
-                ⚡ Quick Demo Presets (Click to Fill):
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {presets.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setReportText(preset.text)}
-                    className="p-2 text-left bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-cyan-600 rounded-lg text-[11px] text-slate-300 transition-colors"
-                  >
-                    <span className="font-bold text-cyan-300 block">{preset.title}</span>
-                    <span className="truncate block text-slate-400 text-[10px]">{preset.text}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Input Text Area */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">

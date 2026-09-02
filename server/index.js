@@ -17,6 +17,8 @@ import { classifyEmergencyReport } from './services/aiClassifier.js';
 import { calculateSafestRoute } from './services/routingEngine.js';
 import { calculatePriorityZones } from './services/dispatchSolver.js';
 import { fetchExternalDistress } from './services/externalFeed.js';
+import { fetchCityIntel } from './services/liveIntel.js';
+import { getReports, submitReport, subscribeToReports } from './services/reportStore.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -144,6 +146,26 @@ app.get('/api/distress', async (req, res) => {
   }
 });
 
+app.get('/api/reports/stream', (req, res) => {
+  const lat = Number(req.query.lat);
+  const lon = Number(req.query.lon);
+  const category = req.query.category ? String(req.query.category) : undefined;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return res.status(400).json({ success: false, error: 'Valid lat and lon are required' });
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive'
+  });
+  const city = { lat, lon };
+  getReports(city).forEach(report => res.write(`data: ${JSON.stringify(report)}\n\n`));
+  const unsubscribe = subscribeToReports(category, city, report => {
+    res.write(`data: ${JSON.stringify(report)}\n\n`);
+  });
+  req.on('close', unsubscribe);
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     success: true,
@@ -173,38 +195,85 @@ app.get('/api/live-data', async (req, res) => {
   }
 
   try {
-    const [weather, radar, reports] = await Promise.all([
-      getCurrentWeather(lat, lng),
-      getRadarData(),
-      fetchExternalDistress(regions, requestedRegion)
+    const city = { name: requestedRegion.name, lat, lon: lng };
+    const [intel, radar] = await Promise.all([
+      fetchCityIntel(city),
+      getRadarData()
     ]);
-    const isPrimaryRegion = requestedRegion.id === regions[0].id;
-    const regionState = isPrimaryRegion
-      ? currentState
-      : {
-          ...currentState,
-          activeRegion: requestedRegion,
-          reports: [],
-          hospitals: [],
-          hazardZones: [],
-          roadBlocks: [],
-          reliefHubs: [],
-          priorityZones: [],
-          dispatchedUnits: []
-        };
+    const communityReports = getReports(city);
+    const reports = [...intel.incidents, ...communityReports];
+    const hospitals = intel.hospitals.map(report => ({
+      id: report.id,
+      name: report.title,
+      location: report.location,
+      coords: report.coords,
+      totalBeds: 0,
+      occupiedBeds: 0,
+      capacity: 0,
+      icuAvailable: 0,
+      powerBackup: 'Unknown',
+      status: 'NORMAL',
+      acceptingEmergencies: true,
+      phone: '',
+      source: report.source
+    }));
+    const reliefHubs = intel.waterPoints.map(report => ({
+      id: report.id,
+      name: report.title,
+      coords: report.coords,
+      type: 'DRINKING_WATER',
+      status: 'MAPPED',
+      managedBy: report.source,
+      source: report.source
+    }));
+    const hazardZones = reports.filter(report => report.category === 'flood').map(report => ({
+      id: report.id,
+      type: report.type,
+      name: report.title,
+      severity: report.severity >= 8 ? 'HIGH' : report.severity >= 5 ? 'MEDIUM' : 'LOW',
+      status: 'LIVE',
+      polygon: [report.coords],
+      description: report.description,
+      source: report.source
+    }));
+    const roadBlocks = reports.filter(report => report.category === 'road_block').map(report => ({
+      id: report.id,
+      roadName: report.title,
+      coords: report.coords,
+      status: 'COMMUNITY_REPORTED',
+      reason: report.description,
+      source: report.source
+    }));
 
     res.json({
       success: true,
       data: {
-        ...regionState,
         activeRegion: requestedRegion,
-        weather,
+        hospitals,
+        hazardZones,
+        roadBlocks,
+        reliefHubs,
+        reports,
+        priorityZones: [],
+        dispatchedUnits: [],
+        disasterAlert: null,
+        weather: intel.weather ? {
+          temperature: intel.weather.current?.temperature_2m,
+          precipitation: intel.weather.current?.precipitation || 0,
+          weatherCode: intel.weather.current?.weathercode ?? intel.weather.current?.weather_code,
+          time: intel.weather.current?.time,
+          humidity: 0,
+          windSpeed: 0,
+          windGusts: 0,
+          floodRiskLevel: (intel.weather.current?.precipitation || 0) >= 10 ? 'HIGH' : (intel.weather.current?.precipitation || 0) >= 2 ? 'MODERATE' : 'LOW'
+        } : null,
         radar,
-        reports
+        intelSources: intel.sources,
+        fetchedAt: intel.fetchedAt
       },
       metadata: {
         serverTime: new Date().toISOString(),
-        source: 'CrisisMap live operations snapshot',
+        source: 'External live feeds and community reports',
         regionId: requestedRegion.id,
         regionCount: regions.length
       }
@@ -217,15 +286,29 @@ app.get('/api/live-data', async (req, res) => {
 
 // Citizen Report Ingestion
 app.post('/api/reports', (req, res) => {
-  const { rawText, coords, callerPhone, imageSimulated } = req.body;
-  if (!rawText || !rawText.trim()) {
-    return res.status(400).json({ success: false, error: "Report text is required" });
+  const { rawText, coords, callerPhone } = req.body;
+  if (!rawText || !rawText.trim() || !Array.isArray(coords) || coords.length !== 2) {
+    return res.status(400).json({ success: false, error: 'Report text and coordinates are required' });
   }
-
-  // Run AI Classifier
-  const classifiedReport = classifyEmergencyReport(rawText, coords);
-  if (callerPhone) classifiedReport.callerPhone = callerPhone;
-  if (imageSimulated) classifiedReport.imageAttached = true;
+  const text = rawText.toLowerCase();
+  const category = text.includes('road') || text.includes('rasta') || text.includes('blocked')
+    ? 'road_block'
+    : text.includes('power') || text.includes('bijli') || text.includes('grid')
+      ? 'power_outage'
+      : text.includes('water') || text.includes('paani')
+        ? 'water_shortage'
+        : 'sos';
+  const classifiedReport = submitReport({
+    category,
+    severity: text.includes('urgent') || text.includes('trapped') ? 9 : 5,
+    title: `${category.replace('_', ' ')} community report`,
+    description: rawText.trim(),
+    language: 'English',
+    needs: [],
+    lat: coords[0],
+    lon: coords[1],
+    callerPhone
+  });
 
   // Prepend to active reports
   currentState.reports.unshift(classifiedReport);
@@ -255,6 +338,9 @@ app.post('/api/route/calculate', (req, res) => {
   const targetHospital = hospitalId
     ? currentState.hospitals.find(h => h.id === hospitalId)
     : currentState.hospitals.find(h => h.status !== 'OVERLOADED') || currentState.hospitals[1];
+  if (!targetHospital) {
+    return res.status(409).json({ success: false, error: 'No live medical facility is available for routing' });
+  }
 
   const calculatedRoute = calculateSafestRoute(
     startCoords,

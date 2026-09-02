@@ -1,3 +1,4 @@
+// Data: live city list, report count, hospital count, and weather from CrisisContext.
 import React from 'react';
 import {
   ShieldAlert,
@@ -121,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center gap-2 shrink-0">
 
         {/* Region selector + weather */}
-        <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 font-mono">
+        <div className="relative z-30 flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 font-mono">
           <MapPin className="w-3.5 h-3.5 text-orange-400 shrink-0" />
           <select
             value={activeRegion.id}
