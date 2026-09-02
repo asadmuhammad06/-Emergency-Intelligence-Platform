@@ -224,5 +224,10 @@ export interface WeatherData {
   [key: string]: any;
 }
 
-export type AnyObject = Record<string, any>;
+export interface RadarData {
+  tileUrl: string;
+  frameTimestamp: number;
+  fetchedAt: string;
+}
 
+export type AnyObject = Record<string, any>;

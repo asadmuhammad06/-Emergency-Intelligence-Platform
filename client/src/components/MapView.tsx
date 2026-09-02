@@ -179,6 +179,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
     toggleLayer,
     calculateSafeRoute,
     weather,
+    radar,
     weatherLoading,
     refreshWeather
   } = useCrisis();
@@ -202,11 +203,10 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
     if (mapTheme === 'carto_voyager') {
       return {
         key: 'carto_voyager',
-        url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by HOT',
-        subdomains: 'abc',
-        maxZoom: 19,
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        attribution: 'Tiles &copy; Esri',
+        subdomains: '',
+        maxZoom: 16,
       };
     }
 
@@ -552,6 +552,15 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           subdomains={currentTileConfig.subdomains}
           maxZoom={currentTileConfig.maxZoom}
         />
+        {radar && (
+          <TileLayer
+            key={`radar-${radar.frameTimestamp}`}
+            url={radar.tileUrl}
+            opacity={0.35}
+            zIndex={2}
+            attribution="Radar &copy; RainViewer"
+          />
+        )}
 
         {/* 1. Flood Inundation Polygons */}
         {layers.floods && hazardZones.map(zone => (

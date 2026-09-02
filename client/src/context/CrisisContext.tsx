@@ -12,7 +12,8 @@ import {
   SystemAlert,
   Region,
   ReportCategory,
-  WeatherData
+  WeatherData,
+  RadarData
 } from '../types';
 import {
   defaultRegions
@@ -32,6 +33,7 @@ interface CrisisContextType {
   regions: Region[];
   weather: WeatherData | null;
   weatherLoading: boolean;
+  radar: RadarData | null;
 
   // Selection & Route State
   selectedReport: EmergencyReport | null;
@@ -105,6 +107,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [radar, setRadar] = useState<RadarData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
 
   const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
@@ -171,6 +174,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (data.dispatchedUnits) setDispatchedUnits(data.dispatchedUnits);
       if (data.disasterAlert) setSystemAlert(data.disasterAlert);
       if (data.weather) setWeather(data.weather);
+      if (data.radar) setRadar(data.radar);
     };
 
     refreshLiveData().catch(error => {
@@ -279,6 +283,8 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (res.data.priorityZones) setPriorityZones(res.data.priorityZones);
           if (res.data.dispatchedUnits) setDispatchedUnits(res.data.dispatchedUnits);
           if (res.data.disasterAlert) setSystemAlert(res.data.disasterAlert);
+          if (res.data.weather) setWeather(res.data.weather);
+          if (res.data.radar) setRadar(res.data.radar);
         }
       })
       .catch(error => console.warn('Failed to load live state:', error));
@@ -472,6 +478,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         systemAlert,
         activeRegion,
         regions: regions.length > 0 ? regions : defaultRegions,
+        radar,
         selectedReport,
         selectedHospital,
         selectedPriorityZone,

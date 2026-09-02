@@ -42,6 +42,19 @@ app.use(cors({
 }));
 app.use(express.json());
 
+async function getRadarData() {
+  const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+  if (!response.ok) throw new Error(`Radar API error: ${response.status}`);
+  const radar = await response.json();
+  const frame = radar.radar?.nowcast?.[0] || radar.radar?.past?.[radar.radar.past.length - 1];
+  if (!frame) throw new Error('Radar API returned no frames');
+  return {
+    tileUrl: `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    frameTimestamp: frame.time,
+    fetchedAt: new Date().toISOString()
+  };
+}
+
 app.get('/api/weather', async (req, res) => {
   try {
     const lat = req.query.lat ? parseFloat(req.query.lat) : 33.6844;
@@ -105,6 +118,15 @@ app.get('/api/regions', (req, res) => {
   });
 });
 
+app.get('/api/radar', async (req, res) => {
+  try {
+    res.json({ success: true, data: await getRadarData() });
+  } catch (error) {
+    console.error('Radar API error:', error);
+    res.status(502).json({ success: false, error: 'Failed to fetch radar telemetry' });
+  }
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     success: true,
@@ -134,7 +156,10 @@ app.get('/api/live-data', async (req, res) => {
   }
 
   try {
-    const weather = await getCurrentWeather(lat, lng);
+    const [weather, radar] = await Promise.all([
+      getCurrentWeather(lat, lng),
+      getRadarData()
+    ]);
     const isPrimaryRegion = requestedRegion.id === regions[0].id;
     const regionState = isPrimaryRegion
       ? currentState
@@ -155,7 +180,8 @@ app.get('/api/live-data', async (req, res) => {
       data: {
         ...regionState,
         activeRegion: requestedRegion,
-        weather
+        weather,
+        radar
       },
       metadata: {
         serverTime: new Date().toISOString(),
