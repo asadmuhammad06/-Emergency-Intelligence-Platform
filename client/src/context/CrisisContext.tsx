@@ -155,6 +155,40 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => clearInterval(interval);
   }, [refreshWeather]);
 
+  // Keep a REST snapshot current when a WebSocket is unavailable or delayed.
+  useEffect(() => {
+    const refreshLiveData = async () => {
+      const [lat, lng] = activeRegion.center;
+      const res = await fetch(`${API_BASE}/api/live-data?lat=${lat}&lng=${lng}`);
+      if (!res.ok) return;
+
+      const payload = await res.json();
+      if (!payload.success || !payload.data) return;
+
+      const data = payload.data;
+      if (data.reports) setReports(data.reports);
+      if (data.hospitals) setHospitals(data.hospitals);
+      if (data.hazardZones) setHazardZones(data.hazardZones);
+      if (data.roadBlocks) setRoadBlocks(data.roadBlocks);
+      if (data.reliefHubs) setReliefHubs(data.reliefHubs);
+      if (data.priorityZones) setPriorityZones(data.priorityZones);
+      if (data.dispatchedUnits) setDispatchedUnits(data.dispatchedUnits);
+      if (data.disasterAlert) setSystemAlert(data.disasterAlert);
+      if (data.weather) setWeather(data.weather);
+    };
+
+    refreshLiveData().catch(error => {
+      console.warn('Failed to refresh live operations snapshot:', error);
+    });
+    const interval = setInterval(() => {
+      refreshLiveData().catch(error => {
+        console.warn('Failed to refresh live operations snapshot:', error);
+      });
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [activeRegion]);
+
   const toggleLayer = (layerKey: keyof typeof layers) => {
     setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
   };

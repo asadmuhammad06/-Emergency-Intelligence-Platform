@@ -109,6 +109,34 @@ app.get('/api/state', (req, res) => {
   });
 });
 
+// Consolidated live snapshot for clients that cannot maintain a WebSocket.
+app.get('/api/live-data', async (req, res) => {
+  const lat = req.query.lat ? parseFloat(req.query.lat) : pakistanCenter.lat;
+  const lng = req.query.lng ? parseFloat(req.query.lng) : pakistanCenter.lng;
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ success: false, error: 'Valid lat and lng coordinates are required' });
+  }
+
+  try {
+    const weather = await getCurrentWeather(lat, lng);
+    res.json({
+      success: true,
+      data: {
+        ...currentState,
+        weather
+      },
+      metadata: {
+        serverTime: new Date().toISOString(),
+        source: 'CrisisMap live operations snapshot'
+      }
+    });
+  } catch (error) {
+    console.error('Live data API error:', error);
+    res.status(502).json({ success: false, error: 'Failed to fetch live telemetry' });
+  }
+});
+
 // Citizen Report Ingestion
 app.post('/api/reports', (req, res) => {
   const { rawText, coords, callerPhone, imageSimulated } = req.body;
