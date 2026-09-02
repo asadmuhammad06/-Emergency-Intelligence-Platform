@@ -8,6 +8,9 @@
     "build": "cd client && npm run build"
   },
   "devDependencies": {
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "lucide-react": "^1.39.0"
   }
 }

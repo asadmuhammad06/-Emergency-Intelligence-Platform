@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import { getCurrentWeather } from './services/weatherService.js';
 import {
   pakistanCenter,
   regions,
@@ -40,6 +41,21 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+app.get('/api/weather', async (req, res) => {
+  try {
+    const lat = req.query.lat ? parseFloat(req.query.lat) : 33.6844;
+    const lng = req.query.lng ? parseFloat(req.query.lng) : 73.0479;
+    const weather = await getCurrentWeather(lat, lng);
+
+    res.json(weather);
+  } catch (error) {
+    console.error('Weather API error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch weather data'
+    });
+  }
+});
 
 // In-Memory Disaster Operations State
 let currentState = {
@@ -179,8 +195,16 @@ app.post('/api/dispatch/approve', (req, res) => {
   });
 });
 
+// Active Simulation Timer
+let activeSimulationTimer = null;
+
 // Reset Simulation & State
 app.post('/api/simulation/reset', (req, res) => {
+  if (activeSimulationTimer) {
+    clearTimeout(activeSimulationTimer);
+    activeSimulationTimer = null;
+  }
+
   currentState.hospitals = JSON.parse(JSON.stringify(initialHospitals));
   currentState.hazardZones = JSON.parse(JSON.stringify(initialHazardZones));
   currentState.roadBlocks = JSON.parse(JSON.stringify(initialRoadBlocks));
@@ -199,8 +223,6 @@ app.post('/api/simulation/reset', (req, res) => {
 });
 
 // Start Real-Time Simulation Script
-let activeSimulationTimer = null;
-
 app.post('/api/simulation/start', (req, res) => {
   if (currentState.simulationRunning) {
     return res.json({ success: true, message: "Simulation is already running" });

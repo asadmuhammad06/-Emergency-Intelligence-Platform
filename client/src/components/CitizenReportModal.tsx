@@ -94,7 +94,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     setSubmittedReport(createdReport);
 
     setTimeout(() => {
-      if (createdReport.coords) {
+      if (createdReport && createdReport.coords) {
         setHighlightedCoords(createdReport.coords);
       }
       setSubmittedReport(null);

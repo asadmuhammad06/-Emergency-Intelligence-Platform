@@ -11,7 +11,8 @@ import {
   DispatchedUnit,
   SystemAlert,
   Region,
-  ReportCategory
+  ReportCategory,
+  WeatherData
 } from '../types';
 import {
   defaultRegions,
@@ -35,6 +36,8 @@ interface CrisisContextType {
   systemAlert: SystemAlert | null;
   activeRegion: Region;
   regions: Region[];
+  weather: WeatherData | null;
+  weatherLoading: boolean;
 
   // Selection & Route State
   selectedReport: EmergencyReport | null;
@@ -72,6 +75,7 @@ interface CrisisContextType {
   approveDispatch: (zoneId: string, assets?: any) => Promise<void>;
   startSimulation: () => void;
   resetSimulation: () => void;
+  refreshWeather: () => Promise<void>;
 }
 
 const API_BASE = 'http://localhost:3001';
@@ -121,9 +125,35 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     safeRouteOverlay: true
   });
 
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
+
   const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
   const [simulationStep, setSimulationStep] = useState<number>(0);
   const [isConnectedToServer, setIsConnectedToServer] = useState<boolean>(false);
+
+  const refreshWeather = useCallback(async () => {
+    if (!activeRegion || !activeRegion.center) return;
+    setWeatherLoading(true);
+    try {
+      const [lat, lng] = activeRegion.center;
+      const res = await fetch(`${API_BASE}/api/weather?lat=${lat}&lng=${lng}`);
+      if (res.ok) {
+        const data: WeatherData = await res.json();
+        setWeather(data);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch weather telemetry:', err);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, [activeRegion]);
+
+  useEffect(() => {
+    refreshWeather();
+    const interval = setInterval(refreshWeather, 120000);
+    return () => clearInterval(interval);
+  }, [refreshWeather]);
 
   const toggleLayer = (layerKey: keyof typeof layers) => {
     setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
@@ -160,7 +190,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       socket.on('new_report', (newRep: EmergencyReport) => {
-        setReports(prev => [newRep, ...prev]);
+        setReports(prev => prev.some(r => r.id === newRep.id) ? prev : [newRep, ...prev]);
       });
 
       socket.on('hospital_update', (updatedHosp: Hospital) => {
@@ -240,6 +270,10 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       const data = await res.json();
       if (data.success) {
+        setReports(prev => prev.some(r => r.id === data.report.id) ? prev : [data.report, ...prev]);
+        if (data.updatedPriorityZones) {
+          setPriorityZones(data.updatedPriorityZones);
+        }
         return data.report;
       }
       throw new Error(data.error || 'Failed to submit report');
@@ -357,11 +391,18 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Approve Resource Dispatch
   const approveDispatch = useCallback(async (zoneId: string, assets?: any) => {
     try {
-      await fetch(`${API_BASE}/api/dispatch/approve`, {
+      const res = await fetch(`${API_BASE}/api/dispatch/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zoneId, assets })
       });
+      const data = await res.json();
+      if (data.success && data.dispatch) {
+        setDispatchedUnits(prev => prev.some(u => u.id === data.dispatch.id) ? prev : [data.dispatch, ...prev]);
+        if (data.priorityZones) {
+          setPriorityZones(data.priorityZones);
+        }
+      }
     } catch (err) {
       setPriorityZones(prev => prev.map(z => z.id === zoneId ? { ...z, status: 'DISPATCH_CONFIRMED' } : z));
       const fallbackDispatch: DispatchedUnit = {
@@ -440,7 +481,10 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         calculateSafeRoute,
         approveDispatch,
         startSimulation,
-        resetSimulation
+        resetSimulation,
+        weather,
+        weatherLoading,
+        refreshWeather
       }}
     >
       {children}

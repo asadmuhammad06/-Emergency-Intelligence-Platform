@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Navigation,
@@ -38,6 +38,12 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
   );
   const [isCalculating, setIsCalculating] = useState(false);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && (!activeSafeRoute || initialCoords)) {
+      calculateSafeRoute(initialCoords, selectedHospitalId);
+    }
+  }, [isOpen, initialCoords, selectedHospitalId, calculateSafeRoute]);
 
   if (!isOpen) return null;
 
@@ -241,7 +247,8 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
             <button
               onClick={() => {
                 if (activeSafeRoute) {
-                  setHighlightedCoords(activeSafeRoute.safePath[1] || activeSafeRoute.origin.coords);
+                  const targetCoord = activeSafeRoute.safePath?.[1] || activeSafeRoute.origin?.coords;
+                  if (targetCoord) setHighlightedCoords(targetCoord);
                 }
                 onClose();
               }}
