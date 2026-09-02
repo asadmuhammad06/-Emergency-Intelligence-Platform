@@ -44,7 +44,9 @@ app.use(express.json());
 
 app.get('/api/weather', async (req, res) => {
   try {
-    const weather = await getCurrentWeather(33.6844, 73.0479);
+    const lat = req.query.lat ? parseFloat(req.query.lat) : 33.6844;
+    const lng = req.query.lng ? parseFloat(req.query.lng) : 73.0479;
+    const weather = await getCurrentWeather(lat, lng);
 
     res.json(weather);
   } catch (error) {

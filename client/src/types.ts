@@ -208,4 +208,21 @@ export interface LayerState {
   safeRouteOverlay: boolean;
 }
 
+export interface WeatherData {
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  weatherCode: number;
+  condition?: string;
+  windSpeed: number;
+  windGusts: number;
+  time: string;
+  isHeavyRain?: boolean;
+  isHighWind?: boolean;
+  flightFeasibility?: 'CLEAR' | 'CAUTION' | 'RESTRICTED';
+  floodRiskLevel?: 'LOW' | 'MODERATE' | 'HIGH';
+  [key: string]: any;
+}
+
 export type AnyObject = Record<string, any>;
+

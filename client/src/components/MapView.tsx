@@ -16,7 +16,16 @@ import {
   Navigation,
   Send,
   Layers,
-  Globe
+  Globe,
+  CloudRain,
+  Sun,
+  CloudSun,
+  CloudLightning,
+  Wind,
+  Droplets,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 // Custom DivIcons for Leaflet
@@ -139,11 +148,15 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
     activeCategoryFilter,
     layers,
     toggleLayer,
-    calculateSafeRoute
+    calculateSafeRoute,
+    weather,
+    weatherLoading,
+    refreshWeather
   } = useCrisis();
 
   // Default to Tactical Dark
   const [mapTheme, setMapTheme] = useState<MapThemeOption>('tactical_dark');
+  const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(true);
 
     const currentTileConfig = useMemo(() => {
     // All free — no API key required
@@ -285,6 +298,167 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           />
           <span className="flex items-center gap-1.5">🆘 SOS Distress Pins</span>
         </label>
+      </div>
+
+      {/* Floating Tactical Hydro-Meteo Intelligence Panel */}
+      <div className="absolute bottom-6 right-6 z-[400] font-mono select-none">
+        {!isWeatherExpanded ? (
+          <button
+            onClick={() => setIsWeatherExpanded(true)}
+            className="bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md border border-cyan-800/80 text-cyan-300 px-3.5 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-bold transition-all hover:scale-105 active:scale-95"
+            title="Open Live Hydro-Meteo Radar Telemetry"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            {weather ? (
+              <>
+                <span>{weather.precipitation > 0 ? '🌧️' : '🌤️'}</span>
+                <span className="text-white">{weather.temperature}°C</span>
+                <span className="text-slate-400 text-[11px]">| 💨 {weather.windSpeed} km/h</span>
+              </>
+            ) : (
+              <span>🛰️ Meteo Radar</span>
+            )}
+            <ChevronUp className="w-3.5 h-3.5 text-slate-400 ml-1" />
+          </button>
+        ) : (
+          <div className="w-80 bg-slate-950/95 backdrop-blur-md border border-cyan-900/70 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(0,0,0,0.8)] text-xs text-slate-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                </span>
+                <span className="font-bold text-cyan-300 tracking-wider uppercase text-[11px]">
+                  HYDRO-METEO RADAR
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => refreshWeather()}
+                  title="Refresh Telemetry"
+                  disabled={weatherLoading}
+                  className="p-1 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 rounded transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${weatherLoading ? 'animate-spin text-cyan-400' : ''}`} />
+                </button>
+                <button
+                  onClick={() => setIsWeatherExpanded(false)}
+                  className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded transition-colors"
+                  title="Minimize Panel"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Region & Time */}
+            <div className="flex items-center justify-between text-[10px] text-slate-400 mb-2 px-0.5">
+              <span className="truncate font-semibold text-slate-300">📍 {activeRegion.name}</span>
+              <span>{weather?.time ? `Sync: ${weather.time.slice(-5)}` : 'Live Telemetry'}</span>
+            </div>
+
+            {weatherLoading && !weather ? (
+              <div className="py-6 text-center text-slate-500 text-xs animate-pulse">
+                Establishing Satellite Weather Link...
+              </div>
+            ) : weather ? (
+              <div className="space-y-2.5">
+                {/* Primary Temp & Condition Banner */}
+                <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800/90 rounded-xl p-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-cyan-950/70 border border-cyan-700/40 text-cyan-400">
+                      {weather.weatherCode >= 95 ? (
+                        <CloudLightning className="w-6 h-6 text-yellow-400 animate-bounce" />
+                      ) : weather.precipitation > 0 || weather.weatherCode >= 51 ? (
+                        <CloudRain className="w-6 h-6 text-sky-400" />
+                      ) : weather.weatherCode >= 1 && weather.weatherCode <= 3 ? (
+                        <CloudSun className="w-6 h-6 text-sky-200" />
+                      ) : (
+                        <Sun className="w-6 h-6 text-amber-400" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xl font-black text-white tracking-tight flex items-baseline gap-1">
+                        {weather.temperature}
+                        <span className="text-sm font-bold text-cyan-400">°C</span>
+                      </div>
+                      <div className="text-[11px] text-slate-300 font-semibold truncate max-w-[130px]">
+                        {weather.condition || 'Clear Sky'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-[10px] text-slate-400">Precipitation</div>
+                    <div className={`font-bold text-sm ${weather.precipitation > 0 ? 'text-sky-300' : 'text-slate-300'}`}>
+                      {weather.precipitation} <span className="text-[10px] font-normal text-slate-400">mm/h</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Atmospheric Sensor Grid */}
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="bg-slate-900/60 border border-slate-800/70 p-1.5 rounded-lg">
+                    <span className="text-[10px] text-slate-400 block">Humidity</span>
+                    <span className="font-bold text-slate-200 text-xs">{weather.humidity}%</span>
+                  </div>
+                  <div className="bg-slate-900/60 border border-slate-800/70 p-1.5 rounded-lg">
+                    <span className="text-[10px] text-slate-400 block">Wind</span>
+                    <span className="font-bold text-slate-200 text-xs">{weather.windSpeed} <span className="text-[9px] font-normal text-slate-400">km/h</span></span>
+                  </div>
+                  <div className="bg-slate-900/60 border border-slate-800/70 p-1.5 rounded-lg">
+                    <span className="text-[10px] text-slate-400 block">Gusts</span>
+                    <span className={`font-bold text-xs ${weather.windGusts >= 35 ? 'text-amber-400' : 'text-slate-200'}`}>
+                      {weather.windGusts} <span className="text-[9px] font-normal text-slate-400">km/h</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tactical EOC Advisories */}
+                <div className="space-y-1.5 pt-1 border-t border-slate-900">
+                  <div className="flex items-center justify-between text-[10px] bg-slate-900/80 px-2 py-1 rounded-md border border-slate-800">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      🚁 Air Rescue Feasibility:
+                    </span>
+                    <span className={`font-bold px-1.5 py-0.2 rounded text-[10px] ${
+                      weather.flightFeasibility === 'RESTRICTED'
+                        ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                        : weather.flightFeasibility === 'CAUTION'
+                        ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                        : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                    }`}>
+                      {weather.flightFeasibility || 'CLEAR'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] bg-slate-900/80 px-2 py-1 rounded-md border border-slate-800">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      🌊 Flood Runoff Risk:
+                    </span>
+                    <span className={`font-bold px-1.5 py-0.2 rounded text-[10px] ${
+                      weather.floodRiskLevel === 'HIGH' || weather.isHeavyRain
+                        ? 'bg-rose-950 text-rose-300 border border-rose-800 animate-pulse'
+                        : weather.floodRiskLevel === 'MODERATE'
+                        ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                        : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                    }`}>
+                      {weather.isHeavyRain ? 'CRITICAL INUNDATION' : (weather.floodRiskLevel || 'LOW')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-4 text-center text-slate-500 text-xs">
+                Weather data unavailable
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main Tactical Map */}

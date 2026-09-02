@@ -9,7 +9,10 @@ import {
   ShieldCheck,
   AlertTriangle,
   Flame,
-  Radio
+  Radio,
+  CloudRain,
+  Sun,
+  Wind
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
@@ -18,7 +21,8 @@ export const AnalyticsDrawer: React.FC = () => {
     hospitals,
     dispatchedUnits,
     systemAlert,
-    reports
+    reports,
+    weather
   } = useCrisis();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,6 +53,18 @@ export const AnalyticsDrawer: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {/* Weather Telemetry in Ticker Bar */}
+          {weather && (
+            <div className="hidden md:flex items-center gap-2 text-[11px] text-slate-300 border-r border-slate-800 pr-3">
+              <span className="text-cyan-400 font-bold flex items-center gap-1">
+                {weather.precipitation > 0 ? <CloudRain className="w-3.5 h-3.5 text-sky-400" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
+                {weather.temperature}°C
+              </span>
+              <span className="text-slate-400">({weather.condition || 'Clear'})</span>
+              <span className="text-slate-500 font-mono text-[10px]">🌧️ {weather.precipitation}mm/h &bull; 💨 {weather.windSpeed}km/h</span>
+            </div>
+          )}
+
           <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
             <span>Overall Hospital Load:</span>
             <span className="font-bold text-amber-400">
@@ -163,6 +179,22 @@ export const AnalyticsDrawer: React.FC = () => {
                 </div>
                 <p className="text-[10px] text-amber-300 mt-0.5">Water overtopping bridge embankments</p>
               </div>
+
+              {/* Atmospheric Weather Telemetry */}
+              {weather && (
+                <div className="bg-slate-950/60 p-2 rounded border border-cyan-900/50">
+                  <div className="flex justify-between">
+                    <span className="text-slate-300 font-medium flex items-center gap-1">
+                      <Wind className="w-3 h-3 text-cyan-400" />
+                      Atmospheric Rain & Wind
+                    </span>
+                    <span className="font-bold text-cyan-400 font-mono">{weather.temperature}°C &bull; {weather.humidity}% Hum</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Precip: <strong className="text-slate-200">{weather.precipitation} mm/h</strong> &bull; Wind: <strong className="text-slate-200">{weather.windSpeed} km/h</strong> (Gusts: {weather.windGusts} km/h)
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

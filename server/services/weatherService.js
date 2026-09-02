@@ -1,3 +1,18 @@
+function decodeWeatherCode(code) {
+  if (code === 0) return 'Clear Sky';
+  if (code === 1) return 'Mainly Clear';
+  if (code === 2) return 'Partly Cloudy';
+  if (code === 3) return 'Overcast';
+  if (code === 45 || code === 48) return 'Dense Fog';
+  if (code >= 51 && code <= 55) return 'Drizzle';
+  if (code >= 61 && code <= 63) return 'Moderate Rain';
+  if (code === 65) return 'Heavy Monsoon Rain';
+  if (code >= 71 && code <= 77) return 'Snow Fall';
+  if (code >= 80 && code <= 82) return 'Rain Showers';
+  if (code >= 95 && code <= 99) return 'Thunderstorm Alert';
+  return 'Cloudy';
+}
+
 export async function getCurrentWeather(lat, lng) {
   const url =
     `https://api.open-meteo.com/v1/forecast` +
@@ -13,14 +28,25 @@ export async function getCurrentWeather(lat, lng) {
   }
 
   const data = await response.json();
+  const current = data.current || {};
+  const weatherCode = current.weather_code ?? 0;
+  const condition = decodeWeatherCode(weatherCode);
+  const precipitation = current.precipitation ?? 0;
+  const windSpeed = current.wind_speed_10m ?? 0;
+  const windGusts = current.wind_gusts_10m ?? 0;
 
   return {
-    temperature: data.current.temperature_2m,
-    humidity: data.current.relative_humidity_2m,
-    precipitation: data.current.precipitation,
-    weatherCode: data.current.weather_code,
-    windSpeed: data.current.wind_speed_10m,
-    windGusts: data.current.wind_gusts_10m,
-    time: data.current.time
+    temperature: current.temperature_2m,
+    humidity: current.relative_humidity_2m,
+    precipitation,
+    weatherCode,
+    condition,
+    windSpeed,
+    windGusts,
+    time: current.time,
+    isHeavyRain: precipitation >= 5 || [65, 82, 95, 96, 99].includes(weatherCode),
+    isHighWind: windGusts >= 40 || windSpeed >= 25,
+    flightFeasibility: (windGusts > 45 || precipitation > 15) ? 'RESTRICTED' : (windGusts > 30 || precipitation > 5) ? 'CAUTION' : 'CLEAR',
+    floodRiskLevel: precipitation > 10 ? 'HIGH' : precipitation > 2 ? 'MODERATE' : 'LOW'
   };
 }

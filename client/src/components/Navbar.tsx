@@ -12,7 +12,12 @@ import {
   Droplets,
   Zap,
   ShieldAlert,
-  Flame
+  Flame,
+  CloudRain,
+  CloudSun,
+  Sun,
+  CloudLightning,
+  Wind
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
@@ -40,7 +45,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     reports,
     hospitals,
     layers,
-    toggleLayer
+    toggleLayer,
+    weather,
+    weatherLoading,
+    refreshWeather
   } = useCrisis();
 
   const totalTrapped = reports
@@ -105,25 +113,86 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="text-slate-400">Active SOS:</span>
           <span className="font-bold text-cyan-300">{reports.length} Reports</span>
         </div>
+
+        {/* Live Hydro-Meteorological Weather KPI */}
+        <div className="h-3.5 w-px bg-slate-700"></div>
+        <div
+          onClick={() => refreshWeather()}
+          title={
+            weather
+              ? `Live Meteo: ${weather.condition || 'Weather'} (${weather.temperature}°C) • Rain: ${weather.precipitation}mm • Wind: ${weather.windSpeed}km/h (Gusts: ${weather.windGusts}km/h) • Humidity: ${weather.humidity}% [Click to Refresh]`
+              : 'Loading weather...'
+          }
+          className={`flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 px-1.5 py-0.5 rounded transition-all ${
+            weather?.isHeavyRain
+              ? 'text-rose-400 font-bold animate-pulse'
+              : weather?.precipitation && weather.precipitation > 0
+              ? 'text-sky-300'
+              : 'text-amber-300'
+          }`}
+        >
+          {weatherLoading ? (
+            <span className="text-slate-500 animate-pulse text-[11px]">Syncing Wx...</span>
+          ) : weather ? (
+            <>
+              {weather.weatherCode >= 95 ? (
+                <CloudLightning className="w-3.5 h-3.5 text-yellow-400 animate-bounce" />
+              ) : weather.precipitation > 0 || weather.weatherCode >= 51 ? (
+                <CloudRain className="w-3.5 h-3.5 text-sky-400" />
+              ) : weather.weatherCode >= 1 && weather.weatherCode <= 3 ? (
+                <CloudSun className="w-3.5 h-3.5 text-sky-200" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              )}
+              <span className="text-slate-400">Wx:</span>
+              <span className="font-bold text-white">{weather.temperature}°C</span>
+              <span className="text-[10px] bg-slate-800 border border-slate-700/80 text-cyan-300 px-1 py-0.2 rounded font-semibold">
+                {weather.precipitation > 0 ? `🌧️ ${weather.precipitation}mm` : (weather.condition || 'Clear')}
+              </span>
+              <span className="text-slate-400 text-[10px] hidden xl:inline">💨 {weather.windSpeed}km/h</span>
+            </>
+          ) : (
+            <span className="text-slate-500 text-[11px]">Wx Offline</span>
+          )}
+        </div>
       </div>
 
       {/* Right Controls & Action CTAs */}
       <div className="flex items-center gap-2 flex-wrap justify-end w-full md:w-auto">
-        {/* Region Selector */}
-        <select
-          value={activeRegion.id}
-          onChange={(e) => {
-            const found = regions.find(r => r.id === e.target.value);
-            if (found) setActiveRegion(found);
-          }}
-          className="bg-slate-900/90 border border-slate-700 hover:border-slate-600 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-medium"
-        >
-          {regions.map(r => (
-            <option key={r.id} value={r.id}>
-              📍 {r.name}
-            </option>
-          ))}
-        </select>
+        {/* Region Selector + Weather Pill */}
+        <div className="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5">
+          <select
+            value={activeRegion.id}
+            onChange={(e) => {
+              const found = regions.find(r => r.id === e.target.value);
+              if (found) setActiveRegion(found);
+            }}
+            className="bg-transparent text-slate-200 text-xs px-2 py-1 focus:outline-none font-medium cursor-pointer"
+          >
+            {regions.map(r => (
+              <option key={r.id} value={r.id} className="bg-slate-900 text-slate-200">
+                📍 {r.name}
+              </option>
+            ))}
+          </select>
+
+          {weather && (
+            <div
+              onClick={() => refreshWeather()}
+              title={`Click to refresh weather for ${activeRegion.name}`}
+              className="flex items-center gap-1 px-2 py-1 text-xs border-l border-slate-800 text-cyan-300 hover:text-white cursor-pointer font-mono"
+            >
+              {weather.weatherCode >= 95 ? (
+                <CloudLightning className="w-3.5 h-3.5 text-yellow-400" />
+              ) : weather.precipitation > 0 ? (
+                <CloudRain className="w-3.5 h-3.5 text-sky-400" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              )}
+              <span className="font-bold">{weather.temperature}°C</span>
+            </div>
+          )}
+        </div>
 
         {/* 1-Click Simulation Showstopper for Hackathon Judges */}
         <div className="flex items-center bg-slate-900 border border-cyan-800/60 rounded-lg p-0.5">
