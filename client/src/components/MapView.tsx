@@ -414,9 +414,9 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
                 <h4 className="font-bold text-sm text-cyan-800">{hub.name}</h4>
                 <p className="text-[11px] text-slate-500 mb-2">Managed by: {hub.managedBy}</p>
                 <div className="space-y-1 text-xs bg-cyan-50 p-2 rounded border border-cyan-100">
-                  <p>💧 Clean Water: <strong>{hub.drinkingWaterLiters.toLocaleString()} Liters</strong></p>
-                  <p>🍱 Food Packets: <strong>{hub.foodPackets.toLocaleString()} Packs</strong></p>
-                  <p>🚤 Rescue Jet-Boats: <strong>{hub.rescueBoats} Boats</strong></p>
+                  <p>💧 Clean Water: <strong>{(hub.drinkingWaterLiters ?? 0).toLocaleString()} Liters</strong></p>
+                  <p>🍱 Food Packets: <strong>{(hub.foodPackets ?? 0).toLocaleString()} Packs</strong></p>
+                  <p>🚤 Rescue Jet-Boats: <strong>{hub.rescueBoats ?? 0} Boats</strong></p>
                 </div>
               </div>
             </Popup>
@@ -481,47 +481,55 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         {layers.safeRouteOverlay && activeSafeRoute && (
           <>
             {/* Direct Blocked Path (Red Dashed Line) */}
-            <Polyline
-              positions={activeSafeRoute.directPath}
-              pathOptions={{
-                color: '#ef4444',
-                weight: 3.5,
-                dashArray: '8, 8',
-                opacity: 0.8
-              }}
-            >
-              <Tooltip sticky>
-                <span className="font-mono text-xs text-red-600 font-bold">
-                  ❌ DIRECT PATH (BLOCKED BY 4.5FT FLOOD AT FAIZABAD)
-                </span>
-              </Tooltip>
-            </Polyline>
+            {activeSafeRoute.directPath && activeSafeRoute.directPath.length > 0 && (
+              <Polyline
+                positions={activeSafeRoute.directPath}
+                pathOptions={{
+                  color: '#ef4444',
+                  weight: 3.5,
+                  dashArray: '8, 8',
+                  opacity: 0.8
+                }}
+              >
+                <Tooltip sticky>
+                  <span className="font-mono text-xs text-red-600 font-bold">
+                    ❌ DIRECT PATH (BLOCKED BY 4.5FT FLOOD AT FAIZABAD)
+                  </span>
+                </Tooltip>
+              </Polyline>
+            )}
 
             {/* Calculated Verified Safe Detour (Glowing Emerald Polyline) */}
-            <Polyline
-              positions={activeSafeRoute.safePath}
-              pathOptions={{
-                color: '#10b981',
-                weight: 6,
-                opacity: 0.95
-              }}
-            >
-              <Tooltip sticky>
-                <span className="font-mono text-xs text-emerald-600 font-bold">
-                  ✅ VERIFIED SAFE DETOUR ROUTE (Via 9th Ave Flyover &bull; {activeSafeRoute.safeDistanceKm} km)
-                </span>
-              </Tooltip>
-            </Polyline>
+            {activeSafeRoute.safePath && activeSafeRoute.safePath.length > 0 && (
+              <Polyline
+                positions={activeSafeRoute.safePath}
+                pathOptions={{
+                  color: '#10b981',
+                  weight: 6,
+                  opacity: 0.95
+                }}
+              >
+                <Tooltip sticky>
+                  <span className="font-mono text-xs text-emerald-600 font-bold">
+                    ✅ VERIFIED SAFE DETOUR ROUTE (Via 9th Ave Flyover &bull; {activeSafeRoute.safeDistanceKm} km)
+                  </span>
+                </Tooltip>
+              </Polyline>
+            )}
 
             {/* Origin & Destination Waypoints */}
-            <Marker
-              position={activeSafeRoute.origin.coords}
-              icon={createRouteWaypointIcon("START", false)}
-            />
-            <Marker
-              position={activeSafeRoute.destination.coords}
-              icon={createRouteWaypointIcon("END", true)}
-            />
+            {activeSafeRoute.origin?.coords && (
+              <Marker
+                position={activeSafeRoute.origin.coords}
+                icon={createRouteWaypointIcon("START", false)}
+              />
+            )}
+            {activeSafeRoute.destination?.coords && (
+              <Marker
+                position={activeSafeRoute.destination.coords}
+                icon={createRouteWaypointIcon("END", true)}
+              />
+            )}
           </>
         )}
       </MapContainer>

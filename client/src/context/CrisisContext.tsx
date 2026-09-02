@@ -160,7 +160,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       socket.on('new_report', (newRep: EmergencyReport) => {
-        setReports(prev => [newRep, ...prev]);
+        setReports(prev => prev.some(r => r.id === newRep.id) ? prev : [newRep, ...prev]);
       });
 
       socket.on('hospital_update', (updatedHosp: Hospital) => {
@@ -240,6 +240,10 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       const data = await res.json();
       if (data.success) {
+        setReports(prev => prev.some(r => r.id === data.report.id) ? prev : [data.report, ...prev]);
+        if (data.updatedPriorityZones) {
+          setPriorityZones(data.updatedPriorityZones);
+        }
         return data.report;
       }
       throw new Error(data.error || 'Failed to submit report');
@@ -357,11 +361,18 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Approve Resource Dispatch
   const approveDispatch = useCallback(async (zoneId: string, assets?: any) => {
     try {
-      await fetch(`${API_BASE}/api/dispatch/approve`, {
+      const res = await fetch(`${API_BASE}/api/dispatch/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zoneId, assets })
       });
+      const data = await res.json();
+      if (data.success && data.dispatch) {
+        setDispatchedUnits(prev => prev.some(u => u.id === data.dispatch.id) ? prev : [data.dispatch, ...prev]);
+        if (data.priorityZones) {
+          setPriorityZones(data.priorityZones);
+        }
+      }
     } catch (err) {
       setPriorityZones(prev => prev.map(z => z.id === zoneId ? { ...z, status: 'DISPATCH_CONFIRMED' } : z));
       const fallbackDispatch: DispatchedUnit = {

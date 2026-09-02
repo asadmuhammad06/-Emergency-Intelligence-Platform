@@ -219,18 +219,18 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                     <div className="bg-slate-900/90 p-2 rounded border border-rose-900/40">
                       <span className="text-[10px] text-slate-400 block">Inflatable Jet-Boats</span>
-                      <span className="font-bold text-white text-sm">{selectedZone.recommendedDispatch.boats} Units</span>
+                      <span className="font-bold text-white text-sm">{selectedZone.recommendedDispatch?.boats ?? 0} Units</span>
                     </div>
                     <div className="bg-slate-900/90 p-2 rounded border border-rose-900/40">
                       <span className="text-[10px] text-slate-400 block">Clean Water Bowsers</span>
                       <span className="font-bold text-cyan-400 text-sm">
-                        {selectedZone.recommendedDispatch.waterBowsersLiters.toLocaleString()} Liters
+                        {(selectedZone.recommendedDispatch?.waterBowsersLiters ?? 0).toLocaleString()} Liters
                       </span>
                     </div>
                     <div className="bg-slate-900/90 p-2 rounded border border-rose-900/40">
                       <span className="text-[10px] text-slate-400 block">Field Medical Teams</span>
                       <span className="font-bold text-emerald-400 text-sm">
-                        {selectedZone.recommendedDispatch.medicalTeams} Squads
+                        {selectedZone.recommendedDispatch?.medicalTeams ?? 0} Squads
                       </span>
                     </div>
                   </div>
@@ -242,7 +242,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
                     Action Directives:
                   </h5>
                   <ul className="space-y-1.5 text-xs text-slate-300">
-                    {selectedZone.actionPlan.map((action, idx) => (
+                    {(selectedZone.actionPlan || []).map((action, idx) => (
                       <li key={idx} className="flex items-start gap-2 bg-slate-950/60 p-2 rounded border border-slate-800/60">
                         <span className="text-rose-400 font-bold">•</span>
                         <span>{action}</span>
