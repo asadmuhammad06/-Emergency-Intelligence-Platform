@@ -27,13 +27,13 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
     calculateSafeRoute
   } = useCrisis();
 
-  const categories: { label: string; value: ReportCategory | 'ALL'; icon: string }[] = [
-    { label: 'All', value: 'ALL', icon: '📡' },
-    { label: 'Rescue', value: 'RESCUE_NEEDED', icon: '🆘' },
-    { label: 'Roads', value: 'ROAD_BLOCKED', icon: '🚧' },
-    { label: 'Hospitals', value: 'HOSPITAL_CAPACITY', icon: '🏥' },
-    { label: 'Water', value: 'WATER_SHORTAGE', icon: '💧' },
-    { label: 'Power', value: 'POWER_OUTAGE', icon: '⚡' },
+  const categories: { label: string; value: ReportCategory | 'ALL' }[] = [
+    { label: 'All Reports', value: 'ALL' },
+    { label: 'Rescue Needed', value: 'RESCUE_NEEDED' },
+    { label: 'Road Blocks', value: 'ROAD_BLOCKED' },
+    { label: 'Hospitals', value: 'HOSPITAL_CAPACITY' },
+    { label: 'Water Shortage', value: 'WATER_SHORTAGE' },
+    { label: 'Power Grid', value: 'POWER_OUTAGE' },
   ];
 
   const filteredReports = activeCategoryFilter === 'ALL'
@@ -43,60 +43,76 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
   const getCategoryBadge = (cat: ReportCategory) => {
     switch (cat) {
       case 'RESCUE_NEEDED':
-        return <span className="bg-red-950/80 text-red-300 border border-red-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">🆘 RESCUE</span>;
+        return <span className="bg-rose-950/80 text-rose-300 border border-rose-500/50 text-[10px] font-mono font-bold px-2 py-0.5 rounded">RESCUE NEEDED</span>;
       case 'ROAD_BLOCKED':
-        return <span className="bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">🚧 ROAD BLOCKED</span>;
+        return <span className="bg-amber-950/80 text-amber-300 border border-amber-500/50 text-[10px] font-mono font-bold px-2 py-0.5 rounded">ROAD BLOCKED</span>;
       case 'HOSPITAL_CAPACITY':
-        return <span className="bg-purple-950/80 text-purple-300 border border-purple-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">🏥 MEDICAL OVERLOAD</span>;
+        return <span className="bg-purple-950/80 text-purple-300 border border-purple-500/50 text-[10px] font-mono font-bold px-2 py-0.5 rounded">MEDICAL OVERLOAD</span>;
       case 'WATER_SHORTAGE':
-        return <span className="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">💧 WATER SHORTAGE</span>;
+        return <span className="bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 text-[10px] font-mono font-bold px-2 py-0.5 rounded">WATER SHORTAGE</span>;
       case 'POWER_OUTAGE':
-        return <span className="bg-yellow-950/80 text-yellow-300 border border-yellow-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">⚡ POWER OUTAGE</span>;
+        return <span className="bg-yellow-950/80 text-yellow-300 border border-yellow-500/50 text-[10px] font-mono font-bold px-2 py-0.5 rounded">POWER OUTAGE</span>;
       default:
-        return <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-1.5 py-0.5 rounded">⚠️ ALERT</span>;
+        return <span className="bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded">INCIDENT</span>;
+    }
+  };
+
+  const handleLocateOnMap = (coords: [number, number]) => {
+    setHighlightedCoords(coords);
+    const mapEl = document.getElementById('tactical-map');
+    if (mapEl) {
+      mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleCalculateRoute = (coords: [number, number]) => {
+    calculateSafeRoute(coords);
+    onOpenSafeRoute(coords);
+    const mapEl = document.getElementById('tactical-map');
+    if (mapEl) {
+      mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
   return (
-    <div className="w-full md:w-96 bg-[#0c1222]/95 border-r border-slate-800 flex flex-col h-full overflow-hidden text-slate-200 select-none">
+    <div className="w-full bg-slate-950/90 border border-slate-800 rounded-2xl flex flex-col h-[650px] overflow-hidden text-slate-200 select-none shadow-2xl">
       {/* Feed Header */}
-      <div className="p-3.5 border-b border-slate-800/80 bg-slate-900/60">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <h2 className="font-bold text-sm text-white tracking-wide font-['Plus_Jakarta_Sans']">
-              LIVE CRISIS INTEL STREAM
-            </h2>
+      <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/60">
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2.5">
+            <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
+            <h3 className="font-extrabold text-base text-white tracking-wide font-['Plus_Jakarta_Sans']">
+              GROUND INTELLIGENCE & DISTRESS WIRE
+            </h3>
           </div>
-          <span className="text-[11px] font-mono bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 px-2 py-0.5 rounded-full font-bold">
-            {reports.length} INCOMING
+          <span className="text-xs font-mono bg-cyan-950/90 border border-cyan-500/50 text-cyan-300 px-3 py-1 rounded-full font-bold">
+            {reports.length} ACTIVE INCIDENTS
           </span>
         </div>
 
         {/* Filter Chips */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {categories.map(cat => (
             <button
               key={cat.value}
               onClick={() => setActiveCategoryFilter(cat.value)}
-              className={`text-xs px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition-all flex items-center gap-1 ${
+              className={`px-3.5 py-1.5 rounded-xl font-mono text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
                 activeCategoryFilter === cat.value
-                  ? 'bg-cyan-600 text-white font-bold shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700/80'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700'
               }`}
             >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
+              {cat.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Reports List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 scrollbar-thin scrollbar-thumb-slate-800">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
         {filteredReports.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 text-xs">
-            No incidents reported under this category.
+          <div className="p-12 text-center text-slate-500 font-mono text-sm">
+            No incidents reported under this sector filter.
           </div>
         ) : (
           filteredReports.map((report) => {
@@ -105,56 +121,56 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
             return (
               <div
                 key={report.id}
-                className={`p-3 rounded-xl border transition-all duration-200 bg-slate-900/80 hover:bg-slate-850 ${
+                className={`p-4 rounded-2xl border transition-all duration-200 bg-slate-900/70 hover:bg-slate-900 ${
                   isHighSeverity
-                    ? 'border-red-900/50 hover:border-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.1)]'
-                    : 'border-slate-800 hover:border-cyan-700/60'
+                    ? 'border-rose-900/50 hover:border-rose-500/60 shadow-[0_0_16px_rgba(244,63,94,0.1)]'
+                    : 'border-slate-800/80 hover:border-cyan-700/60'
                 }`}
               >
                 {/* Top Meta Line */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {getCategoryBadge(report.category)}
                     {report.languageDetected && (
-                      <span className="text-[10px] font-mono bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
-                        🌐 {report.languageDetected}
+                      <span className="text-xs font-mono bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
+                        {report.languageDetected}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 font-mono text-[11px]">
-                    <span className={`font-bold ${isHighSeverity ? 'text-red-400' : 'text-amber-400'}`}>
-                      Sev {report.severity}/10
+                  <div className="flex items-center gap-1 font-mono text-xs">
+                    <span className={`font-bold px-2 py-0.5 rounded-md ${isHighSeverity ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}`}>
+                      SEV {report.severity}/10
                     </span>
                   </div>
                 </div>
 
                 {/* Raw Text Extract */}
-                <p className="text-xs text-slate-200 font-medium leading-relaxed mb-2 line-clamp-3">
+                <p className="text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
                   "{report.rawText}"
                 </p>
 
                 {/* AI Extracted Entity Pills */}
-                <div className="space-y-1 text-[11px] mb-2.5 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
-                    <span className="truncate font-medium text-slate-300">{report.locationName}</span>
+                <div className="space-y-2 text-xs sm:text-sm mb-3.5 font-mono">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <span className="truncate font-semibold">{report.locationName}</span>
                   </div>
 
                   {report.headcount > 0 && (
-                    <div className="flex items-center gap-1.5 text-red-400 font-semibold">
-                      <Users className="w-3 h-3 text-red-400 shrink-0" />
-                      <span>{report.headcount} People Trapped / In Need</span>
+                    <div className="flex items-center gap-2 text-rose-400 font-bold">
+                      <Users className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>{report.headcount} Trapped Citizens In Need</span>
                     </div>
                   )}
 
                   {report.needs && report.needs.length > 0 && (
-                    <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-slate-800/60">
-                      <span className="text-[10px] text-slate-400">Needs:</span>
+                    <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-800/60">
+                      <span className="text-xs text-slate-400">Needs:</span>
                       {report.needs.map((need, idx) => (
                         <span
                           key={idx}
-                          className="bg-cyan-950/60 text-cyan-300 border border-cyan-800/40 text-[10px] px-1.5 py-0.2 rounded"
+                          className="bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 text-xs px-2.5 py-0.5 rounded-md font-medium"
                         >
                           {need}
                         </span>
@@ -164,24 +180,21 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 </div>
 
                 {/* Action Row */}
-                <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-slate-800/60 font-mono">
                   <button
-                    onClick={() => setHighlightedCoords(report.coords)}
-                    className="flex-1 py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium flex items-center justify-center gap-1 transition-colors"
+                    onClick={() => handleLocateOnMap(report.coords)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors"
                   >
-                    <MapPin className="w-3 h-3 text-cyan-400" />
-                    <span>Locate</span>
+                    <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Focus Map</span>
                   </button>
 
                   <button
-                    onClick={() => {
-                      calculateSafeRoute(report.coords);
-                      onOpenSafeRoute(report.coords);
-                    }}
-                    className="flex-1 py-1 px-2 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    onClick={() => handleCalculateRoute(report.coords)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-[0_0_12px_rgba(16,185,129,0.2)]"
                   >
-                    <Navigation className="w-3 h-3 text-emerald-400" />
-                    <span>Safe Route</span>
+                    <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Safe Detour</span>
                   </button>
                 </div>
               </div>

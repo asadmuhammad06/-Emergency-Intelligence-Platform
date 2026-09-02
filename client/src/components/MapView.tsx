@@ -25,42 +25,60 @@ import {
   Droplets,
   RefreshCw,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MapPin,
+  Users,
+  Shield,
+  LifeBuoy,
+  Radio
 } from 'lucide-react';
 
-// Custom DivIcons for Leaflet
+// Custom High-Precision Tactical DivIcons
 const createSosIcon = (headcount: number, severity: number) => {
+  const isExtreme = severity >= 9;
   return L.divIcon({
     className: 'custom-sos-marker',
     html: `
-      <div class="relative flex items-center justify-center">
-        <div class="absolute -inset-2 bg-red-500/30 rounded-full animate-ping"></div>
-        <div class="w-8 h-8 rounded-full bg-red-600 border-2 border-white shadow-[0_0_12px_rgba(239,68,68,0.8)] flex items-center justify-center text-white font-bold text-xs">
-          ${headcount > 0 ? headcount : '🆘'}
+      <div class="relative flex items-center justify-center w-10 h-10 select-none cursor-pointer group">
+        <span class="absolute w-9 h-9 rounded-full ${isExtreme ? 'bg-rose-500/40' : 'bg-amber-500/30'} animate-radar pointer-events-none"></span>
+        <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-slate-950 border-2 ${isExtreme ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.9)]' : 'border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]'} transition-transform group-hover:scale-110">
+          <svg class="w-3.5 h-3.5 ${isExtreme ? 'text-rose-400' : 'text-amber-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+            <circle cx="12" cy="12" r="2"/>
+            <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+            <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/>
+          </svg>
         </div>
-        ${severity >= 9 ? '<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-black"></span>' : ''}
+        ${headcount > 0 ? `
+          <span class="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-mono font-black px-1 py-0.2 rounded-full border border-slate-900 shadow">
+            ${headcount}
+          </span>
+        ` : ''}
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16]
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20]
   });
 };
 
 const createHospitalIcon = (capacity: number, status: string) => {
   const isOverloaded = capacity >= 85 || status === 'OVERLOADED';
-  const bgColor = isOverloaded ? 'bg-rose-600' : 'bg-emerald-600';
-  const borderColor = isOverloaded ? 'border-rose-300' : 'border-emerald-300';
-  const shadowClass = isOverloaded ? 'shadow-[0_0_10px_rgba(244,63,94,0.7)]' : 'shadow-[0_0_10px_rgba(16,185,129,0.7)]';
+  const strokeColor = isOverloaded ? '#f43f5e' : '#10b981';
+  const shadowGlow = isOverloaded ? 'rgba(244,63,94,0.7)' : 'rgba(16,185,129,0.7)';
 
   return L.divIcon({
     className: 'custom-hospital-marker',
     html: `
-      <div class="relative flex flex-col items-center">
-        <div class="w-8 h-8 rounded-lg ${bgColor} border-2 ${borderColor} ${shadowClass} flex items-center justify-center text-white font-black text-xs">
-          🏥
+      <div class="relative flex flex-col items-center select-none cursor-pointer group">
+        <div class="w-8 h-8 rounded-lg bg-slate-950 border-2 flex items-center justify-center transition-transform group-hover:scale-110" style="border-color: ${strokeColor}; box-shadow: 0 0 12px ${shadowGlow};">
+          <svg class="w-4 h-4" style="color: ${strokeColor};" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z"/>
+          </svg>
+          ${isOverloaded ? '<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border border-slate-900 animate-ping"></span>' : ''}
         </div>
-        <div class="bg-slate-900/90 text-[10px] font-mono font-bold px-1 rounded border border-slate-700 text-white mt-0.5 whitespace-nowrap">
+        <div class="mt-0.5 px-1.5 py-0.2 bg-slate-950/95 border text-[9px] font-mono font-bold rounded shadow tracking-tight" style="border-color: ${strokeColor}80; color: ${strokeColor};">
           ${capacity}%
         </div>
       </div>
@@ -75,8 +93,15 @@ const createRoadBlockIcon = () => {
   return L.divIcon({
     className: 'custom-roadblock-marker',
     html: `
-      <div class="w-7 h-7 rounded-md bg-amber-500 border-2 border-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.8)] flex items-center justify-center text-black font-extrabold text-xs">
-        🚧
+      <div class="relative flex items-center justify-center w-7 h-7 select-none cursor-pointer group">
+        <div class="w-6 h-6 rounded-md bg-slate-950 border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)] flex items-center justify-center text-amber-400 transition-transform group-hover:scale-110">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="2" rx="1"/>
+            <path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/>
+            <path d="M7 13v6"/>
+            <path d="M17 13v6"/>
+          </svg>
+        </div>
       </div>
     `,
     iconSize: [28, 28],
@@ -89,8 +114,12 @@ const createReliefHubIcon = () => {
   return L.divIcon({
     className: 'custom-hub-marker',
     html: `
-      <div class="w-7 h-7 rounded-full bg-cyan-600 border-2 border-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.8)] flex items-center justify-center text-white font-bold text-xs">
-        💧
+      <div class="relative flex items-center justify-center w-7 h-7 select-none cursor-pointer group">
+        <div class="w-6 h-6 rounded-full bg-slate-950 border-2 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.8)] flex items-center justify-center text-cyan-400 transition-transform group-hover:scale-110">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+        </div>
       </div>
     `,
     iconSize: [28, 28],
@@ -103,13 +132,13 @@ const createRouteWaypointIcon = (label: string, isDest: boolean) => {
   return L.divIcon({
     className: 'custom-waypoint-marker',
     html: `
-      <div class="w-6 h-6 rounded-full ${isDest ? 'bg-emerald-500' : 'bg-cyan-500'} border-2 border-white shadow-[0_0_10px_rgba(6,182,212,0.9)] flex items-center justify-center text-white font-black text-[10px]">
+      <div class="flex items-center justify-center px-1.5 py-0.5 rounded-full ${isDest ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-cyan-500 text-slate-950 font-bold'} font-mono text-[9px] shadow-[0_0_12px_rgba(6,182,212,0.9)] border border-white">
         ${label}
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12]
+    iconSize: [36, 20],
+    iconAnchor: [18, 10],
+    popupAnchor: [0, -10]
   });
 };
 
@@ -200,108 +229,148 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
 
   return (
     <div className="relative w-full h-full bg-[#080d1a] overflow-hidden">
-      {/* Base Map Style Switcher */}
-      <div className="absolute top-4 left-4 z-[400] bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-2 shadow-xl text-xs space-y-1.5 font-mono">
-        <div className="flex items-center gap-1.5 border-b border-slate-800 pb-1 px-1">
+      {/* Base Map Style Switcher - High-Tech CAD/GIS Segmented Pill */}
+      <div className="absolute top-4 left-4 z-[400] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 font-mono text-xs select-none">
+        <div className="flex items-center gap-1.5 px-2 py-1 text-slate-400 border-r border-slate-800">
           <Globe className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="font-bold text-slate-200">BASE MAP STYLE</span>
+          <span className="text-[10px] font-bold tracking-wider uppercase text-slate-300">TILES</span>
         </div>
 
-        {/* Theme buttons */}
-        <div className="flex items-center gap-1 pt-0.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setMapTheme('tactical_dark')}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+            className={`px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1.5 ${
               mapTheme === 'tactical_dark'
-                ? 'bg-cyan-600 text-white font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
             }`}
           >
-            🌙 Tactical Dark
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]"></span>
+            Tactical Dark
           </button>
           <button
             onClick={() => setMapTheme('osm')}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+            className={`px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1.5 ${
               mapTheme === 'osm'
-                ? 'bg-cyan-600 text-white font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
             }`}
           >
-            🗺️ OpenStreetMap
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+            Standard OSM
           </button>
           <button
             onClick={() => setMapTheme('carto_voyager')}
-            className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+            className={`px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1.5 ${
               mapTheme === 'carto_voyager'
-                ? 'bg-cyan-600 text-white font-bold shadow-[0_0_10px_rgba(6,182,212,0.4)]'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)] font-bold'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
             }`}
           >
-            🧭 CARTO Voyager
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            Topographic
           </button>
         </div>
       </div>
 
-      {/* Floating Layer Controls */}
-      <div className="absolute top-4 right-4 z-[400] bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-2.5 shadow-xl text-xs space-y-1.5 font-mono">
-        <div className="flex items-center gap-1.5 text-slate-300 font-bold px-1 mb-1 border-b border-slate-700 pb-1">
-          <Layers className="w-3.5 h-3.5 text-cyan-400" />
-          <span>MAP LAYERS</span>
+      {/* Floating Layer Controls - High Density Tactical Toggle Matrix */}
+      <div className="absolute top-4 right-4 z-[400] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono min-w-[200px] select-none">
+        <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
+          <span className="flex items-center gap-1.5 text-slate-300">
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            TACTICAL OVERLAYS
+          </span>
+          <span className="text-[9px] text-slate-500">LIVE</span>
         </div>
 
-        <label className="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-slate-800">
-          <input
-            type="checkbox"
-            checked={layers.floods}
-            onChange={() => toggleLayer('floods')}
-            className="rounded bg-slate-800 border-slate-600 text-cyan-500 focus:ring-0"
-          />
-          <span className="flex items-center gap-1.5">🌊 Flood Polygons</span>
-        </label>
+        <button
+          onClick={() => toggleLayer('floods')}
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+            layers.floods
+              ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/60'
+              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${layers.floods ? 'bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]' : 'bg-slate-600'}`}></span>
+            Flood Inundation
+          </span>
+          <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-800/40">
+            {hazardZones.length}
+          </span>
+        </button>
 
-        <label className="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-slate-800">
-          <input
-            type="checkbox"
-            checked={layers.hospitals}
-            onChange={() => toggleLayer('hospitals')}
-            className="rounded bg-slate-800 border-slate-600 text-emerald-500 focus:ring-0"
-          />
-          <span className="flex items-center gap-1.5">🏥 Hospitals & Beds</span>
-        </label>
+        <button
+          onClick={() => toggleLayer('hospitals')}
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+            layers.hospitals
+              ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60'
+              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${layers.hospitals ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`}></span>
+            Medical Facilities
+          </span>
+          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-800/40">
+            {hospitals.length}
+          </span>
+        </button>
 
-        <label className="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-slate-800">
-          <input
-            type="checkbox"
-            checked={layers.roadBlocks}
-            onChange={() => toggleLayer('roadBlocks')}
-            className="rounded bg-slate-800 border-slate-600 text-amber-500 focus:ring-0"
-          />
-          <span className="flex items-center gap-1.5">🚧 Road Obstacles</span>
-        </label>
+        <button
+          onClick={() => toggleLayer('roadBlocks')}
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+            layers.roadBlocks
+              ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
+              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${layers.roadBlocks ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-slate-600'}`}></span>
+            Road Blockades
+          </span>
+          <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-800/40">
+            {roadBlocks.length}
+          </span>
+        </button>
 
-        <label className="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-slate-800">
-          <input
-            type="checkbox"
-            checked={layers.reliefHubs}
-            onChange={() => toggleLayer('reliefHubs')}
-            className="rounded bg-slate-800 border-slate-600 text-cyan-500 focus:ring-0"
-          />
-          <span className="flex items-center gap-1.5">💧 Relief & Water Hubs</span>
-        </label>
+        <button
+          onClick={() => toggleLayer('reliefHubs')}
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+            layers.reliefHubs
+              ? 'bg-sky-950/60 text-sky-300 border border-sky-800/60'
+              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${layers.reliefHubs ? 'bg-sky-400 shadow-[0_0_6px_rgba(14,165,233,0.8)]' : 'bg-slate-600'}`}></span>
+            Relief & Water Depots
+          </span>
+          <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-800/40">
+            {reliefHubs.length}
+          </span>
+        </button>
 
-        <label className="flex items-center gap-2 text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-slate-800">
-          <input
-            type="checkbox"
-            checked={layers.sosPins}
-            onChange={() => toggleLayer('sosPins')}
-            className="rounded bg-slate-800 border-slate-600 text-red-500 focus:ring-0"
-          />
-          <span className="flex items-center gap-1.5">🆘 SOS Distress Pins</span>
-        </label>
+        <button
+          onClick={() => toggleLayer('sosPins')}
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+            layers.sosPins
+              ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
+              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${layers.sosPins ? 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : 'bg-slate-600'}`}></span>
+            Citizen SOS Signals
+          </span>
+          <span className="text-[10px] font-bold text-rose-400 bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800/40">
+            {filteredReports.length}
+          </span>
+        </button>
       </div>
 
-      {/* Floating Tactical Hydro-Meteo Intelligence Panel */}
-      <div className="absolute bottom-6 right-6 z-[400] font-mono select-none">
+      {/* Floating Tactical Hydro-Meteo Intelligence Panel — positioned bottom-LEFT to avoid overlap with right-side layer toggles */}
+      <div className="absolute bottom-5 left-4 z-[400] font-mono select-none max-h-[calc(100%-4rem)] overflow-y-auto">
         {!isWeatherExpanded ? (
           <button
             onClick={() => setIsWeatherExpanded(true)}
@@ -465,7 +534,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       <MapContainer
         center={activeRegion.center}
         zoom={activeRegion.zoom}
-        scrollWheelZoom={true}
+        scrollWheelZoom={false}
         className="w-full h-full z-0"
         style={{ background: '#090d16' }}
       >
@@ -514,39 +583,45 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             icon={createHospitalIcon(hosp.capacity, hosp.status)}
           >
             <Popup className="custom-popup">
-              <div className="p-2 font-['Plus_Jakarta_Sans'] text-slate-900 max-w-xs">
-                <div className="flex items-center justify-between gap-2 border-b pb-1 mb-1">
-                  <h4 className="font-bold text-sm text-slate-900">{hosp.name}</h4>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hosp.capacity >= 85 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+              <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 mb-2">
+                  <div>
+                    <h4 className="font-bold text-sm text-white tracking-tight">{hosp.name}</h4>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 font-mono">
+                      <MapPin className="w-2.5 h-2.5 text-cyan-400" /> {hosp.location}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    hosp.capacity >= 85
+                      ? 'bg-rose-950/80 text-rose-300 border-rose-800 animate-pulse'
+                      : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
+                  }`}>
                     {hosp.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 mb-2">{hosp.location}</p>
 
-                <div className="grid grid-cols-2 gap-1.5 text-xs bg-slate-100 p-2 rounded mb-2">
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">Bed Capacity</span>
-                    <span className="font-bold">{hosp.occupiedBeds} / {hosp.totalBeds} ({hosp.capacity}%)</span>
+                <div className="grid grid-cols-2 gap-1.5 text-xs mb-3 font-mono">
+                  <div className="bg-slate-900/90 border border-slate-800/80 p-2 rounded-lg">
+                    <span className="text-[10px] text-slate-400 block">Bed Load</span>
+                    <span className="font-bold text-white text-xs">{hosp.occupiedBeds} / {hosp.totalBeds} ({hosp.capacity}%)</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">ICU Beds Free</span>
-                    <span className="font-bold text-emerald-700">{hosp.icuAvailable} Beds</span>
+                  <div className="bg-slate-900/90 border border-slate-800/80 p-2 rounded-lg">
+                    <span className="text-[10px] text-slate-400 block">ICU Free</span>
+                    <span className="font-bold text-emerald-400 text-xs">{hosp.icuAvailable} Beds</span>
                   </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-500 block text-[10px]">Power Backup</span>
-                    <span className="font-medium text-slate-800">{hosp.powerBackup}</span>
+                  <div className="col-span-2 bg-slate-900/60 border border-slate-800/60 px-2 py-1.5 rounded-lg flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">Power Backup:</span>
+                    <span className="text-[10px] font-semibold text-cyan-300">{hosp.powerBackup}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => calculateSafeRoute(undefined, hosp.id)}
-                    className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold flex items-center justify-center gap-1"
-                  >
-                    <Navigation className="w-3 h-3" />
-                    Route Ambulances Here
-                  </button>
-                </div>
+                <button
+                  onClick={() => calculateSafeRoute(undefined, hosp.id)}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold font-mono tracking-wide flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  ROUTE AMBULANCES HERE
+                </button>
               </div>
             </Popup>
           </Marker>
@@ -560,16 +635,18 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             icon={createRoadBlockIcon()}
           >
             <Popup className="custom-popup">
-              <div className="p-2 font-['Plus_Jakarta_Sans'] text-slate-900 max-w-xs">
-                <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs mb-1">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>ROAD CLOSURE / HAZARD</span>
+              <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
+                <div className="flex items-center gap-2 text-amber-400 font-mono text-[11px] font-bold border-b border-slate-800 pb-1.5 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>CORRIDOR BLOCKED</span>
                 </div>
-                <h4 className="font-bold text-sm text-slate-900">{block.roadName}</h4>
-                <p className="text-xs text-red-600 font-medium mt-1">{block.reason}</p>
-                <div className="mt-2 text-xs bg-amber-50 border border-amber-200 p-1.5 rounded">
-                  <span className="text-slate-700 font-bold block text-[10px]">RECOMMENDED DETOUR:</span>
-                  <span className="text-slate-800">{block.detourRecommended}</span>
+                <h4 className="font-bold text-sm text-white">{block.roadName}</h4>
+                <p className="text-xs text-rose-300 font-mono mt-1 bg-rose-950/40 p-1.5 rounded border border-rose-900/40">
+                  {block.reason}
+                </p>
+                <div className="mt-2 text-xs bg-amber-950/30 border border-amber-900/50 p-2 rounded-lg font-mono">
+                  <span className="text-amber-400 text-[10px] block font-bold">RECOMMENDED DETOUR:</span>
+                  <span className="text-slate-200 text-[11px]">{block.detourRecommended}</span>
                 </div>
               </div>
             </Popup>
@@ -584,13 +661,26 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             icon={createReliefHubIcon()}
           >
             <Popup className="custom-popup">
-              <div className="p-2 text-slate-900 max-w-xs">
-                <h4 className="font-bold text-sm text-cyan-800">{hub.name}</h4>
-                <p className="text-[11px] text-slate-500 mb-2">Managed by: {hub.managedBy}</p>
-                <div className="space-y-1 text-xs bg-cyan-50 p-2 rounded border border-cyan-100">
-                  <p>💧 Clean Water: <strong>{(hub.drinkingWaterLiters ?? 0).toLocaleString()} Liters</strong></p>
-                  <p>🍱 Food Packets: <strong>{(hub.foodPackets ?? 0).toLocaleString()} Packs</strong></p>
-                  <p>🚤 Rescue Jet-Boats: <strong>{hub.rescueBoats ?? 0} Boats</strong></p>
+              <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2">
+                  <h4 className="font-bold text-sm text-cyan-300">{hub.name}</h4>
+                  <span className="text-[9px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 px-1.5 py-0.5 rounded">
+                    {hub.managedBy}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs font-mono bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 flex items-center gap-1"><Droplets className="w-3 h-3 text-cyan-400" /> Potable Water</span>
+                    <strong className="text-cyan-300">{(hub.drinkingWaterLiters ?? 0).toLocaleString()} L</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 flex items-center gap-1"><Shield className="w-3 h-3 text-emerald-400" /> Food Packs</span>
+                    <strong className="text-emerald-300">{(hub.foodPackets ?? 0).toLocaleString()} Packs</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 flex items-center gap-1"><LifeBuoy className="w-3 h-3 text-amber-400" /> Jet Boats</span>
+                    <strong className="text-amber-300">{hub.rescueBoats ?? 0} Units</strong>
+                  </div>
                 </div>
               </div>
             </Popup>
@@ -605,33 +695,41 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             icon={createSosIcon(rep.headcount, rep.severity)}
           >
             <Popup className="custom-popup">
-              <div className="p-2 text-slate-900 max-w-xs">
-                <div className="flex items-center justify-between border-b pb-1 mb-1">
-                  <span className="text-xs font-bold text-red-600 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+              <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2">
+                  <span className="text-xs font-mono font-bold text-rose-400 flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
                     {rep.category.replace('_', ' ')}
                   </span>
-                  <span className="text-[10px] font-mono bg-slate-200 px-1 py-0.5 rounded font-bold">
-                    Severity {rep.severity}/10
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded font-bold bg-rose-950/80 text-rose-300 border border-rose-800/80">
+                    SEV {rep.severity}/10
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-800 italic font-medium my-1.5 bg-slate-100 p-1.5 rounded">
+                <p className="text-xs text-slate-200 font-medium my-2 bg-slate-900/90 p-2 rounded-lg border border-slate-800/80 leading-relaxed italic">
                   "{rep.rawText}"
                 </p>
 
-                <div className="text-xs space-y-1 mb-2">
-                  <p className="text-slate-600">📍 Location: <strong>{rep.locationName}</strong></p>
+                <div className="text-xs font-mono space-y-1 mb-3 bg-slate-900/50 p-2 rounded-lg border border-slate-800/60">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+                    <span className="truncate">{rep.locationName}</span>
+                  </div>
                   {rep.headcount > 0 && (
-                    <p className="text-red-700 font-bold">👥 Trapped Citizens: {rep.headcount}</p>
+                    <div className="flex items-center gap-1.5 text-rose-300 font-bold">
+                      <Users className="w-3 h-3 text-rose-400 shrink-0" />
+                      <span>{rep.headcount} Trapped Civilians</span>
+                    </div>
                   )}
-                  <p className="text-slate-500 text-[11px]">🌐 Detected: {rep.languageDetected || 'Urdu/English'}</p>
+                  <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
+                    Lng: {rep.coords[1].toFixed(4)} | Lat: {rep.coords[0].toFixed(4)}
+                  </div>
                 </div>
 
-                <div className="flex gap-1.5">
+                <div className="flex gap-2">
                   <button
                     onClick={() => calculateSafeRoute(rep.coords)}
-                    className="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold flex items-center justify-center gap-1"
+                    className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1 shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all"
                   >
                     <Navigation className="w-3 h-3" />
                     Safe Route
@@ -640,7 +738,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
                     onClick={() => {
                       if (onDispatchToSector) onDispatchToSector(rep.coords);
                     }}
-                    className="flex-1 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-bold flex items-center justify-center gap-1"
+                    className="flex-1 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1 shadow-[0_0_12px_rgba(244,63,94,0.3)] transition-all"
                   >
                     <Send className="w-3 h-3" />
                     Dispatch

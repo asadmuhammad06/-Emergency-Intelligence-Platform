@@ -2,10 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Scrollbars */
+/* Prevent Horizontal Overflow Globally */
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+/* Custom Sleek Vertical Scrollbar (Zero Horizontal Scrollbar) */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 0px !important;
 }
 ::-webkit-scrollbar-track {
   background: #080d1a;
@@ -13,39 +20,126 @@
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 4px;
+  border: 1px solid #0f172a;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #ea580c;
 }
 
-/* Leaflet Custom Overrides */
+/* Tactical Radar Sonar Pulse Animation */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-radar {
+  animation: radar-pulse 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* Leaflet Container */
 .leaflet-container {
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
   background-color: #080d1a !important;
 }
 
+/* Tactical Dark Glassmorphic Popup Shell */
 .custom-popup .leaflet-popup-content-wrapper {
-  background: #0f172a;
-  color: #f8fafc;
-  border-radius: 12px;
-  padding: 4px;
-  border: 1px solid #1e293b;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  background: rgba(9, 14, 28, 0.97) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #f1f5f9 !important;
+  border-radius: 14px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(251, 146, 60, 0.25) !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.85), 0 0 20px rgba(234, 88, 12, 0.12) !important;
+  overflow: hidden;
+}
+
+.custom-popup .leaflet-popup-tip-container {
+  overflow: visible;
 }
 
 .custom-popup .leaflet-popup-tip {
-  background: #0f172a;
+  background: #090e1c !important;
+  border: 1px solid rgba(251, 146, 60, 0.25) !important;
+  box-shadow: none !important;
 }
 
 .custom-popup .leaflet-popup-content {
-  margin: 8px 10px;
-  line-height: 1.4;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  min-width: 270px;
+}
+
+.custom-popup a.leaflet-popup-close-button {
+  top: 10px !important;
+  right: 12px !important;
+  color: #64748b !important;
+  font-size: 16px !important;
+  width: 22px !important;
+  height: 22px !important;
+  line-height: 20px !important;
+  text-align: center;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.custom-popup a.leaflet-popup-close-button:hover {
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Tactical Zoom Buttons */
+.leaflet-bar {
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-bar a {
+  background-color: rgba(15, 23, 42, 0.92) !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.6) !important;
+  backdrop-filter: blur(8px);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.leaflet-bar a:hover {
+  background-color: #1c1a14 !important;
+  color: #fb923c !important;
+}
+
+.leaflet-control-attribution {
+  background-color: rgba(11, 19, 43, 0.8) !important;
+  color: #64748b !important;
+  font-family: monospace !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  border-top-left-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.leaflet-control-attribution a {
+  color: #ea580c !important;
 }
 
 .custom-leaflet-tooltip {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(251, 146, 60, 0.3) !important;
+  border-radius: 6px !important;
+  color: #f8fafc !important;
+  font-family: monospace !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Custom Marker Pulsing */
