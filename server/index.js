@@ -130,7 +130,13 @@ app.get('/api/radar', async (req, res) => {
 
 app.get('/api/distress', async (req, res) => {
   try {
-    const reports = await fetchExternalDistress(regions);
+    const requestedRegion = req.query.regionId
+      ? regions.find(region => region.id === req.query.regionId)
+      : undefined;
+    if (req.query.regionId && !requestedRegion) {
+      return res.status(404).json({ success: false, error: 'Region not found' });
+    }
+    const reports = await fetchExternalDistress(regions, requestedRegion);
     res.json({ success: true, data: reports, metadata: { source: 'ReliefWeb', fetchedAt: new Date().toISOString() } });
   } catch (error) {
     console.error('External distress feed error:', error);
@@ -170,7 +176,7 @@ app.get('/api/live-data', async (req, res) => {
     const [weather, radar, reports] = await Promise.all([
       getCurrentWeather(lat, lng),
       getRadarData(),
-      fetchExternalDistress(regions)
+      fetchExternalDistress(regions, requestedRegion)
     ]);
     const isPrimaryRegion = requestedRegion.id === regions[0].id;
     const regionState = isPrimaryRegion
@@ -194,9 +200,7 @@ app.get('/api/live-data', async (req, res) => {
         activeRegion: requestedRegion,
         weather,
         radar,
-        reports: requestedRegion.id === regions[0].id
-          ? reports
-          : reports.filter(report => report.coords[0] === requestedRegion.center[0] && report.coords[1] === requestedRegion.center[1])
+        reports
       },
       metadata: {
         serverTime: new Date().toISOString(),

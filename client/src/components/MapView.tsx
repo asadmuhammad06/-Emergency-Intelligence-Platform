@@ -247,7 +247,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
   }, [reports, activeCategoryFilter]);
 
   return (
-    <div className="relative w-full h-full bg-[#080d1a] overflow-hidden">
+    <div className="relative isolate w-full h-full min-h-0 bg-[#080d1a] overflow-hidden">
       {/* Base Map Style Switcher - High-Tech CAD/GIS Segmented Pill */}
 
 
@@ -577,6 +577,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
           maxZoom={currentTileConfig.maxZoom}
+          zIndex={1}
         />
         {radar && (
           <TileLayer
