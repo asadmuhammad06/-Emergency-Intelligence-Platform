@@ -1,27 +1,21 @@
 import React from 'react';
 import {
-  AlertTriangle,
-  Play,
-  RotateCcw,
-  Navigation,
-  Send,
+  ShieldAlert,
   PlusCircle,
-  Radio,
-  Layers,
+  MapPin,
   Hospital,
   Droplets,
-  Zap,
-  ShieldAlert,
-  Flame,
-  CloudRain,
-  CloudSun,
-  Sun,
-  CloudLightning,
-  Wind
+  LayoutDashboard,
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
+export type DashboardTab = 'all' | 'map' | 'reports' | 'hospitals' | 'sensors';
+
 interface NavbarProps {
+  activeTab: DashboardTab;
+  onSelectTab: (tab: DashboardTab) => void;
   onOpenSafeRouteModal: () => void;
   onOpenPriorityModal: () => void;
   onOpenCitizenModal: () => void;
@@ -29,220 +23,132 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  onOpenSafeRouteModal,
-  onOpenPriorityModal,
+  activeTab,
+  onSelectTab,
   onOpenCitizenModal
 }) => {
   const {
     activeRegion,
     regions,
     setActiveRegion,
-    simulationRunning,
-    simulationStep,
-    startSimulation,
-    resetSimulation,
     isConnectedToServer,
     reports,
     hospitals,
-    layers,
-    toggleLayer,
-    weather,
-    weatherLoading,
-    refreshWeather
+    weather
   } = useCrisis();
 
-  const totalTrapped = reports
-    .filter(r => r.category === 'RESCUE_NEEDED')
-    .reduce((sum, r) => sum + (r.headcount || 0), 0);
+  const overloadedCount = hospitals.filter(h => h.capacity >= 85).length;
 
-  const overloadedHospitals = hospitals.filter(h => h.capacity >= 85).length;
+  const tabs: { id: DashboardTab; label: string; icon: React.FC<{ className?: string }>; badge?: string | number; badgeColor?: string }[] = [
+    { id: 'all',       label: 'Overview',       icon: LayoutDashboard },
+    { id: 'map',       label: 'Tactical Map',   icon: MapPin },
+    { id: 'reports',   label: 'Distress Wire',  icon: Radio,     badge: reports.length,                                      badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
+    { id: 'hospitals', label: 'Hospitals & ICU', icon: Hospital, badge: overloadedCount > 0 ? `${overloadedCount} Alert` : undefined, badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
+    { id: 'sensors',   label: 'Hydrology',      icon: Droplets },
+  ];
+
+  const handleOpenInNewTab = (tabId: DashboardTab, e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(`/#${tabId}`, '_blank');
+  };
 
   return (
-    <header className="bg-[#0b1329]/95 backdrop-blur-md border-b border-cyan-950/80 px-4 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3 select-none sticky top-0 z-50">
-      {/* Brand & Mission Badge */}
-      <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-red-600 to-rose-700 shadow-[0_0_15px_rgba(239,68,68,0.5)] border border-red-400/40">
-            <ShieldAlert className="w-5 h-5 text-white animate-pulse" />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
-          </div>
+    // h-14 = 56px, single row, overflow:hidden keeps SOS from ever spilling right
+    <header className="h-14 w-full bg-[#0b0f1c] border-b border-white/[0.06] px-4 sm:px-6 flex items-center justify-between gap-4 select-none sticky top-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.6)]">
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5 font-['Plus_Jakarta_Sans']">
-                <span>CRISIS<span className="text-cyan-400">MAP</span></span>
-                <span className="text-xs bg-red-950/80 border border-red-500/50 text-red-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-wider uppercase">
-                  Pakistan EOC
-                </span>
-              </h1>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">
-              National Emergency Intelligence & Decision Engine
-            </p>
-          </div>
+      {/* ── LEFT: Brand ── */}
+      <div className="flex items-center gap-3 shrink-0">
+        {/* Logo mark */}
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-950 to-slate-900 border border-orange-500/50 flex items-center justify-center shadow-[0_0_16px_rgba(234,88,12,0.35)] shrink-0">
+          <ShieldAlert className="w-4 h-4 text-orange-400" />
         </div>
 
-        {/* Live Status Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-xs">
-          <span className={`w-2 h-2 rounded-full ${isConnectedToServer ? 'bg-emerald-400 animate-ping-slow' : 'bg-amber-400'}`}></span>
-          <span className="text-slate-300 font-mono text-[11px]">
-            {isConnectedToServer ? 'LIVE MESH SYNC' : 'OFFLINE MODE'}
+        {/* Wordmark */}
+        <div className="flex items-center gap-2">
+          <span className="font-black text-[15px] tracking-tight text-white whitespace-nowrap">
+            CRISIS<span className="text-orange-400">MAP</span>
+          </span>
+          {/* "PAKISTAN EOC" badge — hidden on 1366px, shows at 2xl (1536px+) */}
+          <span className="hidden 2xl:inline text-[9px] bg-rose-950/80 border border-rose-700/60 text-rose-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest uppercase">
+            PAKISTAN EOC
+          </span>
+          {/* Live status dot */}
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isConnectedToServer ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.9)]' : 'bg-amber-400'}`} />
+          <span className="hidden xl:inline text-[11px] text-slate-500 font-mono">
+            {isConnectedToServer ? 'Live' : 'Offline'}
           </span>
         </div>
       </div>
 
-      {/* Center Tactical Telemetry KPIs */}
-      <div className="hidden lg:flex items-center gap-3 bg-slate-900/90 border border-slate-800/90 px-3 py-1.5 rounded-lg text-xs font-mono">
-        <div className="flex items-center gap-1.5 text-red-400">
-          <Flame className="w-3.5 h-3.5" />
-          <span className="text-slate-400">Trapped:</span>
-          <span className="font-bold text-red-300">{totalTrapped} Citizens</span>
-        </div>
-        <div className="h-3.5 w-px bg-slate-700"></div>
-        <div className="flex items-center gap-1.5 text-amber-400">
-          <Hospital className="w-3.5 h-3.5" />
-          <span className="text-slate-400">Overloaded Beds:</span>
-          <span className="font-bold text-amber-300">{overloadedHospitals} Facilities</span>
-        </div>
-        <div className="h-3.5 w-px bg-slate-700"></div>
-        <div className="flex items-center gap-1.5 text-cyan-400">
-          <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span className="text-slate-400">Active SOS:</span>
-          <span className="font-bold text-cyan-300">{reports.length} Reports</span>
-        </div>
+      {/* ── CENTER: Navigation Tabs ── */}
+      <nav className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.07] p-1 rounded-xl">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => { onSelectTab(tab.id); window.location.hash = tab.id; }}
+              title={tab.label}
+              className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150 whitespace-nowrap ${
+                isActive
+                  ? 'bg-orange-500/15 text-orange-200 border border-orange-500/30 shadow-[0_0_12px_rgba(234,88,12,0.2)]'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-white/[0.06] border border-transparent'
+              }`}
+            >
+              <Icon className={`w-[14px] h-[14px] shrink-0 ${isActive ? 'text-orange-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+              {/* Tab labels: icon-only at 1366px (lg/xl), full label only at 2xl (1536px+) */}
+              <span className="hidden 2xl:inline">{tab.label}</span>
 
-        {/* Live Hydro-Meteorological Weather KPI */}
-        <div className="h-3.5 w-px bg-slate-700"></div>
-        <div
-          onClick={() => refreshWeather()}
-          title={
-            weather
-              ? `Live Meteo: ${weather.condition || 'Weather'} (${weather.temperature}°C) • Rain: ${weather.precipitation}mm • Wind: ${weather.windSpeed}km/h (Gusts: ${weather.windGusts}km/h) • Humidity: ${weather.humidity}% [Click to Refresh]`
-              : 'Loading weather...'
-          }
-          className={`flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 px-1.5 py-0.5 rounded transition-all ${
-            weather?.isHeavyRain
-              ? 'text-rose-400 font-bold animate-pulse'
-              : weather?.precipitation && weather.precipitation > 0
-              ? 'text-sky-300'
-              : 'text-amber-300'
-          }`}
-        >
-          {weatherLoading ? (
-            <span className="text-slate-500 animate-pulse text-[11px]">Syncing Wx...</span>
-          ) : weather ? (
-            <>
-              {weather.weatherCode >= 95 ? (
-                <CloudLightning className="w-3.5 h-3.5 text-yellow-400 animate-bounce" />
-              ) : weather.precipitation > 0 || weather.weatherCode >= 51 ? (
-                <CloudRain className="w-3.5 h-3.5 text-sky-400" />
-              ) : weather.weatherCode >= 1 && weather.weatherCode <= 3 ? (
-                <CloudSun className="w-3.5 h-3.5 text-sky-200" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              {tab.badge !== undefined && (
+                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border leading-none ${tab.badgeColor || 'bg-white/10 text-slate-300 border-white/20'}`}>
+                  {tab.badge}
+                </span>
               )}
-              <span className="text-slate-400">Wx:</span>
-              <span className="font-bold text-white">{weather.temperature}°C</span>
-              <span className="text-[10px] bg-slate-800 border border-slate-700/80 text-cyan-300 px-1 py-0.2 rounded font-semibold">
-                {weather.precipitation > 0 ? `🌧️ ${weather.precipitation}mm` : (weather.condition || 'Clear')}
+              <span
+                onClick={(e) => handleOpenInNewTab(tab.id, e)}
+                title="Open in new tab"
+                className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity p-0.5 rounded hidden 2xl:inline-flex text-slate-400"
+              >
+                <ExternalLink className="w-2.5 h-2.5" />
               </span>
-              <span className="text-slate-400 text-[10px] hidden xl:inline">💨 {weather.windSpeed}km/h</span>
-            </>
-          ) : (
-            <span className="text-slate-500 text-[11px]">Wx Offline</span>
-          )}
-        </div>
-      </div>
+            </button>
+          );
+        })}
+      </nav>
 
-      {/* Right Controls & Action CTAs */}
-      <div className="flex items-center gap-2 flex-wrap justify-end w-full md:w-auto">
-        {/* Region Selector + Weather Pill */}
-        <div className="flex items-center bg-slate-900/90 border border-slate-700 rounded-lg p-0.5">
+      {/* ── RIGHT: Controls ── */}
+      <div className="flex items-center gap-2 shrink-0">
+
+        {/* Region selector + weather */}
+        <div className="flex items-center gap-1.5 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2.5 py-1.5 font-mono">
+          <MapPin className="w-3.5 h-3.5 text-orange-400 shrink-0" />
           <select
             value={activeRegion.id}
             onChange={(e) => {
               const found = regions.find(r => r.id === e.target.value);
               if (found) setActiveRegion(found);
             }}
-            className="bg-transparent text-slate-200 text-xs px-2 py-1 focus:outline-none font-medium cursor-pointer"
+            className="bg-transparent text-slate-200 text-[13px] focus:outline-none cursor-pointer max-w-[110px]"
           >
             {regions.map(r => (
-              <option key={r.id} value={r.id} className="bg-slate-900 text-slate-200">
-                📍 {r.name}
-              </option>
+              <option key={r.id} value={r.id} className="bg-slate-900">{r.name}</option>
             ))}
           </select>
-
           {weather && (
-            <div
-              onClick={() => refreshWeather()}
-              title={`Click to refresh weather for ${activeRegion.name}`}
-              className="flex items-center gap-1 px-2 py-1 text-xs border-l border-slate-800 text-cyan-300 hover:text-white cursor-pointer font-mono"
-            >
-              {weather.weatherCode >= 95 ? (
-                <CloudLightning className="w-3.5 h-3.5 text-yellow-400" />
-              ) : weather.precipitation > 0 ? (
-                <CloudRain className="w-3.5 h-3.5 text-sky-400" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-              )}
-              <span className="font-bold">{weather.temperature}°C</span>
-            </div>
+            <span className="text-orange-400 text-[13px] font-bold pl-2 border-l border-white/10 hidden sm:inline">
+              {weather.temperature}°
+            </span>
           )}
         </div>
 
-        {/* 1-Click Simulation Showstopper for Hackathon Judges */}
-        <div className="flex items-center bg-slate-900 border border-cyan-800/60 rounded-lg p-0.5">
-          <button
-            onClick={startSimulation}
-            disabled={simulationRunning}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-              simulationRunning
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 animate-pulse cursor-wait'
-                : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-            }`}
-          >
-            <Play className={`w-3.5 h-3.5 ${simulationRunning ? 'animate-spin' : 'fill-white'}`} />
-            <span>{simulationRunning ? `Simulating (Step ${simulationStep}/7)...` : '🌊 Run Flood Simulation'}</span>
-          </button>
-
-          <button
-            onClick={resetSimulation}
-            title="Reset Disaster State"
-            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-r-md transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Find Safest Route Modal Trigger */}
-        <button
-          onClick={onOpenSafeRouteModal}
-          className="flex items-center gap-1.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 hover:border-emerald-400 text-emerald-300 hover:text-emerald-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-        >
-          <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Find Safest Route</span>
-        </button>
-
-        {/* Where to send resources Dispatch Modal Trigger */}
-        <button
-          onClick={onOpenPriorityModal}
-          className="flex items-center gap-1.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 hover:border-rose-400 text-rose-300 hover:text-rose-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-[0_0_10px_rgba(244,63,94,0.2)]"
-        >
-          <Send className="w-3.5 h-3.5 text-rose-400" />
-          <span>Send Resources</span>
-        </button>
-
-        {/* Submit Citizen SOS */}
+        {/* SOS button — always fully visible */}
         <button
           onClick={onOpenCitizenModal}
-          className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+          className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-[13px] font-bold font-mono transition-all shrink-0 shadow-[0_0_14px_rgba(244,63,94,0.3)] hover:shadow-[0_0_20px_rgba(244,63,94,0.5)]"
         >
-          <PlusCircle className="w-3.5 h-3.5 text-red-400" />
-          <span className="hidden sm:inline">SOS Report</span>
+          <PlusCircle className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden sm:inline">+ SOS</span>
         </button>
       </div>
     </header>
