@@ -97,6 +97,14 @@ currentState.priorityZones = calculatePriorityZones(
 );
 
 // REST API Endpoints
+app.get('/api/regions', (req, res) => {
+  res.json({
+    success: true,
+    data: regions,
+    metadata: { serverTime: new Date().toISOString() }
+  });
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     success: true,
@@ -111,8 +119,15 @@ app.get('/api/state', (req, res) => {
 
 // Consolidated live snapshot for clients that cannot maintain a WebSocket.
 app.get('/api/live-data', async (req, res) => {
-  const lat = req.query.lat ? parseFloat(req.query.lat) : pakistanCenter.lat;
-  const lng = req.query.lng ? parseFloat(req.query.lng) : pakistanCenter.lng;
+  const requestedRegion = req.query.regionId
+    ? regions.find(region => region.id === req.query.regionId)
+    : regions[0];
+  if (!requestedRegion) {
+    return res.status(404).json({ success: false, error: 'Region not found' });
+  }
+
+  const lat = req.query.lat ? parseFloat(req.query.lat) : requestedRegion.center[0];
+  const lng = req.query.lng ? parseFloat(req.query.lng) : requestedRegion.center[1];
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return res.status(400).json({ success: false, error: 'Valid lat and lng coordinates are required' });
@@ -120,15 +135,33 @@ app.get('/api/live-data', async (req, res) => {
 
   try {
     const weather = await getCurrentWeather(lat, lng);
+    const isPrimaryRegion = requestedRegion.id === regions[0].id;
+    const regionState = isPrimaryRegion
+      ? currentState
+      : {
+          ...currentState,
+          activeRegion: requestedRegion,
+          reports: [],
+          hospitals: [],
+          hazardZones: [],
+          roadBlocks: [],
+          reliefHubs: [],
+          priorityZones: [],
+          dispatchedUnits: []
+        };
+
     res.json({
       success: true,
       data: {
-        ...currentState,
+        ...regionState,
+        activeRegion: requestedRegion,
         weather
       },
       metadata: {
         serverTime: new Date().toISOString(),
-        source: 'CrisisMap live operations snapshot'
+        source: 'CrisisMap live operations snapshot',
+        regionId: requestedRegion.id,
+        regionCount: regions.length
       }
     });
   } catch (error) {
