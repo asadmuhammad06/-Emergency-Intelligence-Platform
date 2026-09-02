@@ -165,7 +165,6 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!payload.success || !payload.data) return;
 
       const data = payload.data;
-      if (data.reports) setReports(data.reports);
       if (data.hospitals) setHospitals(data.hospitals);
       if (data.hazardZones) setHazardZones(data.hazardZones);
       if (data.roadBlocks) setRoadBlocks(data.roadBlocks);

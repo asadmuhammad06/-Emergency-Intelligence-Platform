@@ -112,7 +112,7 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
         {filteredReports.length === 0 ? (
           <div className="p-12 text-center text-slate-500 font-mono text-sm">
-            No incidents reported under this sector filter.
+            Live external feed has no reports matching this filter.
           </div>
         ) : (
           filteredReports.map((report) => {

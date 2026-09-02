@@ -16,6 +16,7 @@ import { simulationSteps } from './data/simulationEvents.js';
 import { classifyEmergencyReport } from './services/aiClassifier.js';
 import { calculateSafestRoute } from './services/routingEngine.js';
 import { calculatePriorityZones } from './services/dispatchSolver.js';
+import { fetchExternalDistress } from './services/externalFeed.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -127,6 +128,16 @@ app.get('/api/radar', async (req, res) => {
   }
 });
 
+app.get('/api/distress', async (req, res) => {
+  try {
+    const reports = await fetchExternalDistress(regions);
+    res.json({ success: true, data: reports, metadata: { source: 'ReliefWeb', fetchedAt: new Date().toISOString() } });
+  } catch (error) {
+    console.error('External distress feed error:', error);
+    res.status(502).json({ success: false, error: 'Failed to fetch external distress feed' });
+  }
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     success: true,
@@ -156,9 +167,10 @@ app.get('/api/live-data', async (req, res) => {
   }
 
   try {
-    const [weather, radar] = await Promise.all([
+    const [weather, radar, reports] = await Promise.all([
       getCurrentWeather(lat, lng),
-      getRadarData()
+      getRadarData(),
+      fetchExternalDistress(regions)
     ]);
     const isPrimaryRegion = requestedRegion.id === regions[0].id;
     const regionState = isPrimaryRegion
@@ -181,7 +193,10 @@ app.get('/api/live-data', async (req, res) => {
         ...regionState,
         activeRegion: requestedRegion,
         weather,
-        radar
+        radar,
+        reports: requestedRegion.id === regions[0].id
+          ? reports
+          : reports.filter(report => report.coords[0] === requestedRegion.center[0] && report.coords[1] === requestedRegion.center[1])
       },
       metadata: {
         serverTime: new Date().toISOString(),
