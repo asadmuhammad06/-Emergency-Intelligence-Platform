@@ -247,7 +247,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
   }, [reports, activeCategoryFilter]);
 
   return (
-    <div className="relative w-full h-full bg-[#080d1a] overflow-hidden">
+    <div className="relative isolate w-full h-full min-h-0 bg-[#080d1a] overflow-hidden">
       {/* Base Map Style Switcher - High-Tech CAD/GIS Segmented Pill */}
       <div className="map-toolbar absolute top-3 left-3 right-3 sm:right-auto z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 font-mono text-xs select-none overflow-x-auto">
         <div className="flex shrink-0 items-center gap-1.5 px-2 py-1 text-slate-400 border-r border-slate-800">
@@ -571,6 +571,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
           maxZoom={currentTileConfig.maxZoom}
+          zIndex={1}
         />
         {radar && (
           <TileLayer

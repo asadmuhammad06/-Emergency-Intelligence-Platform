@@ -1,5 +1,4 @@
-const NEWS_RSS_URL =
-  'https://news.google.com/rss/search?q=Pakistan+flood+OR+earthquake+OR+emergency&hl=en-PK&gl=PK&ceid=PK:en';
+const NEWS_RSS_URL = 'https://news.google.com/rss/search';
 
 const categoryFor = text => {
   const value = text.toLowerCase();
@@ -27,8 +26,12 @@ const coordinatesFor = (item, regions) => {
   return match?.center || regions[0].center;
 };
 
-export const fetchExternalDistress = async regions => {
-  const response = await fetch(NEWS_RSS_URL, { headers: { Accept: 'application/rss+xml' } });
+export const fetchExternalDistress = async (regions, region) => {
+  const regionQuery = region ? `${region.name.split('/')[0]} Pakistan` : 'Pakistan';
+  const query = encodeURIComponent(`${regionQuery} flood OR earthquake OR emergency OR rescue`);
+  const response = await fetch(`${NEWS_RSS_URL}?q=${query}&hl=en-PK&gl=PK&ceid=PK:en`, {
+    headers: { Accept: 'application/rss+xml' }
+  });
   if (!response.ok) throw new Error(`External news feed error: ${response.status}`);
   const xml = await response.text();
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
@@ -39,14 +42,14 @@ export const fetchExternalDistress = async regions => {
     const title = read('title') || 'Pakistan emergency update';
     const body = read('description') || title;
     const text = `${title} ${body}`;
-    const coords = coordinatesFor({ fields: { title } }, regions);
+    const coords = region?.center || coordinatesFor({ fields: { title } }, regions);
     return {
       id: `news_${Buffer.from(title).toString('base64url').slice(0, 30)}_${index}`,
       rawText: title,
       category: categoryFor(text),
       severity: severityFor(text),
       headcount: 0,
-      locationName: regions.find(region => region.name.toLowerCase().split('/')[0].trim() &&
+      locationName: region?.name || regions.find(region => region.name.toLowerCase().split('/')[0].trim() &&
         title.toLowerCase().includes(region.name.toLowerCase().split('/')[0].trim()))?.name || 'Pakistan',
       coords,
       timestamp: read('pubDate') || new Date().toISOString(),
