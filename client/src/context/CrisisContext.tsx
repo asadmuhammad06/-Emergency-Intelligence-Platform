@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+// Data: live city API snapshots and SSE community reports; derived UI state only.
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import {
   EmergencyReport,
@@ -34,6 +35,7 @@ interface CrisisContextType {
   weather: WeatherData | null;
   weatherLoading: boolean;
   radar: RadarData | null;
+  intelLoading: boolean;
 
   // Selection & Route State
   selectedReport: EmergencyReport | null;
@@ -72,6 +74,7 @@ interface CrisisContextType {
   startSimulation: () => void;
   resetSimulation: () => void;
   refreshWeather: () => Promise<void>;
+  fetchCityIntel: (city: { name: string; lat: number; lon: number }) => Promise<void>;
 }
 
 const API_BASE = 'http://localhost:3001';
@@ -109,10 +112,43 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [radar, setRadar] = useState<RadarData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
+  const [intelLoading, setIntelLoading] = useState<boolean>(false);
 
   const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
   const [simulationStep, setSimulationStep] = useState<number>(0);
   const [isConnectedToServer, setIsConnectedToServer] = useState<boolean>(false);
+  const intelRequestId = useRef(0);
+  const intelController = useRef<AbortController | null>(null);
+
+  const fetchCityIntel = useCallback(async (city: { name: string; lat: number; lon: number }) => {
+    const requestId = ++intelRequestId.current;
+    intelController.current?.abort();
+    const controller = new AbortController();
+    intelController.current = controller;
+    setIntelLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/live-data?regionId=${encodeURIComponent(activeRegion.id)}&lat=${city.lat}&lng=${city.lon}`, {
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error(`City intelligence API returned ${response.status}`);
+      const payload = await response.json();
+      if (!payload.success || !payload.data) throw new Error('City intelligence API returned an invalid payload');
+      if (requestId !== intelRequestId.current) return;
+      const data = payload.data;
+      setReports(data.reports || []);
+      setHospitals(data.hospitals || []);
+      setHazardZones(data.hazardZones || []);
+      setRoadBlocks(data.roadBlocks || []);
+      setReliefHubs(data.reliefHubs || []);
+      setPriorityZones(data.priorityZones || []);
+      setDispatchedUnits(data.dispatchedUnits || []);
+      setSystemAlert(data.disasterAlert || null);
+      setWeather(data.weather || null);
+      setRadar(data.radar || null);
+    } finally {
+      if (requestId === intelRequestId.current) setIntelLoading(false);
+    }
+  }, [activeRegion.id]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/regions`)
@@ -156,36 +192,28 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Keep a REST snapshot current when a WebSocket is unavailable or delayed.
   useEffect(() => {
-    const refreshLiveData = async () => {
-      const [lat, lng] = activeRegion.center;
-      const res = await fetch(`${API_BASE}/api/live-data?regionId=${activeRegion.id}&lat=${lat}&lng=${lng}`);
-      if (!res.ok) return;
-
-      const payload = await res.json();
-      if (!payload.success || !payload.data) return;
-
-      const data = payload.data;
-      if (data.hospitals) setHospitals(data.hospitals);
-      if (data.hazardZones) setHazardZones(data.hazardZones);
-      if (data.roadBlocks) setRoadBlocks(data.roadBlocks);
-      if (data.reliefHubs) setReliefHubs(data.reliefHubs);
-      if (data.priorityZones) setPriorityZones(data.priorityZones);
-      if (data.dispatchedUnits) setDispatchedUnits(data.dispatchedUnits);
-      if (data.disasterAlert) setSystemAlert(data.disasterAlert);
-      if (data.weather) setWeather(data.weather);
-      if (data.radar) setRadar(data.radar);
-    };
-
-    refreshLiveData().catch(error => {
-      console.warn('Failed to refresh live operations snapshot:', error);
+    const [lat, lon] = activeRegion.center;
+    let cancelled = false;
+    const refreshLiveData = () => fetchCityIntel({ name: activeRegion.name, lat, lon }).catch(error => {
+      if (!cancelled) console.warn('Failed to refresh live city intelligence:', error);
     });
-    const interval = setInterval(() => {
-      refreshLiveData().catch(error => {
-        console.warn('Failed to refresh live operations snapshot:', error);
-      });
-    }, 30000);
+    refreshLiveData();
+    const interval = setInterval(refreshLiveData, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [activeRegion, fetchCityIntel]);
 
-    return () => clearInterval(interval);
+  useEffect(() => {
+    const [lat, lon] = activeRegion.center;
+    const stream = new EventSource(`${API_BASE}/api/reports/stream?lat=${lat}&lon=${lon}`);
+    stream.onmessage = event => {
+      const report = JSON.parse(event.data) as EmergencyReport;
+      setReports(previous => previous.some(item => item.id === report.id) ? previous : [report, ...previous]);
+    };
+    stream.onerror = () => stream.close();
+    return () => stream.close();
   }, [activeRegion]);
 
   const toggleLayer = (layerKey: keyof typeof layers) => {
@@ -211,14 +239,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       socket.on('initial_state', (data) => {
         if (data) {
-          if (data.reports) setReports(data.reports);
-          if (data.hospitals) setHospitals(data.hospitals);
-          if (data.hazardZones) setHazardZones(data.hazardZones);
-          if (data.roadBlocks) setRoadBlocks(data.roadBlocks);
-          if (data.reliefHubs) setReliefHubs(data.reliefHubs);
-          if (data.priorityZones) setPriorityZones(data.priorityZones);
-          if (data.dispatchedUnits) setDispatchedUnits(data.dispatchedUnits);
-          if (data.disasterAlert) setSystemAlert(data.disasterAlert);
+          // Operational data is loaded from city-scoped live telemetry below.
         }
       });
 
@@ -269,25 +290,6 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn('Socket connection deferred:', err);
     }
 
-    // Fallback REST fetch
-    fetch(`${API_BASE}/api/live-data?regionId=${activeRegion.id}`)
-      .then(res => res.json())
-      .then(res => {
-        if (res.success && res.data) {
-          if (res.data.reports) setReports(res.data.reports);
-          if (res.data.hospitals) setHospitals(res.data.hospitals);
-          if (res.data.hazardZones) setHazardZones(res.data.hazardZones);
-          if (res.data.roadBlocks) setRoadBlocks(res.data.roadBlocks);
-          if (res.data.reliefHubs) setReliefHubs(res.data.reliefHubs);
-          if (res.data.priorityZones) setPriorityZones(res.data.priorityZones);
-          if (res.data.dispatchedUnits) setDispatchedUnits(res.data.dispatchedUnits);
-          if (res.data.disasterAlert) setSystemAlert(res.data.disasterAlert);
-          if (res.data.weather) setWeather(res.data.weather);
-          if (res.data.radar) setRadar(res.data.radar);
-        }
-      })
-      .catch(error => console.warn('Failed to load live state:', error));
-
     return () => {
       if (socket) socket.disconnect();
     };
@@ -331,81 +333,10 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       throw new Error('Routing calculation failed');
     } catch (err) {
-      const targetHosp = hospitalId ? hospitals.find(h => h.id === hospitalId) : hospitals[1];
-      const defaultRoute: SafestRoute = {
-        origin: {
-          name: "Stranded Civilians Pin (Dhok Kala Khan)",
-          coords: startCoords || [33.6380, 73.0760]
-        },
-        destination: {
-          name: targetHosp ? targetHosp.name : "PIMS Hospital (Primary Evacuation Center)",
-          coords: targetHosp ? targetHosp.coords : [33.7037, 73.0561],
-          capacity: targetHosp ? targetHosp.capacity : 60,
-          status: targetHosp ? targetHosp.status : "NORMAL",
-          icuAvailable: targetHosp ? targetHosp.icuAvailable : 28
-        },
-        directPath: [
-          startCoords || [33.6380, 73.0760],
-          [33.6490, 73.0780],
-          [33.6580, 73.0780],
-          [33.6750, 73.0760],
-          [33.6900, 73.0680],
-          targetHosp ? targetHosp.coords : [33.7037, 73.0561]
-        ],
-        safePath: [
-          startCoords || [33.6380, 73.0760],
-          [33.6410, 73.0600],
-          [33.6450, 73.0420],
-          [33.6620, 73.0450],
-          [33.6850, 73.0460],
-          [33.6940, 73.0520],
-          targetHosp ? targetHosp.coords : [33.7037, 73.0561]
-        ],
-        directDistanceKm: 7.4,
-        safeDistanceKm: 10.1,
-        estimatedTimeMin: 21,
-        riskReductionPercent: 94,
-        detectedHazards: [
-          {
-            type: "ROAD_SUBMERGED",
-            name: "Faizabad Interchange Flood Barrier",
-            coords: [33.6580, 73.0780],
-            hazardLevel: "CRITICAL (4.5ft Water)",
-            risk: "Vehicle Submersion / 100% Impassable"
-          }
-        ],
-        steps: [
-          {
-            instruction: "Depart origin moving West on cleared lane toward Stadium Road",
-            distanceKm: "1.2 km",
-            status: "CLEAR",
-            safetyStatus: "100% Dry"
-          },
-          {
-            instruction: "Avoid Faizabad flood corridor; turn right onto IJP Westbound Bypass",
-            distanceKm: "2.1 km",
-            status: "DIVERTED",
-            safetyStatus: "Emergency Lane Active"
-          },
-          {
-            instruction: "Enter 9th Avenue Northbound via elevated flyover (Zero flood risk)",
-            distanceKm: "3.8 km",
-            status: "SAFE_HIGHWAY",
-            safetyStatus: "Cleared by Police"
-          },
-          {
-            instruction: "Merge onto Srinagar Highway Eastbound and enter PIMS Emergency Gate",
-            distanceKm: "1.5 km",
-            status: "DESTINATION",
-            safetyStatus: "ICU Available (28 Beds Ready)"
-          }
-        ],
-        routeClearedTimestamp: new Date().toISOString()
-      };
-      setActiveSafeRoute(defaultRoute);
-      return defaultRoute;
+      console.error('Failed to calculate a live safe route:', err);
+      throw err;
     }
-  }, [hospitals]);
+  }, []);
 
   // Approve Resource Dispatch
   const approveDispatch = useCallback(async (zoneId: string, assets?: any) => {
@@ -503,6 +434,8 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         resetSimulation,
         weather,
         weatherLoading,
+        intelLoading,
+        fetchCityIntel,
         refreshWeather
       }}
     >

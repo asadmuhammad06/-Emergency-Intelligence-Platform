@@ -1,3 +1,4 @@
+// Data: derived dispatch recommendations from live city reports and facilities.
 import React, { useState } from 'react';
 import {
   X,
@@ -52,7 +53,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
       <div className="bg-[#0e1628] border border-rose-500/40 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_0_50px_rgba(244,63,94,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">

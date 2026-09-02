@@ -1,4 +1,4 @@
-
+// Data: live API weather, facilities, overlays, and distress; community reports arrive over SSE.
 import { useState, useEffect } from 'react';
 import { CrisisProvider, useCrisis } from './context/CrisisContext';
 import { Navbar, DashboardTab } from './components/Navbar';
@@ -32,7 +32,8 @@ function DashboardContent() {
     dispatchedUnits,
     reports,
     weather,
-    radar
+    radar,
+    intelLoading
   } = useCrisis();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>('all');
@@ -497,9 +498,9 @@ function DashboardContent() {
             </div>
 
             {/* Section 2: Split Tactical Operations & Infrastructure Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
               {/* Left Column: Live Ground Intel Feed (7 cols) */}
-              <div className="lg:col-span-7">
+              <div className="min-w-0">
                 <LiveFeed
                   onOpenSafeRoute={(coords) => {
                     setRouteOriginCoords(coords);
@@ -509,7 +510,7 @@ function DashboardContent() {
               </div>
 
               {/* Right Column: Critical Infrastructure & Sensors (5 cols) */}
-              <div className="lg:col-span-5 space-y-6">
+              <div className="min-w-0 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-6 pr-1">
                 {/* 1. Hospital Bed Surge & ICU Saturation Card */}
                 <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-6 shadow-xl font-mono text-xs">
                   <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
@@ -525,6 +526,12 @@ function DashboardContent() {
                   </div>
 
                   <div className="space-y-4">
+                    {intelLoading && hospitals.length === 0 && (
+                      <div className="space-y-2 animate-pulse">
+                        <div className="h-4 rounded bg-slate-800" />
+                        <div className="h-3 rounded bg-slate-900" />
+                      </div>
+                    )}
                     {hospitals.map(h => (
                       <div key={h.id} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs sm:text-sm">

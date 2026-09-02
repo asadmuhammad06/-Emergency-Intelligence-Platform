@@ -1,3 +1,4 @@
+// Data: live external API incidents and community-reported records; no local incident fixtures.
 import React from 'react';
 import {
   AlertTriangle,
@@ -24,7 +25,8 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
     activeCategoryFilter,
     setActiveCategoryFilter,
     setHighlightedCoords,
-    calculateSafeRoute
+    calculateSafeRoute,
+    intelLoading
   } = useCrisis();
 
   const categories: { label: string; value: ReportCategory | 'ALL' }[] = [
@@ -110,7 +112,13 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
 
       {/* Reports List */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
-        {filteredReports.length === 0 ? (
+        {intelLoading ? (
+          <div className="space-y-4 animate-pulse">
+            {[1, 2, 3].map(item => (
+              <div key={item} className="h-32 rounded-2xl border border-slate-800 bg-slate-900/70" />
+            ))}
+          </div>
+        ) : filteredReports.length === 0 ? (
           <div className="p-12 text-center text-slate-500 font-mono text-sm">
             Live external feed has no reports matching this filter.
           </div>
@@ -129,8 +137,11 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
               >
                 {/* Top Meta Line */}
                 <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="min-w-0 flex items-center gap-2 flex-wrap">
                     {getCategoryBadge(report.category)}
+                   <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-800/60 px-2 py-0.5 rounded">
+                     source: {report.source === 'community-reported' ? 'community-reported' : 'live'}
+                   </span>
                     {report.languageDetected && (
                       <span className="text-xs font-mono bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
                         {report.languageDetected}
@@ -146,16 +157,19 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 </div>
 
                 {/* Raw Text Extract */}
-                <p className="text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
-                  "{report.rawText}"
+                <p className="line-clamp-3 text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
+                  {report.title || report.rawText || 'Live incident update'}
                 </p>
 
                 {/* AI Extracted Entity Pills */}
                 <div className="space-y-2 text-xs sm:text-sm mb-3.5 font-mono">
                   <div className="flex items-center gap-2 text-slate-300">
                     <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span className="truncate font-semibold">{report.locationName}</span>
+                    <span className="truncate font-semibold">{report.location || report.locationName}</span>
                   </div>
+                  {report.description && report.description !== report.title && (
+                    <p className="line-clamp-2 text-slate-400 text-xs pl-6">{report.description}</p>
+                  )}
 
                   {report.headcount > 0 && (
                     <div className="flex items-center gap-2 text-rose-400 font-bold">

@@ -1,3 +1,4 @@
+// Data: live city intelligence overlays from external APIs plus community report coordinates.
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   MapContainer,
@@ -252,6 +253,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
 
 
       <div className="map-toolbar absolute top-3 left-3 right-3 sm:right-auto z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 font-mono text-xs select-none overflow-x-auto">
+
         <div className="flex shrink-0 items-center gap-1.5 px-2 py-1 text-slate-400 border-r border-slate-800">
 
           <Globe className="w-3.5 h-3.5 text-cyan-400" />
@@ -296,6 +298,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       </div>
 
       {/* Floating Layer Controls - High Density Tactical Toggle Matrix */}
+
 
 
       <div className="absolute top-[4.5rem] sm:top-4 right-3 sm:right-4 z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-1.5rem))] select-none">
@@ -395,7 +398,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       </div>
 
       {/* Floating Tactical Hydro-Meteo Intelligence Panel — positioned bottom-LEFT to avoid overlap with right-side layer toggles */}
-      <div className="absolute bottom-5 left-4 z-[400] font-mono select-none max-h-[calc(100%-4rem)] overflow-y-auto">
+      <div className="absolute bottom-5 left-4 z-30 font-mono select-none max-h-[calc(100%-4rem)] overflow-y-auto">
         {!isWeatherExpanded ? (
           <button
             onClick={() => setIsWeatherExpanded(true)}
