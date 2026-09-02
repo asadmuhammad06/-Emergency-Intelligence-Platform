@@ -31,7 +31,8 @@ function DashboardContent() {
     reliefHubs,
     dispatchedUnits,
     reports,
-    weather
+    weather,
+    radar
   } = useCrisis();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>('all');
@@ -545,39 +546,28 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* 2. Hydrological Flood River Gauges */}
+                {/* 2. Live meteorological and radar telemetry */}
                 <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-6 shadow-xl font-mono text-xs">
                   <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
                     <div className="flex items-center gap-2.5">
                       <Droplets className="w-5 h-5 text-cyan-400" />
                       <h3 className="font-black text-base text-white font-['Plus_Jakarta_Sans']">
-                        HYDROLOGICAL FLOOD SENSORS
+                        HYDRO-METEO RADAR
                       </h3>
                     </div>
-                    <span className="text-xs text-rose-400 font-bold bg-rose-950/80 border border-rose-800/60 px-2.5 py-1 rounded-md animate-pulse">
-                      HIGH SURGE
+                    <span className="text-xs text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-800/60 px-2.5 py-1 rounded-md">
+                      {radar ? 'LIVE FRAME' : 'CONNECTING'}
                     </span>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-rose-900/50">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-200 font-bold text-xs sm:text-sm">Nullah Lai @ Kattarian Bridge</span>
-                        <span className="text-rose-400 font-black text-sm sm:text-base font-mono">22.4 ft</span>
-                      </div>
-                      <p className="text-xs text-rose-300/90 mt-1">
-                        Danger Level: 20.0 ft &bull; Discharge: 34,000 cusecs (Rising Fast)
-                      </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block mb-1">Precipitation</span>
+                      <span className="text-cyan-300 font-black text-lg">{weather?.precipitation ?? '--'} mm/h</span>
                     </div>
-
-                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-amber-900/50">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-200 font-bold text-xs sm:text-sm">Nullah Lai @ Gawalmandi</span>
-                        <span className="text-amber-400 font-black text-sm sm:text-base font-mono">19.2 ft</span>
-                      </div>
-                      <p className="text-xs text-amber-300/90 mt-1">
-                        Danger Level: 18.0 ft &bull; Embankment overflow reported
-                      </p>
+                    <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block mb-1">Flood risk</span>
+                      <span className="text-amber-300 font-black text-lg">{weather?.floodRiskLevel ?? '--'}</span>
                     </div>
                   </div>
                 </div>

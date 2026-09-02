@@ -9,6 +9,14 @@ html, body, #root {
   overflow-x: hidden !important;
 }
 
+.map-toolbar {
+  scrollbar-width: none;
+}
+
+.map-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom Sleek Vertical Scrollbar (Zero Horizontal Scrollbar) */
 ::-webkit-scrollbar {
   width: 8px;

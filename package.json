@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "CrisisMap — Pakistan Emergency Intelligence Platform",
   "scripts": {
+    "dev": "node scripts/dev.js",
     "server": "cd server && node index.js",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build"
