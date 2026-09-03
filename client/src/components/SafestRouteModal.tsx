@@ -165,7 +165,7 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
                       <p className="font-bold flex items-center gap-1 mb-0.5">
                         ⚠️ Critical Hazard Intersection:
                       </p>
-                      <p>Faizabad Interchange submerged under 4.5ft flood water. Vehicle drowning hazard reported.</p>
+                      <p>Flood hazard reported along the selected route. Vehicle access is unsafe.</p>
                     </div>
                   </div>
                 </div>
