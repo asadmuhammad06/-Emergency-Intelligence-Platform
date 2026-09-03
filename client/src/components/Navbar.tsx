@@ -60,29 +60,29 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* ── LEFT: Brand ── */}
       <div className="flex items-center gap-3 shrink-0">
         {/* Logo mark */}
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-950 to-slate-900 border border-orange-500/50 flex items-center justify-center shadow-[0_0_16px_rgba(234,88,12,0.35)] shrink-0">
-          <ShieldAlert className="w-4 h-4 text-orange-400" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-950 via-slate-900 to-slate-950 border border-orange-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.4)] shrink-0 transition-transform hover:scale-105">
+          <ShieldAlert className="w-5 h-5 text-orange-400" />
         </div>
 
         {/* Wordmark */}
         <div className="flex items-center gap-2">
-          <span className="font-black text-[15px] tracking-tight text-white whitespace-nowrap">
+          <span className="font-black text-[17px] sm:text-[18px] tracking-tight text-white whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
             CRISIS<span className="text-orange-400">MAP</span>
           </span>
-          {/* "PAKISTAN EOC" badge — hidden on 1366px, shows at 2xl (1536px+) */}
-          <span className="hidden 2xl:inline text-[9px] bg-rose-950/80 border border-rose-700/60 text-rose-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest uppercase">
+          {/* "PAKISTAN EOC" badge */}
+          <span className="hidden sm:inline text-[9px] bg-rose-950/80 border border-rose-700/60 text-rose-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest uppercase">
             PAKISTAN EOC
           </span>
           {/* Live status dot */}
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isConnectedToServer ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.9)]' : 'bg-amber-400'}`} />
-          <span className="hidden xl:inline text-[11px] text-slate-500 font-mono">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${isConnectedToServer ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-amber-400'}`} />
+          <span className="hidden sm:inline text-[11px] text-emerald-400 font-mono font-semibold">
             {isConnectedToServer ? 'Live' : 'Offline'}
           </span>
         </div>
       </div>
 
       {/* ── CENTER: Navigation Tabs ── */}
-      <nav className="flex items-center gap-0.5 bg-white/[0.04] border border-white/[0.07] p-1 rounded-xl">
+      <nav className="flex items-center gap-1 bg-slate-950/70 border border-white/[0.08] p-1 rounded-xl shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)]">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -91,28 +91,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={tab.id}
               onClick={() => { onSelectTab(tab.id); window.location.hash = tab.id; }}
               title={tab.label}
-              className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150 whitespace-nowrap ${
+              className={`group relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150 whitespace-nowrap ${
                 isActive
-                  ? 'bg-orange-500/15 text-orange-200 border border-orange-500/30 shadow-[0_0_12px_rgba(234,88,12,0.2)]'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-white/[0.06] border border-transparent'
+                  ? 'bg-orange-500/20 text-orange-200 border border-orange-500/40 shadow-[0_0_14px_rgba(234,88,12,0.25)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
               }`}
             >
-              <Icon className={`w-[14px] h-[14px] shrink-0 ${isActive ? 'text-orange-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-              {/* Tab labels: icon-only at 1366px (lg/xl), full label only at 2xl (1536px+) */}
-              <span className="hidden 2xl:inline">{tab.label}</span>
+              <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+              <span className="font-semibold tracking-tight">{tab.label}</span>
 
               {tab.badge !== undefined && (
                 <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border leading-none ${tab.badgeColor || 'bg-white/10 text-slate-300 border-white/20'}`}>
                   {tab.badge}
                 </span>
               )}
-              <span
-                onClick={(e) => handleOpenInNewTab(tab.id, e)}
-                title="Open in new tab"
-                className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity p-0.5 rounded hidden 2xl:inline-flex text-slate-400"
-              >
-                <ExternalLink className="w-2.5 h-2.5" />
-              </span>
             </button>
           );
         })}
@@ -130,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               const found = regions.find(r => r.id === e.target.value);
               if (found) setActiveRegion(found);
             }}
-            className="bg-transparent text-slate-200 text-[13px] focus:outline-none cursor-pointer max-w-[110px]"
+            className="bg-transparent text-slate-200 text-[13px] focus:outline-none cursor-pointer max-w-[180px]"
           >
             {regions.map(r => (
               <option key={r.id} value={r.id} className="bg-slate-900">{r.name}</option>

@@ -207,16 +207,17 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
 
   // Default to Tactical Dark
   const [mapTheme, setMapTheme] = useState<MapThemeOption>('tactical_dark');
-  const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(true);
+  const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(false);
 
     const currentTileConfig = useMemo(() => {
     // All free — no API key required
     if (mapTheme === 'tactical_dark') {
       return {
         key: 'tactical_dark',
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-        subdomains: '',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
+        subdomains: 'abc',
+        className: 'tactical-dark-tiles',
       };
     }
 
@@ -574,6 +575,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         center={activeRegion.center}
         zoom={mapZoom}
         scrollWheelZoom={false}
+        preferCanvas={true}
         className="w-full h-full z-0"
         style={{ background: '#090d16' }}
       >
@@ -590,6 +592,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           attribution={currentTileConfig.attribution}
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
+          className={currentTileConfig.className}
           zIndex={1}
         />
        {/* Radar temporarily disabled - tile provider causing zoom errors */}

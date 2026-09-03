@@ -165,3 +165,83 @@ html, body, #root {
   background: transparent;
   border: none;
 }
+
+/* Tactical Emergency Marquee Ticker */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 42s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Tactical Glowing HUD Card Animations */
+@keyframes pulse-glow-rose {
+  0%, 100% {
+    box-shadow: 0 0 20px -3px rgba(244, 63, 94, 0.25), inset 0 0 15px rgba(244, 63, 94, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 35px 2px rgba(244, 63, 94, 0.45), inset 0 0 25px rgba(244, 63, 94, 0.12);
+  }
+}
+
+@keyframes pulse-glow-amber {
+  0%, 100% {
+    box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 35px 2px rgba(245, 158, 11, 0.4), inset 0 0 25px rgba(245, 158, 11, 0.12);
+  }
+}
+
+@keyframes pulse-glow-cyan {
+  0%, 100% {
+    box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.2), inset 0 0 15px rgba(6, 182, 212, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 35px 2px rgba(6, 182, 212, 0.4), inset 0 0 25px rgba(6, 182, 212, 0.12);
+  }
+}
+
+@keyframes pulse-glow-emerald {
+  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.25), inset 0 0 10px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.2); }
+}
+
+/* Tactical Dark Filter for OpenStreetMap Tiles — 100% free, zero watermarks, zero blank squares */
+.tactical-dark-tiles .leaflet-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(80%) contrast(125%) saturate(70%) !important;
+}
+
+.tactical-glow-rose {
+  animation: pulse-glow-rose 3.5s ease-in-out infinite;
+}
+
+.tactical-glow-amber {
+  animation: pulse-glow-amber 3.5s ease-in-out infinite;
+}
+
+.tactical-glow-cyan {
+  animation: pulse-glow-cyan 3.5s ease-in-out infinite;
+}
+
+.tactical-glow-emerald {
+  animation: pulse-glow-emerald 3.5s ease-in-out infinite;
+}
+
+/* EOC Scanline Texture Effect */
+.bg-scanlines {
+  background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+}

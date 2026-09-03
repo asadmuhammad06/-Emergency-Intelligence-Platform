@@ -270,5 +270,20 @@ export const initialReports = [
     languageDetected: "Roman Urdu",
     confidence: 0.97,
     dispatched: false
+  },
+  {
+    id: "rep_106",
+    rawText: "Main drinking water pipeline breached near Commercial Market. Over 40 families completely without potable drinking water.",
+    category: "WATER_SHORTAGE",
+    severity: 8,
+    headcount: 40,
+    locationName: "Commercial Market, Satellite Town",
+    coords: [33.6310, 73.0690],
+    timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+    status: "VERIFIED",
+    needs: ["Water Bowser Fleet", "Purification Tablets"],
+    languageDetected: "English",
+    confidence: 0.95,
+    dispatched: false
   }
 ];
