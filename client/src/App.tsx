@@ -33,7 +33,8 @@ function DashboardContent() {
     reports,
     weather,
     radar,
-    intelLoading
+    intelLoading,
+    simulatedMetrics
   } = useCrisis();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>('all');

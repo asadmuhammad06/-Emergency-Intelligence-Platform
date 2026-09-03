@@ -217,8 +217,6 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
         attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
         subdomains: '',
-        minZoom: 1,
-        maxZoom: 19,
       };
     }
 
@@ -228,8 +226,6 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
         attribution: 'Tiles &copy; Esri',
         subdomains: '',
-        minZoom: 1,
-        maxZoom: 19,
       };
     }
 
@@ -240,21 +236,19 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       subdomains: 'abc',
-      minZoom: 1,
-      maxZoom: 19,
     };
   }, [mapTheme]);
 
-  const safeZoom = Math.min(19, Math.max(1, activeRegion.zoom));
+  const mapZoom = activeRegion.zoom;
 
   useEffect(() => {
     console.log('[MapView] active region center/zoom:', {
       city: activeRegion.name,
       lat: activeRegion.center[0],
       lon: activeRegion.center[1],
-      zoom: safeZoom
+      zoom: mapZoom
     });
-  }, [activeRegion, safeZoom]);
+  }, [activeRegion, mapZoom]);
 
   // Filter reports according to activeCategoryFilter
   const filteredReports = useMemo(() => {
@@ -578,9 +572,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       {/* Main Tactical Map */}
       <MapContainer
         center={activeRegion.center}
-        zoom={safeZoom}
-        minZoom={1}
-        maxZoom={19}
+        zoom={mapZoom}
         scrollWheelZoom={false}
         className="w-full h-full z-0"
         style={{ background: '#090d16' }}
@@ -588,7 +580,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         <MapSizeSynchronizer />
         <MapController
           center={activeRegion.center}
-          zoom={safeZoom}
+          zoom={mapZoom}
           highlightedCoords={highlightedCoords}
         />
 
@@ -598,21 +590,9 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           attribution={currentTileConfig.attribution}
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
-          minZoom={currentTileConfig.minZoom}
-          maxZoom={currentTileConfig.maxZoom}
           zIndex={1}
         />
-        {radar && (
-          <TileLayer
-            key={`radar-${radar.frameTimestamp}`}
-            url={radar.tileUrl}
-            opacity={0.35}
-            zIndex={2}
-            minZoom={1}
-            maxZoom={10}
-            attribution="Radar &copy; RainViewer"
-          />
-        )}
+       {/* Radar temporarily disabled - tile provider causing zoom errors */}
 
         {/* 1. Flood Inundation Polygons */}
         {layers.floods && hazardZones.map(zone => (

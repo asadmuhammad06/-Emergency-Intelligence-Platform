@@ -1,4 +1,12 @@
-import { EmergencyReport, HazardZone, Hospital, ReliefHub, RoadBlock, Region } from '../types';
+import { EmergencyReport, HazardZone, Hospital, ReliefHub, RoadBlock, Region, WeatherData } from '../types';
+
+export interface SimulatedMetrics {
+  trappedCitizens: number;
+  icuSaturation: number;
+  activeSos: number;
+  nullahGaugeFeet: number;
+  floodInundation: number;
+}
 
 const hash = (value: string) => [...value].reduce((total, char) => ((total * 31) + char.charCodeAt(0)) >>> 0, 2166136261);
 const numberFor = (seed: number, min: number, max: number) => min + (seed % (max - min + 1));
@@ -13,28 +21,39 @@ export interface SimulatedCityData {
   hazardZones: HazardZone[];
   roadBlocks: RoadBlock[];
   reliefHubs: ReliefHub[];
+  weather: WeatherData;
   priorityZones: never[];
   dispatchedUnits: never[];
-  metrics: {
-    trapped: number;
-    icuSaturation: number;
-    activeSos: number;
-    gaugeFeet: number;
-    floodInundation: number;
-  };
+  metrics: SimulatedMetrics;
 }
 
 export function createSimulatedCityData(region: Region): SimulatedCityData {
   const seed = hash(region.id + region.name);
   const trapped = numberFor(seed, 4, 28);
   const hospitalCount = numberFor(seed >>> 2, 2, 5);
-  const roadCount = numberFor(seed >>> 4, 1, 4);
-  const depotCount = numberFor(seed >>> 6, 1, 3);
-  const reports: EmergencyReport[] = Array.from({ length: numberFor(seed >>> 8, 1, 3) }, (_, index) => {
+  const roadCount = numberFor(seed >>> 4, 2, 4);
+  const depotCount = numberFor(seed >>> 6, 2, 3);
+  const precipitation = numberFor(seed >>> 10, 0, 12);
+  const weatherCode = numberFor(seed >>> 12, 0, 99);
+  const weather: WeatherData = {
+    temperature: numberFor(seed >>> 14, 18, 38),
+    humidity: numberFor(seed >>> 16, 45, 88),
+    precipitation,
+    weatherCode,
+    condition: weatherCode >= 80 ? 'Rain showers' : weatherCode >= 50 ? 'Cloudy' : 'Clear Sky',
+    windSpeed: numberFor(seed >>> 18, 4, 24),
+    windGusts: numberFor(seed >>> 20, 10, 42),
+    time: 'SIMULATED',
+    isHeavyRain: precipitation >= 10,
+    isHighWind: numberFor(seed >>> 22, 0, 1) === 1,
+    flightFeasibility: 'CLEAR',
+    floodRiskLevel: precipitation >= 10 ? 'HIGH' : precipitation >= 3 ? 'MODERATE' : 'LOW'
+  };
+  const reports: EmergencyReport[] = Array.from({ length: numberFor(seed >>> 8, 3, 5) }, (_, index) => {
     const coords = point(region, seed + index * 997);
     return {
       id: `sim-${region.id}-sos-${index}`,
-      rawText: `Simulated emergency signal for ${region.name}`,
+      rawText: `Simulated ground intelligence for ${region.name}: precipitation ${precipitation} mm, weather code ${weatherCode}.`,
       category: index % 2 ? 'ROAD_BLOCKED' : 'RESCUE_NEEDED',
       severity: numberFor(seed + index, 4, 9),
       headcount: index === 0 ? trapped : 0,
@@ -95,12 +114,12 @@ export function createSimulatedCityData(region: Region): SimulatedCityData {
     source: 'SIMULATED'
   }];
   return {
-    reports, hospitals, hazardZones, roadBlocks, reliefHubs, priorityZones: [], dispatchedUnits: [],
+    reports, hospitals, hazardZones, roadBlocks, reliefHubs, weather, priorityZones: [], dispatchedUnits: [],
     metrics: {
-      trapped,
+      trappedCitizens: trapped,
       icuSaturation: numberFor(seed >>> 5, 35, 92),
       activeSos: numberFor(seed >>> 7, 1, 9),
-      gaugeFeet: numberFor(seed >>> 9, 8, 24),
+      nullahGaugeFeet: numberFor(seed >>> 9, 8, 24),
       floodInundation: numberFor(seed >>> 11, 1, 7)
     }
   };
