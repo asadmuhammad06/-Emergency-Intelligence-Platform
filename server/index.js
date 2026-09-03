@@ -178,6 +178,107 @@ app.get('/api/state', (req, res) => {
   });
 });
 
+const liveRegionCache = new Map();
+let liveRefreshPromise = null;
+
+const buildLiveSnapshot = (region, intel, radar) => {
+  const communityReports = getReports({ lat: region.center[0], lon: region.center[1] });
+  const reports = [...intel.incidents, ...communityReports];
+  const hospitals = intel.hospitals.map(report => ({
+    id: report.id,
+    name: report.title,
+    location: report.location,
+    coords: report.coords,
+    totalBeds: 0,
+    occupiedBeds: 0,
+    capacity: 0,
+    icuAvailable: 0,
+    powerBackup: 'Unknown',
+    status: 'LIVE_LOCATION',
+    acceptingEmergencies: true,
+    phone: '',
+    source: report.source
+  }));
+  const reliefHubs = intel.waterPoints.map(report => ({
+    id: report.id,
+    name: report.title,
+    coords: report.coords,
+    type: 'DRINKING_WATER',
+    status: 'LIVE_LOCATION',
+    managedBy: report.source,
+    source: report.source
+  }));
+  const hazardZones = reports.filter(report => report.category === 'flood').map(report => ({
+    id: report.id,
+    type: report.type,
+    name: report.title,
+    severity: report.severity >= 8 ? 'HIGH' : report.severity >= 5 ? 'MEDIUM' : 'LOW',
+    status: 'LIVE',
+    polygon: [report.coords],
+    description: report.description,
+    source: report.source
+  }));
+  const roadBlocks = communityReports.filter(report => report.category === 'road_block').map(report => ({
+    id: report.id,
+    roadName: report.title,
+    coords: report.coords,
+    status: 'COMMUNITY_REPORTED',
+    reason: report.description,
+    source: report.source
+  }));
+  return {
+    activeRegion: region,
+    hospitals,
+    hazardZones,
+    roadBlocks,
+    reliefHubs,
+    reports,
+    priorityZones: [],
+    dispatchedUnits: [],
+    disasterAlert: null,
+    weather: intel.weather ? {
+      temperature: intel.weather.current?.temperature_2m,
+      precipitation: intel.weather.current?.precipitation || 0,
+      weatherCode: intel.weather.current?.weathercode ?? intel.weather.current?.weather_code,
+      time: intel.weather.current?.time,
+      humidity: intel.weather.current?.relative_humidity_2m || 0,
+      windSpeed: intel.weather.current?.wind_speed_10m || 0,
+      windGusts: intel.weather.current?.wind_gusts_10m || 0,
+      floodRiskLevel: (intel.weather.current?.precipitation || 0) >= 10 ? 'HIGH' : (intel.weather.current?.precipitation || 0) >= 2 ? 'MODERATE' : 'LOW'
+    } : null,
+    radar,
+    intelSources: intel.sources,
+    fetchedAt: intel.fetchedAt
+  };
+};
+
+const refreshRegion = async region => {
+  const city = { name: region.name, lat: region.center[0], lon: region.center[1] };
+  const [intel, radar] = await Promise.all([fetchCityIntel(city), getRadarData()]);
+  const snapshot = buildLiveSnapshot(region, intel, radar);
+  liveRegionCache.set(region.id, snapshot);
+  return snapshot;
+};
+
+const refreshAllRegions = async () => {
+  if (liveRefreshPromise) return liveRefreshPromise;
+  liveRefreshPromise = Promise.allSettled(regions.map(refreshRegion))
+    .then(results => {
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`Live refresh failed for ${regions[index].name}:`, result.reason);
+        }
+      });
+    })
+    .finally(() => {
+      liveRefreshPromise = null;
+    });
+  return liveRefreshPromise;
+};
+
+void refreshAllRegions();
+setInterval(refreshAllRegions, 60000);
+
 // Consolidated live snapshot for clients that cannot maintain a WebSocket.
 app.get('/api/live-data', async (req, res) => {
   const requestedRegion = req.query.regionId
@@ -187,90 +288,13 @@ app.get('/api/live-data', async (req, res) => {
     return res.status(404).json({ success: false, error: 'Region not found' });
   }
 
-  const lat = req.query.lat ? parseFloat(req.query.lat) : requestedRegion.center[0];
-  const lng = req.query.lng ? parseFloat(req.query.lng) : requestedRegion.center[1];
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return res.status(400).json({ success: false, error: 'Valid lat and lng coordinates are required' });
-  }
-
   try {
-    const city = { name: requestedRegion.name, lat, lon: lng };
-    const [intel, radar] = await Promise.all([
-      fetchCityIntel(city),
-      getRadarData()
-    ]);
-    const communityReports = getReports(city);
-    const reports = [...intel.incidents, ...communityReports];
-    const hospitals = intel.hospitals.map(report => ({
-      id: report.id,
-      name: report.title,
-      location: report.location,
-      coords: report.coords,
-      totalBeds: 0,
-      occupiedBeds: 0,
-      capacity: 0,
-      icuAvailable: 0,
-      powerBackup: 'Unknown',
-      status: 'NORMAL',
-      acceptingEmergencies: true,
-      phone: '',
-      source: report.source
-    }));
-    const reliefHubs = intel.waterPoints.map(report => ({
-      id: report.id,
-      name: report.title,
-      coords: report.coords,
-      type: 'DRINKING_WATER',
-      status: 'MAPPED',
-      managedBy: report.source,
-      source: report.source
-    }));
-    const hazardZones = reports.filter(report => report.category === 'flood').map(report => ({
-      id: report.id,
-      type: report.type,
-      name: report.title,
-      severity: report.severity >= 8 ? 'HIGH' : report.severity >= 5 ? 'MEDIUM' : 'LOW',
-      status: 'LIVE',
-      polygon: [report.coords],
-      description: report.description,
-      source: report.source
-    }));
-    const roadBlocks = reports.filter(report => report.category === 'road_block').map(report => ({
-      id: report.id,
-      roadName: report.title,
-      coords: report.coords,
-      status: 'COMMUNITY_REPORTED',
-      reason: report.description,
-      source: report.source
-    }));
+    if (!liveRegionCache.has(requestedRegion.id)) await refreshRegion(requestedRegion);
+    const snapshot = liveRegionCache.get(requestedRegion.id);
 
     res.json({
       success: true,
-      data: {
-        activeRegion: requestedRegion,
-        hospitals,
-        hazardZones,
-        roadBlocks,
-        reliefHubs,
-        reports,
-        priorityZones: [],
-        dispatchedUnits: [],
-        disasterAlert: null,
-        weather: intel.weather ? {
-          temperature: intel.weather.current?.temperature_2m,
-          precipitation: intel.weather.current?.precipitation || 0,
-          weatherCode: intel.weather.current?.weathercode ?? intel.weather.current?.weather_code,
-          time: intel.weather.current?.time,
-          humidity: 0,
-          windSpeed: 0,
-          windGusts: 0,
-          floodRiskLevel: (intel.weather.current?.precipitation || 0) >= 10 ? 'HIGH' : (intel.weather.current?.precipitation || 0) >= 2 ? 'MODERATE' : 'LOW'
-        } : null,
-        radar,
-        intelSources: intel.sources,
-        fetchedAt: intel.fetchedAt
-      },
+      data: snapshot,
       metadata: {
         serverTime: new Date().toISOString(),
         source: 'External live feeds and community reports',
