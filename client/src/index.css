@@ -110,8 +110,21 @@ html, body, #root {
 .leaflet-bar {
   border: 1px solid rgba(51, 65, 85, 0.8) !important;
   border-radius: 10px !important;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-control-zoom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 0 !important;
+}
+
+/* Keep Leaflet's zoom buttons below the map tile switcher. */
+.leaflet-top.leaflet-left {
+  top: 70px;
+  left: 16px;
 }
 
 .leaflet-bar a {
@@ -120,6 +133,11 @@ html, body, #root {
   border-bottom: 1px solid rgba(51, 65, 85, 0.6) !important;
   backdrop-filter: blur(8px);
   transition: background-color 0.15s, color 0.15s;
+}
+
+.leaflet-control-zoom a {
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 8px !important;
 }
 
 .leaflet-bar a:hover {

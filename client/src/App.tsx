@@ -67,9 +67,6 @@ function DashboardContent() {
     }
   };
 
-  const totalTrapped = reports
-    .filter(r => r.category === 'RESCUE_NEEDED')
-    .reduce((sum, r) => sum + (r.headcount || 0), 0);
   const overloadedHospitals = hospitals.filter(h => h.capacity >= 85).length;
   const availableIcu = hospitals.reduce((sum, h) => sum + h.icuAvailable, 0);
   const totalDrinkingWater = reliefHubs.reduce((sum, h) => sum + (h.drinkingWaterLiters || 0), 0);
@@ -296,8 +293,8 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Citizens Trapped</span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-rose-300 font-mono leading-none">{totalTrapped}</span>
-                    <span className="text-xs font-medium text-rose-400/80">In Need</span>
+                    <span className="font-black text-2xl text-rose-300 font-mono leading-none">{simulatedMetrics.trappedCitizens}</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -309,8 +306,8 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">ICU Saturation</span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-amber-300 font-mono leading-none">{overloadedHospitals}</span>
-                    <span className="text-xs font-medium text-amber-400/80">Overloaded</span>
+                    <span className="font-black text-2xl text-amber-300 font-mono leading-none">{simulatedMetrics.icuSaturation}%</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -322,8 +319,8 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Active SOS Signals</span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-cyan-300 font-mono leading-none">{reports.length}</span>
-                    <span className="text-xs font-medium text-cyan-400/80">Incoming</span>
+                    <span className="font-black text-2xl text-cyan-300 font-mono leading-none">{simulatedMetrics.activeSos}</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -335,8 +332,8 @@ function DashboardContent() {
                 <div className="min-w-0">
                   <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Nullah Lai Gauge</span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-emerald-300 font-mono leading-none">22.4<span className="text-sm font-normal ml-0.5 text-emerald-400">ft</span></span>
-                    <span className="text-xs font-bold text-rose-400 bg-rose-950 px-1.5 py-0.5 rounded font-mono uppercase">Danger</span>
+                    <span className="font-black text-2xl text-emerald-300 font-mono leading-none">{simulatedMetrics.nullahGaugeFeet}<span className="text-sm font-normal ml-0.5 text-emerald-400">ft</span></span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -520,8 +517,8 @@ function DashboardContent() {
                         HOSPITAL BED CAPACITY & SURGE
                       </h3>
                     </div>
-                    <span className="text-xs text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-800/60 px-2.5 py-1 rounded-md">
-                      {availableIcu} ICU Free
+                    <span className="text-xs text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-800/60 px-2.5 py-1 rounded-md">
+                      {simulatedMetrics.icuSaturation}% <span className="text-[9px]">SIMULATED</span>
                     </span>
                   </div>
 
@@ -535,7 +532,7 @@ function DashboardContent() {
                     {hospitals.map(h => (
                       <div key={h.id} className="space-y-1.5">
                         <div className="flex justify-between items-center text-xs sm:text-sm">
-                          <span className="text-slate-200 font-bold">{h.name}</span>
+                          <span className="text-slate-200 font-bold truncate pr-2">{h.name}</span>
                           <span className={`font-bold font-mono ${h.capacity >= 85 ? 'text-rose-400' : 'text-emerald-400'}`}>
                             {h.capacity}% ({h.occupiedBeds}/{h.totalBeds})
                           </span>
@@ -589,7 +586,7 @@ function DashboardContent() {
                       </h3>
                     </div>
                     <span className="text-xs text-sky-400 font-bold bg-sky-950/80 border border-sky-800/60 px-2.5 py-1 rounded-md">
-                      {reliefHubs.length} DEPOTS READY
+                      {reliefHubs.length} DEPOTS <span className="text-[9px]">SIMULATED</span>
                     </span>
                   </div>
 
