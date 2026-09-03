@@ -29,6 +29,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [photoAttached, setPhotoAttached] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReport, setSubmittedReport] = useState<any>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Quick prompt templates
   const presets = [
@@ -89,18 +90,24 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     if (!reportText.trim()) return;
 
     setIsSubmitting(true);
-    const createdReport = await submitCitizenReport(reportText, undefined, phoneNumber);
-    setIsSubmitting(false);
-    setSubmittedReport(createdReport);
+    setSubmitError(null);
+    try {
+      const createdReport = await submitCitizenReport(reportText, undefined, phoneNumber);
+      setSubmittedReport(createdReport);
 
-    setTimeout(() => {
-      if (createdReport && createdReport.coords) {
-        setHighlightedCoords(createdReport.coords);
-      }
-      setSubmittedReport(null);
-      setReportText('');
-      onClose();
-    }, 2500);
+      setTimeout(() => {
+        if (createdReport && createdReport.coords) {
+          setHighlightedCoords(createdReport.coords);
+        }
+        setSubmittedReport(null);
+        setReportText('');
+        onClose();
+      }, 2500);
+    } catch (error) {
+      setSubmitError('The live reporting service is unavailable. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,6 +119,11 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             <div className="p-2.5 rounded-xl bg-red-950 border border-red-500/50 text-red-400">
               <AlertCircle className="w-6 h-6" />
             </div>
+            {submitError && (
+              <p className="px-4 py-2 text-xs text-rose-300 bg-rose-950/40 border-b border-rose-900/60">
+                {submitError}
+              </p>
+            )}
             <div>
               <h3 className="font-extrabold text-base sm:text-lg text-white flex items-center gap-2">
                 <span>Citizen Emergency SOS Portal</span>

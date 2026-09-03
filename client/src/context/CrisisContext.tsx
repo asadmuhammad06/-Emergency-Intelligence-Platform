@@ -12,16 +12,11 @@ import {
   SystemAlert,
   Region,
   ReportCategory,
-  WeatherData
+  WeatherData,
+  RadarData
 } from '../types';
 import {
-  defaultRegions,
-  initialHospitals,
-  initialHazardZones,
-  initialRoadBlocks,
-  initialReliefHubs,
-  initialReports,
-  initialPriorityZones
+  defaultRegions
 } from '../data/pakistanGeoData';
 
 interface CrisisContextType {
@@ -38,6 +33,7 @@ interface CrisisContextType {
   regions: Region[];
   weather: WeatherData | null;
   weatherLoading: boolean;
+  radar: RadarData | null;
 
   // Selection & Route State
   selectedReport: EmergencyReport | null;
@@ -83,32 +79,17 @@ const API_BASE = 'http://localhost:3001';
 const CrisisContext = createContext<CrisisContextType | undefined>(undefined);
 
 export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [reports, setReports] = useState<EmergencyReport[]>(initialReports);
-  const [hospitals, setHospitals] = useState<Hospital[]>(initialHospitals);
-  const [hazardZones, setHazardZones] = useState<HazardZone[]>(initialHazardZones);
-  const [roadBlocks, setRoadBlocks] = useState<RoadBlock[]>(initialRoadBlocks);
-  const [reliefHubs, setReliefHubs] = useState<ReliefHub[]>(initialReliefHubs);
-  const [priorityZones, setPriorityZones] = useState<PriorityZone[]>(initialPriorityZones);
-  const [dispatchedUnits, setDispatchedUnits] = useState<DispatchedUnit[]>([
-    {
-      id: "disp_1",
-      targetZone: "Priority Zone #2 — Faizabad Corridor",
-      unitName: "Rescue 1122 Quick Response Alpha",
-      type: "4x4 High-Clearance Troop Carrier",
-      status: "EN_ROUTE",
-      dispatchedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-      etaMin: 8
-    }
-  ]);
-  const [systemAlert, setSystemAlert] = useState<SystemAlert | null>({
-    active: true,
-    title: "🚨 MONSOON FLOODING DETECTED — TWIN CITIES BASIN",
-    severity: "HIGH",
-    summary: "Nullah Lai gauge at 22.4ft. Rapid inundation in Rawalpindi lowlands and Faizabad interchange.",
-    timestamp: new Date().toISOString()
-  });
+  const [reports, setReports] = useState<EmergencyReport[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [hazardZones, setHazardZones] = useState<HazardZone[]>([]);
+  const [roadBlocks, setRoadBlocks] = useState<RoadBlock[]>([]);
+  const [reliefHubs, setReliefHubs] = useState<ReliefHub[]>([]);
+  const [priorityZones, setPriorityZones] = useState<PriorityZone[]>([]);
+  const [dispatchedUnits, setDispatchedUnits] = useState<DispatchedUnit[]>([]);
+  const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
 
   const [activeRegion, setActiveRegion] = useState<Region>(defaultRegions[0]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [selectedReport, setSelectedReport] = useState<EmergencyReport | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [selectedPriorityZone, setSelectedPriorityZone] = useState<PriorityZone | null>(null);
@@ -126,11 +107,29 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [radar, setRadar] = useState<RadarData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(false);
 
   const [simulationRunning, setSimulationRunning] = useState<boolean>(false);
   const [simulationStep, setSimulationStep] = useState<number>(0);
   const [isConnectedToServer, setIsConnectedToServer] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/regions`)
+      .then(res => {
+        if (!res.ok) throw new Error('Regions API unavailable');
+        return res.json();
+      })
+      .then(payload => {
+        if (!payload.success || !Array.isArray(payload.data) || payload.data.length === 0) {
+          throw new Error('Regions API returned no locations');
+        }
+        setRegions(payload.data);
+        const selectedRegion = payload.data.find((region: Region) => region.id === activeRegion.id);
+        if (selectedRegion) setActiveRegion(selectedRegion);
+      })
+      .catch(error => console.warn('Failed to load live regions:', error));
+  }, []);
 
   const refreshWeather = useCallback(async () => {
     if (!activeRegion || !activeRegion.center) return;
@@ -154,6 +153,41 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const interval = setInterval(refreshWeather, 120000);
     return () => clearInterval(interval);
   }, [refreshWeather]);
+
+  // Keep a REST snapshot current when a WebSocket is unavailable or delayed.
+  useEffect(() => {
+    const refreshLiveData = async () => {
+      const [lat, lng] = activeRegion.center;
+      const res = await fetch(`${API_BASE}/api/live-data?regionId=${activeRegion.id}&lat=${lat}&lng=${lng}`);
+      if (!res.ok) return;
+
+      const payload = await res.json();
+      if (!payload.success || !payload.data) return;
+
+      const data = payload.data;
+      if (data.reports) setReports(data.reports);
+      if (data.hospitals) setHospitals(data.hospitals);
+      if (data.hazardZones) setHazardZones(data.hazardZones);
+      if (data.roadBlocks) setRoadBlocks(data.roadBlocks);
+      if (data.reliefHubs) setReliefHubs(data.reliefHubs);
+      if (data.priorityZones) setPriorityZones(data.priorityZones);
+      if (data.dispatchedUnits) setDispatchedUnits(data.dispatchedUnits);
+      if (data.disasterAlert) setSystemAlert(data.disasterAlert);
+      if (data.weather) setWeather(data.weather);
+      if (data.radar) setRadar(data.radar);
+    };
+
+    refreshLiveData().catch(error => {
+      console.warn('Failed to refresh live operations snapshot:', error);
+    });
+    const interval = setInterval(() => {
+      refreshLiveData().catch(error => {
+        console.warn('Failed to refresh live operations snapshot:', error);
+      });
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [activeRegion]);
 
   const toggleLayer = (layerKey: keyof typeof layers) => {
     setLayers(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
@@ -223,11 +257,11 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       socket.on('state_reset', (resetState) => {
-        setReports(resetState.reports || initialReports);
-        setHospitals(resetState.hospitals || initialHospitals);
-        setHazardZones(resetState.hazardZones || initialHazardZones);
-        setRoadBlocks(resetState.roadBlocks || initialRoadBlocks);
-        setPriorityZones(resetState.priorityZones || initialPriorityZones);
+        setReports(resetState.reports || []);
+        setHospitals(resetState.hospitals || []);
+        setHazardZones(resetState.hazardZones || []);
+        setRoadBlocks(resetState.roadBlocks || []);
+        setPriorityZones(resetState.priorityZones || []);
         setSimulationRunning(false);
         setSimulationStep(0);
         setActiveSafeRoute(null);
@@ -237,7 +271,7 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     // Fallback REST fetch
-    fetch(`${API_BASE}/api/state`)
+    fetch(`${API_BASE}/api/live-data?regionId=${activeRegion.id}`)
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data) {
@@ -249,11 +283,11 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (res.data.priorityZones) setPriorityZones(res.data.priorityZones);
           if (res.data.dispatchedUnits) setDispatchedUnits(res.data.dispatchedUnits);
           if (res.data.disasterAlert) setSystemAlert(res.data.disasterAlert);
+          if (res.data.weather) setWeather(res.data.weather);
+          if (res.data.radar) setRadar(res.data.radar);
         }
       })
-      .catch(() => {
-        // Fallback already pre-seeded
-      });
+      .catch(error => console.warn('Failed to load live state:', error));
 
     return () => {
       if (socket) socket.disconnect();
@@ -277,23 +311,9 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return data.report;
       }
       throw new Error(data.error || 'Failed to submit report');
-    } catch (err) {
-      const fallbackReport: EmergencyReport = {
-        id: `rep_${Date.now()}`,
-        rawText: text,
-        category: text.toLowerCase().includes('water') ? 'WATER_SHORTAGE' : text.toLowerCase().includes('road') ? 'ROAD_BLOCKED' : 'RESCUE_NEEDED',
-        severity: 9,
-        headcount: 5,
-        locationName: "Rawalpindi Metro Zone",
-        coords: coords || [33.6350, 73.0650],
-        timestamp: new Date().toISOString(),
-        status: "VERIFIED",
-        needs: ["Emergency Response"],
-        languageDetected: text.includes('pani') ? 'Roman Urdu' : 'English',
-        confidence: 0.95
-      };
-      setReports(prev => [fallbackReport, ...prev]);
-      return fallbackReport;
+    } catch (error) {
+      console.error('Failed to submit report to the live API:', error);
+      throw error;
     }
   }, []);
 
@@ -423,10 +443,8 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setSimulationRunning(true);
       await fetch(`${API_BASE}/api/simulation/start`, { method: 'POST' });
-    } catch (err) {
-      // Local step simulation
-      setSimulationRunning(true);
-      setSimulationStep(1);
+    } catch (error) {
+      console.warn('Simulation API unavailable:', error);
     }
   }, []);
 
@@ -434,12 +452,13 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const resetSimulation = useCallback(async () => {
     try {
       await fetch(`${API_BASE}/api/simulation/reset`, { method: 'POST' });
-    } catch (err) {
-      setReports(initialReports);
-      setHospitals(initialHospitals);
-      setHazardZones(initialHazardZones);
-      setRoadBlocks(initialRoadBlocks);
-      setPriorityZones(initialPriorityZones);
+    } catch (error) {
+      console.warn('Simulation reset API unavailable:', error);
+      setReports([]);
+      setHospitals([]);
+      setHazardZones([]);
+      setRoadBlocks([]);
+      setPriorityZones([]);
       setSimulationRunning(false);
       setSimulationStep(0);
       setActiveSafeRoute(null);
@@ -458,7 +477,8 @@ export const CrisisProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         dispatchedUnits,
         systemAlert,
         activeRegion,
-        regions: defaultRegions,
+        regions: regions.length > 0 ? regions : defaultRegions,
+        radar,
         selectedReport,
         selectedHospital,
         selectedPriorityZone,

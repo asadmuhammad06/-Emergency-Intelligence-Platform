@@ -42,6 +42,19 @@ app.use(cors({
 }));
 app.use(express.json());
 
+async function getRadarData() {
+  const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+  if (!response.ok) throw new Error(`Radar API error: ${response.status}`);
+  const radar = await response.json();
+  const frame = radar.radar?.nowcast?.[0] || radar.radar?.past?.[radar.radar.past.length - 1];
+  if (!frame) throw new Error('Radar API returned no frames');
+  return {
+    tileUrl: `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    frameTimestamp: frame.time,
+    fetchedAt: new Date().toISOString()
+  };
+}
+
 app.get('/api/weather', async (req, res) => {
   try {
     const lat = req.query.lat ? parseFloat(req.query.lat) : 33.6844;
@@ -97,6 +110,23 @@ currentState.priorityZones = calculatePriorityZones(
 );
 
 // REST API Endpoints
+app.get('/api/regions', (req, res) => {
+  res.json({
+    success: true,
+    data: regions,
+    metadata: { serverTime: new Date().toISOString() }
+  });
+});
+
+app.get('/api/radar', async (req, res) => {
+  try {
+    res.json({ success: true, data: await getRadarData() });
+  } catch (error) {
+    console.error('Radar API error:', error);
+    res.status(502).json({ success: false, error: 'Failed to fetch radar telemetry' });
+  }
+});
+
 app.get('/api/state', (req, res) => {
   res.json({
     success: true,
@@ -107,6 +137,63 @@ app.get('/api/state', (req, res) => {
       totalReportsCount: currentState.reports.length
     }
   });
+});
+
+// Consolidated live snapshot for clients that cannot maintain a WebSocket.
+app.get('/api/live-data', async (req, res) => {
+  const requestedRegion = req.query.regionId
+    ? regions.find(region => region.id === req.query.regionId)
+    : regions[0];
+  if (!requestedRegion) {
+    return res.status(404).json({ success: false, error: 'Region not found' });
+  }
+
+  const lat = req.query.lat ? parseFloat(req.query.lat) : requestedRegion.center[0];
+  const lng = req.query.lng ? parseFloat(req.query.lng) : requestedRegion.center[1];
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ success: false, error: 'Valid lat and lng coordinates are required' });
+  }
+
+  try {
+    const [weather, radar] = await Promise.all([
+      getCurrentWeather(lat, lng),
+      getRadarData()
+    ]);
+    const isPrimaryRegion = requestedRegion.id === regions[0].id;
+    const regionState = isPrimaryRegion
+      ? currentState
+      : {
+          ...currentState,
+          activeRegion: requestedRegion,
+          reports: [],
+          hospitals: [],
+          hazardZones: [],
+          roadBlocks: [],
+          reliefHubs: [],
+          priorityZones: [],
+          dispatchedUnits: []
+        };
+
+    res.json({
+      success: true,
+      data: {
+        ...regionState,
+        activeRegion: requestedRegion,
+        weather,
+        radar
+      },
+      metadata: {
+        serverTime: new Date().toISOString(),
+        source: 'CrisisMap live operations snapshot',
+        regionId: requestedRegion.id,
+        regionCount: regions.length
+      }
+    });
+  } catch (error) {
+    console.error('Live data API error:', error);
+    res.status(502).json({ success: false, error: 'Failed to fetch live telemetry' });
+  }
 });
 
 // Citizen Report Ingestion
