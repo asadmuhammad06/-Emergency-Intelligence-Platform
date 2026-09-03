@@ -309,11 +309,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       </div>
 
       {/* Floating Layer Controls - High Density Tactical Toggle Matrix */}
-<<<<<<< Updated upstream
-      <div className="absolute top-[4.5rem] sm:top-4 right-3 sm:right-4 z-30 bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-1.5rem))] select-none">
-=======
       <div className="absolute top-[4.5rem] sm:top-4 right-4 max-w-[calc(100%-2rem)] z-[400] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-2rem))] select-none">
->>>>>>> Stashed changes
         <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
           <span className="flex items-center gap-1.5 text-slate-300">
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
