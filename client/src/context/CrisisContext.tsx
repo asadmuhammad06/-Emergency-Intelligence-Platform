@@ -36,11 +36,8 @@ interface CrisisContextType {
   weather: WeatherData | null;
   weatherLoading: boolean;
   radar: RadarData | null;
-<<<<<<< Updated upstream
   intelLoading: boolean;
-=======
   simulatedMetrics: SimulatedMetrics;
->>>>>>> Stashed changes
 
   // Selection & Route State
   selectedReport: EmergencyReport | null;
