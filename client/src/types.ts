@@ -17,6 +17,13 @@ export interface EmergencyReport {
   rawText: string;
   locationName: string;
   coords: [number, number];
+  type?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  source?: string;
+  lat?: number;
+  lon?: number;
   headcount?: number;
   needs?: string[];
   languageDetected?: string;
