@@ -162,13 +162,8 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 </div>
 
                 {/* Raw Text Extract */}
-<<<<<<< Updated upstream
                 <p className="line-clamp-3 text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
                   {report.title || report.rawText || 'Live incident update'}
-=======
-                <p className="text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 line-clamp-3 overflow-hidden">
-                  "{report.rawText}"
->>>>>>> Stashed changes
                 </p>
 
                 {/* AI Extracted Entity Pills */}
