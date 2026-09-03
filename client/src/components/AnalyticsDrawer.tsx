@@ -22,7 +22,8 @@ export const AnalyticsDrawer: React.FC = () => {
     dispatchedUnits,
     systemAlert,
     reports,
-    weather
+    weather,
+    simulatedMetrics
   } = useCrisis();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -66,9 +67,9 @@ export const AnalyticsDrawer: React.FC = () => {
           )}
 
           <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
-            <span>Overall Hospital Load:</span>
+            <span>ICU Saturation <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em>:</span>
             <span className="font-bold text-amber-400">
-              {Math.round((occupiedBeds / (totalBeds || 1)) * 100)}%
+              {simulatedMetrics.icuSaturation}%
             </span>
           </div>
 
@@ -86,14 +87,14 @@ export const AnalyticsDrawer: React.FC = () => {
       {isExpanded && (
         <div className="p-4 border-t border-slate-800/60 bg-slate-950/80 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           {/* Hospital Capacity Grid */}
-          <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl min-w-0">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-bold text-slate-200 flex items-center gap-1.5 font-mono">
                 <Hospital className="w-4 h-4 text-emerald-400" />
                 <span>HOSPITAL SURGE STATUS</span>
               </h4>
               <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                {availableIcu} ICU Beds Free
+                {availableIcu} ICU Beds Free <span className="text-cyan-400">SIMULATED</span>
               </span>
             </div>
 
@@ -101,7 +102,7 @@ export const AnalyticsDrawer: React.FC = () => {
               {hospitals.map(h => (
                 <div key={h.id} className="text-[11px]">
                   <div className="flex justify-between mb-0.5">
-                    <span className="text-slate-300 font-medium truncate">{h.name}</span>
+                    <span className="text-slate-300 font-medium truncate">{h.name} <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
                     <span className={`font-mono font-bold ${h.capacity >= 85 ? 'text-red-400' : 'text-emerald-400'}`}>
                       {h.capacity}% ({h.occupiedBeds}/{h.totalBeds})
                     </span>
@@ -120,7 +121,7 @@ export const AnalyticsDrawer: React.FC = () => {
           </div>
 
           {/* Active Dispatched Units Fleet */}
-          <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl min-w-0">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-bold text-slate-200 flex items-center gap-1.5 font-mono">
                 <Truck className="w-4 h-4 text-rose-400" />
@@ -152,37 +153,37 @@ export const AnalyticsDrawer: React.FC = () => {
           </div>
 
           {/* River & Catchment Flood Gauges */}
-          <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+          <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl min-w-0">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-bold text-slate-200 flex items-center gap-1.5 font-mono">
                 <Droplets className="w-4 h-4 text-cyan-400" />
                 <span>HYDROLOGICAL SENSORS</span>
               </h4>
               <span className="text-[10px] text-red-400 font-mono font-bold animate-pulse">
-                HIGH DANGER
+                <span className="text-cyan-400">SIMULATED</span>
               </span>
             </div>
 
-            <div className="space-y-2.5 text-[11px]">
-              <div className="bg-slate-950/60 p-2 rounded border border-red-900/50">
+            <div className="space-y-3 text-[11px]">
+              <div className="bg-slate-950/60 p-3 rounded-xl border border-red-900/50 min-w-0">
                 <div className="flex justify-between">
                   <span className="text-slate-300 font-medium">Nullah Lai @ Kattarian</span>
-                  <span className="font-bold text-red-400 font-mono">22.4 ft (Danger: 20ft)</span>
+                  <span className="font-bold text-red-400 font-mono">{simulatedMetrics.nullahGaugeFeet} ft <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
                 </div>
-                <p className="text-[10px] text-red-300 mt-0.5">Discharge: 34,000 cusecs (Rising)</p>
+                <p className="text-[10px] text-red-300 mt-0.5">Scenario gauge value — field verification required.</p>
               </div>
 
-              <div className="bg-slate-950/60 p-2 rounded border border-amber-900/50">
+              <div className="bg-slate-950/60 p-3 rounded-xl border border-amber-900/50 min-w-0">
                 <div className="flex justify-between">
                   <span className="text-slate-300 font-medium">Nullah Lai @ Gawalmandi</span>
-                  <span className="font-bold text-amber-400 font-mono">19.2 ft (Danger: 18ft)</span>
+                  <span className="font-bold text-amber-400 font-mono">{simulatedMetrics.nullahGaugeFeet - 1} ft <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
                 </div>
-                <p className="text-[10px] text-amber-300 mt-0.5">Water overtopping bridge embankments</p>
+                <p className="text-[10px] text-amber-300 mt-0.5">Scenario gauge value — field verification required.</p>
               </div>
 
               {/* Atmospheric Weather Telemetry */}
               {weather && (
-                <div className="bg-slate-950/60 p-2 rounded border border-cyan-900/50">
+                <div className="bg-slate-950/60 p-3 rounded-xl border border-cyan-900/50 min-w-0">
                   <div className="flex justify-between">
                     <span className="text-slate-300 font-medium flex items-center gap-1">
                       <Wind className="w-3 h-3 text-cyan-400" />

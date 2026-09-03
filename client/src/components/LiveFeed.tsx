@@ -139,9 +139,17 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 <div className="flex items-center justify-between gap-2 mb-2.5">
                   <div className="min-w-0 flex items-center gap-2 flex-wrap">
                     {getCategoryBadge(report.category)}
+<<<<<<< Updated upstream
                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-800/60 px-2 py-0.5 rounded">
                      source: {report.source === 'community-reported' ? 'community-reported' : 'live'}
                    </span>
+=======
+                    {report.source === 'SIMULATED' && (
+                      <span className="text-[10px] font-mono bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800">
+                        SIMULATED
+                      </span>
+                    )}
+>>>>>>> Stashed changes
                     {report.languageDetected && (
                       <span className="text-xs font-mono bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-slate-800">
                         {report.languageDetected}
@@ -157,8 +165,13 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 </div>
 
                 {/* Raw Text Extract */}
+<<<<<<< Updated upstream
                 <p className="line-clamp-3 text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80">
                   {report.title || report.rawText || 'Live incident update'}
+=======
+                <p className="text-sm text-slate-100 font-medium leading-relaxed mb-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 line-clamp-3 overflow-hidden">
+                  "{report.rawText}"
+>>>>>>> Stashed changes
                 </p>
 
                 {/* AI Extracted Entity Pills */}

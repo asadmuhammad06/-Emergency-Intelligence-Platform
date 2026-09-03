@@ -201,7 +201,8 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
     weather,
     radar,
     weatherLoading,
-    refreshWeather
+    refreshWeather,
+    simulatedMetrics
   } = useCrisis();
 
   // Default to Tactical Dark
@@ -216,7 +217,8 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
         attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
         subdomains: '',
-        maxZoom: 16,
+        minZoom: 1,
+        maxZoom: 19,
       };
     }
 
@@ -226,7 +228,8 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
         attribution: 'Tiles &copy; Esri',
         subdomains: '',
-        maxZoom: 16,
+        minZoom: 1,
+        maxZoom: 19,
       };
     }
 
@@ -237,9 +240,21 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       subdomains: 'abc',
+      minZoom: 1,
       maxZoom: 19,
     };
   }, [mapTheme]);
+
+  const safeZoom = Math.min(19, Math.max(1, activeRegion.zoom));
+
+  useEffect(() => {
+    console.log('[MapView] active region center/zoom:', {
+      city: activeRegion.name,
+      lat: activeRegion.center[0],
+      lon: activeRegion.center[1],
+      zoom: safeZoom
+    });
+  }, [activeRegion, safeZoom]);
 
   // Filter reports according to activeCategoryFilter
   const filteredReports = useMemo(() => {
@@ -301,6 +316,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
 
 
 
+
       <div className="absolute top-[4.5rem] sm:top-4 right-3 sm:right-4 z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-1.5rem))] select-none">
 
         <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
@@ -308,7 +324,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
             TACTICAL OVERLAYS
           </span>
-          <span className="text-[9px] text-slate-500">LIVE</span>
+          <span className="text-[9px] text-cyan-400">SIMULATED</span>
         </div>
 
         <button
@@ -324,7 +340,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             Flood Inundation
           </span>
           <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-800/40">
-            {hazardZones.length}
+            {hazardZones.length} <span className="text-[8px]">SIMULATED</span>
           </span>
         </button>
 
@@ -341,7 +357,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             Medical Facilities
           </span>
           <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-800/40">
-            {hospitals.length}
+            {hospitals.length} <span className="text-[8px]">SIMULATED</span>
           </span>
         </button>
 
@@ -358,7 +374,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             Road Blockades
           </span>
           <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-800/40">
-            {roadBlocks.length}
+            {roadBlocks.length} <span className="text-[8px]">SIMULATED</span>
           </span>
         </button>
 
@@ -375,7 +391,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             Relief & Water Depots
           </span>
           <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-800/40">
-            {reliefHubs.length}
+            {reliefHubs.length} <span className="text-[8px]">SIMULATED</span>
           </span>
         </button>
 
@@ -392,7 +408,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             Citizen SOS Signals
           </span>
           <span className="text-[10px] font-bold text-rose-400 bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800/40">
-            {filteredReports.length}
+            {simulatedMetrics.activeSos} <span className="text-[8px]">SIMULATED</span>
           </span>
         </button>
       </div>
@@ -561,7 +577,9 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       {/* Main Tactical Map */}
       <MapContainer
         center={activeRegion.center}
-        zoom={activeRegion.zoom}
+        zoom={safeZoom}
+        minZoom={1}
+        maxZoom={19}
         scrollWheelZoom={false}
         className="w-full h-full z-0"
         style={{ background: '#090d16' }}
@@ -569,7 +587,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         <MapSizeSynchronizer />
         <MapController
           center={activeRegion.center}
-          zoom={activeRegion.zoom}
+          zoom={safeZoom}
           highlightedCoords={highlightedCoords}
         />
 
@@ -579,6 +597,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           attribution={currentTileConfig.attribution}
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
+          minZoom={currentTileConfig.minZoom}
           maxZoom={currentTileConfig.maxZoom}
           zIndex={1}
         />
@@ -588,6 +607,8 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
             url={radar.tileUrl}
             opacity={0.35}
             zIndex={2}
+            minZoom={1}
+            maxZoom={10}
             attribution="Radar &copy; RainViewer"
           />
         )}
