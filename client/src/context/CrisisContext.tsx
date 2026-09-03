@@ -217,7 +217,7 @@ export const CrisisProvider: React.FC<{
     useState<Region>(defaultRegions[0]);
 
   const [regions, setRegions] =
-    useState<Region[]>([]);
+    useState<Region[]>(defaultRegions);
 
   const [selectedReport, setSelectedReport] =
     useState<EmergencyReport | null>(null);
@@ -565,6 +565,7 @@ export const CrisisProvider: React.FC<{
       windGusts: current.wind_gusts_10m,
       weatherCode: current.weather_code,
       time: current.time,
+      floodRiskLevel: (current.precipitation ?? 0) >= 10 ? 'HIGH' : (current.precipitation ?? 0) >= 2 ? 'MODERATE' : 'LOW',
     };
 
     setWeather(realWeather);

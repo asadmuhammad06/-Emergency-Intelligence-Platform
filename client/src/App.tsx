@@ -7,6 +7,8 @@ import { MapView } from './components/MapView';
 import { SafestRouteModal } from './components/SafestRouteModal';
 import { PriorityDispatch } from './components/PriorityDispatch';
 import { CitizenReportModal } from './components/CitizenReportModal';
+import { EmergencyTicker } from './components/EmergencyTicker';
+import { CommanderQwenDrawer } from './components/CommanderQwenDrawer';
 import {
   Navigation,
   Send,
@@ -18,7 +20,8 @@ import {
   Truck,
   Activity,
   Radio,
-  Users
+  Users,
+  Bot
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -41,6 +44,7 @@ function DashboardContent() {
   const [isSafeRouteOpen, setIsSafeRouteOpen] = useState(false);
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isCitizenOpen, setIsCitizenOpen] = useState(false);
+  const [isQwenOpen, setIsQwenOpen] = useState(false);
   const [routeOriginCoords, setRouteOriginCoords] = useState<[number, number] | undefined>(undefined);
 
   // Sync activeTab with URL hash so tabs can be opened in new windows/tabs
@@ -76,6 +80,12 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] overflow-x-hidden">
+      {/* Live Emergency Broadcast Ticker */}
+      <EmergencyTicker
+        onOpenCitizenModal={() => setIsCitizenOpen(true)}
+        onOpenSafeRoute={() => handleOpenSafeRoute()}
+      />
+
       {/* Sleek Single-Line Navbar with Tabs and Popout Options */}
       <Navbar
         activeTab={activeTab}
@@ -272,7 +282,7 @@ function DashboardContent() {
       {activeTab === 'all' && (
         <>
           {/* Hero: Tactical Geospatial EOC Map Viewport */}
-          <section id="tactical-map" className="relative w-full h-[420px] lg:h-[460px] bg-slate-950 border-b border-slate-800 shadow-2xl">
+          <section id="tactical-map" className="relative w-full h-[460px] lg:h-[500px] bg-slate-950 border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]">
             <MapView
               onSelectRouteFromCoords={(coords) => {
                 setRouteOriginCoords(coords);
@@ -284,57 +294,126 @@ function DashboardContent() {
             />
           </section>
 
-          {/* Core Telemetry KPI Strip */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-4 hover:border-slate-700 transition-all group">
-                <div className="w-11 h-11 rounded-xl bg-rose-950/80 border border-rose-800/60 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_14px_rgba(244,63,94,0.2)] group-hover:shadow-[0_0_20px_rgba(244,63,94,0.3)] transition-all">
-                  <Users className="w-5 h-5" />
+          {/* Core Telemetry KPI Strip — Cleanly Separated Below Map */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 relative z-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {/* Card 1: Citizens Trapped */}
+              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-rose-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-rose hover:border-rose-400 transition-all group">
+                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-rose-500/15 blur-xl group-hover:bg-rose-500/25 transition-all"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-rose-400 uppercase">
+                      PRIORITY ZERO
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-rose-950/80 text-rose-300 border border-rose-800/80 px-1.5 py-0.5 rounded">
+                    URGENT
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Citizens Trapped</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-rose-300 font-mono leading-none">{simulatedMetrics.trappedCitizens}</span>
-                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-rose-950/90 border border-rose-600/50 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_16px_rgba(244,63,94,0.35)] group-hover:scale-105 transition-transform">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Trapped Civilians</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.5)]">
+                        {simulatedMetrics.trappedCitizens}
+                      </span>
+                      <span className="text-[10px] text-rose-400 font-mono font-bold">SO-1122</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-4 hover:border-slate-700 transition-all group">
-                <div className="w-11 h-11 rounded-xl bg-amber-950/80 border border-amber-800/60 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_14px_rgba(245,158,11,0.2)] group-hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all">
-                  <Hospital className="w-5 h-5" />
+              {/* Card 2: ICU Saturation */}
+              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-amber-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-amber hover:border-amber-400 transition-all group">
+                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/15 blur-xl group-hover:bg-amber-500/25 transition-all"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-amber-400 uppercase">
+                      HOSPITAL SURGE
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-800/80 px-1.5 py-0.5 rounded">
+                    TRIAGE ACTIVE
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">ICU Saturation</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-amber-300 font-mono leading-none">{simulatedMetrics.icuSaturation}%</span>
-                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-amber-950/90 border border-amber-600/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_16px_rgba(245,158,11,0.35)] group-hover:scale-105 transition-transform">
+                    <Hospital className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">ICU Saturation</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]">
+                        {simulatedMetrics.icuSaturation}%
+                      </span>
+                      <span className="text-[10px] text-amber-400 font-mono font-bold">{availableIcu} Beds Free</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-4 hover:border-slate-700 transition-all group">
-                <div className="w-11 h-11 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_14px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all">
-                  <Radio className="w-5 h-5" />
+              {/* Card 3: Active SOS Signals */}
+              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-cyan-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-cyan hover:border-cyan-400 transition-all group">
+                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cyan-500/15 blur-xl group-hover:bg-cyan-500/25 transition-all"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-400 uppercase">
+                      DISTRESS MESH
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 px-1.5 py-0.5 rounded">
+                    LIVE INTEL
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Active SOS Signals</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-cyan-300 font-mono leading-none">{simulatedMetrics.activeSos}</span>
-                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-cyan-950/90 border border-cyan-600/50 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_16px_rgba(6,182,212,0.35)] group-hover:scale-105 transition-transform">
+                    <Radio className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Active SOS Beacons</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]">
+                        {simulatedMetrics.activeSos}
+                      </span>
+                      <span className="text-[10px] text-cyan-400 font-mono font-bold">{reports.length} Total Logs</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-4 hover:border-slate-700 transition-all group">
-                <div className="w-11 h-11 rounded-xl bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_14px_rgba(16,185,129,0.2)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">
-                  <Droplets className="w-5 h-5" />
+              {/* Card 4: River Hydrology Gauge */}
+              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-emerald-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-emerald hover:border-emerald-400 transition-all group">
+                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/15 blur-xl group-hover:bg-emerald-500/25 transition-all"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
+                      HYDROLOGY GAUGE
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 px-1.5 py-0.5 rounded">
+                    KATTARIAN SENSOR
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Nullah Lai Gauge</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-black text-2xl text-emerald-300 font-mono leading-none">{simulatedMetrics.nullahGaugeFeet}<span className="text-sm font-normal ml-0.5 text-emerald-400">ft</span></span>
-                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-950/90 border border-emerald-600/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_16px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform">
+                    <Droplets className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Nullah Lai Level</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]">
+                        {simulatedMetrics.nullahGaugeFeet}
+                      </span>
+                      <span className="text-sm font-bold text-emerald-400 font-mono ml-0.5">ft</span>
+                      <span className="text-[10px] text-slate-500 font-mono ml-1.5 hidden sm:inline">(Limit 20.0ft)</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -660,6 +739,34 @@ function DashboardContent() {
       <CitizenReportModal
         isOpen={isCitizenOpen}
         onClose={() => setIsCitizenOpen(false)}
+      />
+
+      {/* Floating Commander Qwen AI Copilot Trigger */}
+      <div className="fixed bottom-5 right-5 z-40">
+        <button
+          onClick={() => setIsQwenOpen(true)}
+          className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(234,88,12,0.6)] border border-orange-400/50 transition-all hover:scale-105 active:scale-95 group"
+          title="Open Commander Qwen EOC AI Copilot"
+        >
+          <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
+            <Bot className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+          </div>
+          <span className="hidden sm:inline">COMMANDER QWEN (AI COPILOT)</span>
+          <span className="sm:hidden">QWEN AI</span>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        </button>
+      </div>
+
+      {/* Commander Qwen EOC AI Drawer */}
+      <CommanderQwenDrawer
+        isOpen={isQwenOpen}
+        onClose={() => setIsQwenOpen(false)}
+        onOpenSafeRouteModal={() => setIsSafeRouteOpen(true)}
+        onOpenPriorityModal={() => setIsPriorityOpen(true)}
+        onOpenCitizenModal={() => setIsCitizenOpen(true)}
       />
     </div>
   );

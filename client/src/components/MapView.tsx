@@ -207,16 +207,17 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
 
   // Default to Tactical Dark
   const [mapTheme, setMapTheme] = useState<MapThemeOption>('tactical_dark');
-  const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(true);
+  const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(false);
 
     const currentTileConfig = useMemo(() => {
     // All free — no API key required
     if (mapTheme === 'tactical_dark') {
       return {
         key: 'tactical_dark',
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-        subdomains: '',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
+        subdomains: 'abc',
+        className: 'tactical-dark-tiles',
       };
     }
 
@@ -259,13 +260,17 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
   return (
     <div className="relative isolate w-full h-full min-h-0 bg-[#080d1a] overflow-hidden">
       {/* Base Map Style Switcher - High-Tech CAD/GIS Segmented Pill */}
-      <div className="map-toolbar absolute top-3 left-3 right-3 sm:right-auto z-30 bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 font-mono text-xs select-none overflow-x-auto">
+
+
+      <div className="map-toolbar absolute top-3 left-3 right-3 sm:right-auto z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] flex items-center gap-1 font-mono text-xs select-none overflow-x-auto">
+
         <div className="flex shrink-0 items-center gap-1.5 px-2 py-1 text-slate-400 border-r border-slate-800">
+
           <Globe className="w-3.5 h-3.5 text-cyan-400" />
           <span className="text-[10px] font-bold tracking-wider uppercase text-slate-300">TILES</span>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setMapTheme('tactical_dark')}
             className={`px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1.5 ${
@@ -303,7 +308,13 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       </div>
 
       {/* Floating Layer Controls - High Density Tactical Toggle Matrix */}
-      <div className="absolute top-[4.5rem] sm:top-4 right-4 max-w-[calc(100%-2rem)] z-[400] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-2rem))] select-none">
+
+
+
+
+
+      <div className="absolute top-[4.5rem] sm:top-4 right-3 sm:right-4 z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-1.5rem))] select-none">
+      
         <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
           <span className="flex items-center gap-1.5 text-slate-300">
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
@@ -564,6 +575,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
         center={activeRegion.center}
         zoom={mapZoom}
         scrollWheelZoom={false}
+        preferCanvas={true}
         className="w-full h-full z-0"
         style={{ background: '#090d16' }}
       >
@@ -580,6 +592,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           attribution={currentTileConfig.attribution}
           url={currentTileConfig.url}
           subdomains={currentTileConfig.subdomains}
+          className={currentTileConfig.className}
           zIndex={1}
         />
        {/* Radar temporarily disabled - tile provider causing zoom errors */}
