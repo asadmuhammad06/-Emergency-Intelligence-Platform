@@ -1,5 +1,5 @@
 // Data: live API submission; community-reported records are stored and streamed by the server.
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   AlertCircle,
@@ -62,11 +62,6 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReport, setSubmittedReport] = useState<any>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Voice SOS Speech-to-Text State
-  const [isListening, setIsListening] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(true);
-  const recognitionRef = useRef<any>(null);
 
   // Dynamic client-side NLP preview
   const [previewCategory, setPreviewCategory] = useState('RESCUE_NEEDED');
@@ -190,8 +185,8 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
-      <div className="bg-[#0e1628] border border-red-500/50 rounded-2xl w-full max-w-xl flex flex-col shadow-[0_0_60px_rgba(239,68,68,0.3)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
+      <div className="bg-[#0e1628] border border-red-500/40 rounded-2xl w-full max-w-xl flex flex-col shadow-[0_0_50px_rgba(239,68,68,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/95 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
@@ -241,42 +236,6 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-            {/* Voice SOS Recording Banner Button */}
-            {speechSupported && (
-              <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`p-2 rounded-lg transition-colors ${
-                    isListening
-                      ? 'bg-rose-950 text-rose-400 border border-rose-600 animate-pulse'
-                      : 'bg-slate-900 text-slate-400 border border-slate-700'
-                  }`}>
-                    {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-white block truncate">
-                      {isListening ? 'Listening to Citizen Speech...' : 'Voice SOS Recording'}
-                    </span>
-                    <span className="text-[11px] text-slate-400 block truncate">
-                      {isListening ? 'Speak in Urdu or English now' : 'Speak your emergency distress hands-free'}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={toggleVoiceRecording}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all shrink-0 flex items-center gap-1.5 ${
-                    isListening
-                      ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
-                      : 'bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-900/60'
-                  }`}
-                >
-                  <Mic className="w-3.5 h-3.5" />
-                  <span>{isListening ? 'Stop Mic' : 'Record SOS'}</span>
-                </button>
-              </div>
-            )}
-
             {/* Input Text Area */}
             <div>
               <div className="flex items-center justify-between mb-1.5">

@@ -311,18 +311,11 @@ function DashboardContent() {
                     URGENT
                   </span>
                 </div>
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-rose-950/90 border border-rose-600/50 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_16px_rgba(244,63,94,0.35)] group-hover:scale-105 transition-transform">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Trapped Civilians</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.5)]">
-                        {simulatedMetrics.trappedCitizens}
-                      </span>
-                      <span className="text-[10px] text-rose-400 font-mono font-bold">SO-1122</span>
-                    </div>
+                <div className="min-w-0">
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Citizens Trapped</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-black text-2xl text-rose-300 font-mono leading-none">{simulatedMetrics.trappedCitizens}</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -341,18 +334,11 @@ function DashboardContent() {
                     TRIAGE ACTIVE
                   </span>
                 </div>
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-amber-950/90 border border-amber-600/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_16px_rgba(245,158,11,0.35)] group-hover:scale-105 transition-transform">
-                    <Hospital className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">ICU Saturation</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-                        {simulatedMetrics.icuSaturation}%
-                      </span>
-                      <span className="text-[10px] text-amber-400 font-mono font-bold">{availableIcu} Beds Free</span>
-                    </div>
+                <div className="min-w-0">
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">ICU Saturation</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-black text-2xl text-amber-300 font-mono leading-none">{simulatedMetrics.icuSaturation}%</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -371,18 +357,11 @@ function DashboardContent() {
                     LIVE INTEL
                   </span>
                 </div>
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-cyan-950/90 border border-cyan-600/50 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_16px_rgba(6,182,212,0.35)] group-hover:scale-105 transition-transform">
-                    <Radio className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Active SOS Beacons</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]">
-                        {simulatedMetrics.activeSos}
-                      </span>
-                      <span className="text-[10px] text-cyan-400 font-mono font-bold">{reports.length} Total Logs</span>
-                    </div>
+                <div className="min-w-0">
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Active SOS Signals</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-black text-2xl text-cyan-300 font-mono leading-none">{simulatedMetrics.activeSos}</span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
@@ -401,19 +380,11 @@ function DashboardContent() {
                     KATTARIAN SENSOR
                   </span>
                 </div>
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-emerald-950/90 border border-emerald-600/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_16px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform">
-                    <Droplets className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Nullah Lai Level</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]">
-                        {simulatedMetrics.nullahGaugeFeet}
-                      </span>
-                      <span className="text-sm font-bold text-emerald-400 font-mono ml-0.5">ft</span>
-                      <span className="text-[10px] text-slate-500 font-mono ml-1.5 hidden sm:inline">(Limit 20.0ft)</span>
-                    </div>
+                <div className="min-w-0">
+                  <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block mb-0.5">Nullah Lai Gauge</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-black text-2xl text-emerald-300 font-mono leading-none">{simulatedMetrics.nullahGaugeFeet}<span className="text-sm font-normal ml-0.5 text-emerald-400">ft</span></span>
+                    <span className="text-[9px] font-bold text-cyan-400">SIMULATED</span>
                   </div>
                 </div>
               </div>
