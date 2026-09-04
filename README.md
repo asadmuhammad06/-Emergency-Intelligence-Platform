@@ -1,3 +1,8 @@
+Here is a complete, production-grade `README.md` for your repository. It covers the full architecture, tech stack, workflows, disaster management pipelines, setup steps, and stage demo walkthrough.
+
+You can directly copy and paste this into your `README.md`:
+
+```markdown
 # 🚨 CrisisMap Pakistan — Autonomous Emergency Intelligence & Tactical Decision Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
@@ -75,15 +80,43 @@ During catastrophic monsoon flash floods (e.g., Rawalpindi / Islamabad Nullah La
 ---
 
 ## 🏗️ System Architecture
-                            [ Citizen / Field Operative ]
-                                  │                   │
-                        Voice SOS (Urdu/Eng)    Incident Photo
-                                  │                   │
-                                  ▼                   ▼
-                      [ Client-Side Audio / Canvas Compression ]
-                                  │                   │
-                                  ▼                   ▼
 
+```
+                                  [ Citizen / Field Operative ]
+                                      │                   │
+                            Voice SOS (Urdu/Eng)    Incident Photo
+                                      │                   │
+                                      ▼                   ▼
+                          [ Client-Side Audio / Canvas Compression ]
+                                      │                   │
+                                      ▼                   ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                CRISISMAP CLIENT (VITE + REACT 18)                      │
+│                                                                                        │
+│  [ Tactical MapView ]     [ Live EOC Wire ]      [ Qwen-VL Inspector ]  [ Commander Drawer ] │
+│   (60 FPS GIS Leaflet)    (Real-Time Ticker)     (Scanline & Bounding)   (Full Context AI) │
+└─────────────────────────────────────────▲──────────────────────────────────────────────┘
+                                          │ HTTP / REST / SSE / WebSockets
+                                          ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CRISISMAP BACKEND (NODE.JS + EXPRESS)                     │
+│                                                                                        │
+│  ┌─────────────────────────┐  ┌──────────────────────────┐  ┌────────────────────────┐ │
+│  │   Live Ingestion & NLP  │  │  Qwen-VL Vision Engine   │  │ Routing & Safe Detours │ │
+│  │  (Multi-lingual Parser) │  │  (DashScope / Heuristic) │  │ (A* / Dijkstra Solver) │ │
+│  └────────────┬────────────┘  └─────────────┬────────────┘  └───────────┬────────────┘ │
+│               │                             │                           │              │
+│               ▼                             ▼                           ▼              │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+│  │               Dynamic Priority Dispatch Solver (Multi-Criteria Matrix)            │ │
+│  └──────────────────────────────────────────┬────────────────────────────────────────┘ │
+│                                             │                                          │
+│                                             ▼                                          │
+│  ┌───────────────────────────────────────────────────────────────────────────────────┐ │
+│  │               Persistent ACID File-Backed Store (emergency_db.json)               │ │
+│  └───────────────────────────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -135,3 +168,75 @@ During catastrophic monsoon flash floods (e.g., Rawalpindi / Islamabad Nullah La
 ```bash
 git clone https://github.com/your-username/CrisisMap-Pakistan.git
 cd CrisisMap-Pakistan
+```
+
+### 2. Environment Configuration
+Create a `.env` file in the `server` directory:
+```bash
+cp server/.env.example server/.env
+```
+
+*(Optional)* To enable live cloud inference on arbitrary uploaded photos, configure your Alibaba DashScope key:
+```env
+PORT=3001
+NODE_ENV=development
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+```
+> **Note:** If `DASHSCOPE_API_KEY` is omitted, the platform seamlessly runs in **Calibrated Disaster Simulation Mode**, perfectly safe for offline hackathon evaluations.
+
+### 3. Launch Development Servers
+
+#### **Cross-Platform (Windows, Mac, Linux):**
+Install dependencies in both directories and launch:
+
+```bash
+# Terminal 1: Backend
+cd server
+npm install
+npm run dev
+
+# Terminal 2: Frontend
+cd client
+npm install
+npm run dev
+```
+
+#### **One-Click Launchers:**
+* **Windows:** Double-click `start.bat`
+* **Mac / Linux:** Run `chmod +x start.sh && ./start.sh`
+
+Open your browser at **`http://localhost:5173`**.
+
+---
+
+## 📡 API Endpoints Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/database/status` | Reports ACID database health, record counts, and location. |
+| `GET` | `/api/vision/status` | Reports whether live DashScope Qwen-VL API is connected. |
+| `GET` | `/api/vision/presets` | Retrieves calibrated flood damage scenarios for 1-click evaluation. |
+| `POST` | `/api/vision/analyze-damage` | Executes Qwen-VL multimodal damage assessment on image payload. |
+| `GET` | `/api/live-data` | Consolidated snapshot of hospitals, river gauges, weather, and reports. |
+| `POST` | `/api/reports` | Ingests new citizen distress reports into the priority solver. |
+| `POST` | `/api/route/calculate` | Computes safest hazard-avoiding route between coordinates. |
+| `POST` | `/api/dispatch/approve` | Confirms tactical unit mobilization to priority sector. |
+
+---
+
+## ⏱️ Live Stage Demo Sequence (3 Minutes)
+
+| Time | Action | What Judges See |
+| :--- | :--- | :--- |
+| **0:00 - 0:45** | **The Crisis & Tactical Map** | Show the dark-mode Leaflet tactical map. Point out the Nullah Lai Kattarian river level gauge (15.0 ft), ICU saturation across PIMS/Holy Family, and DEFCON monsoon ticker. |
+| **0:45 - 1:45** | **Citizen Voice & Qwen-VL Vision SOS** | Open the Citizen SOS modal. Click **Record SOS** (streams Roman Urdu speech). Open **Qwen-VL Vision Inspector**: show laser HUD scanning a flood photo, estimating 1.85m depth, detecting 4 rooftop victims, and flagging a submerged 11kV line. Click **Inject Vision Telemetry** and submit. |
+| **1:45 - 2:30** | **Dynamic Priority Dispatch Matrix** | Show the new report instantly appearing on the map. Point to the **Priority Zones**: the solver dynamically calculated Dhok Kala Khan as Priority #1 based on the 4 victims and power hazards. Click **Approve Dispatch**. |
+| **2:30 - 3:00** | **Hazard-Avoidance Routing & Persistence** | Click **Calculate Safest Route**: show the algorithm rejecting the submerged Faizabad underpass and routing the ambulance via the 9th Avenue flyover. Highlight the database health status showing zero-data-loss persistence. |
+
+---
+
+## 📄 License & Acknowledgments
+* **License:** Distributed under the MIT License.
+* **Emergency Data Models:** Calibrated using real Islamabad-Rawalpindi hydrological profiles and Pakistan NDMA Monsoon SOPs.
+* **AI Architecture:** Powered by Alibaba Tongyi Lab Qwen-VL Vision Intelligence.
+```
