@@ -104,7 +104,7 @@ function DashboardContent() {
   }, [weather?.precipitation, simulatedMetrics.nullahGaugeFeet]);
 
   return (
-    <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] overflow-x-hidden pb-16 md:pb-0">
       {/* Live Emergency Broadcast Ticker */}
       <EmergencyTicker
         onOpenCitizenModal={() => setIsCitizenOpen(true)}
@@ -123,7 +123,7 @@ function DashboardContent() {
 
       {/* VIEW MODE: Standalone Tactical Map Tab */}
       {activeTab === 'map' && (
-        <section className="relative w-full h-[calc(100vh-56px)] bg-slate-950">
+        <section className="relative w-full h-[calc(100vh-112px)] md:h-[calc(100vh-56px)] bg-slate-950">
           <MapView
             onSelectRouteFromCoords={(coords) => {
               setRouteOriginCoords(coords);
@@ -308,7 +308,7 @@ function DashboardContent() {
       {activeTab === 'all' && (
         <>
           {/* Hero: Tactical Geospatial EOC Map Viewport */}
-          <section id="tactical-map" className="relative w-full h-[460px] lg:h-[500px] bg-slate-950 border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]">
+          <section id="tactical-map" className="relative w-full h-[360px] sm:h-[440px] lg:h-[500px] bg-slate-950 border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.7)]">
             <MapView
               onSelectRouteFromCoords={(coords) => {
                 setRouteOriginCoords(coords);
@@ -322,7 +322,7 @@ function DashboardContent() {
 
           {/* Core Telemetry KPI Strip — Cleanly Separated Below Map */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 relative z-10">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {/* Card 1: Citizens Trapped */}
               <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-rose-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-rose hover:border-rose-400 transition-all group">
                 <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-rose-500/15 blur-xl group-hover:bg-rose-500/25 transition-all"></div>
