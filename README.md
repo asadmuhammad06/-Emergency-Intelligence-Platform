@@ -75,3 +75,63 @@ During catastrophic monsoon flash floods (e.g., Rawalpindi / Islamabad Nullah La
 ---
 
 ## 🏗️ System Architecture
+                            [ Citizen / Field Operative ]
+                                  │                   │
+                        Voice SOS (Urdu/Eng)    Incident Photo
+                                  │                   │
+                                  ▼                   ▼
+                      [ Client-Side Audio / Canvas Compression ]
+                                  │                   │
+                                  ▼                   ▼
+
+
+---
+
+## 🔄 Operational Workflows
+
+### Workflow 1: Citizen Voice & Vision SOS Ingestion
+1. Citizen opens the SOS portal and dictates emergency via **Voice Mic** (e.g. *"Dhok Kala Khan me chhat par 4 afrad phansay hain..."*).
+2. Citizen attaches flood damage photo. The client-side `<canvas>` resizes it to max 1200px.
+3. **Qwen-VL Vision Engine** scans pixels:
+   * Assesses depth: `1.85m (Grade 3 Critical)`.
+   * Detects 4 marooned victims and flags submerged 11kV electrical feeder.
+   * Auto-populates triage severity (`10/10`) and incident category (`RESCUE_NEEDED`).
+4. Citizen submits report; backend commits report to `emergency_db.json` and broadcasts it over WebSockets.
+
+### Workflow 2: Automated Dispatch Prioritization & Safe Routing
+1. EOC Dispatch Solver aggregates reports across Twin Cities zones.
+2. The sector with the highest casualty density and power hazards is ranked **Priority Sector #1**.
+3. Commander reviews recommended assets (e.g., *Rescue 1122 Tactical Jet-Boat 04 + Paramedics*) and clicks **Approve Dispatch**.
+4. The **Safest Route Engine** computes the optimal trajectory avoiding the 4.5ft flooded Faizabad interchange, routing the ambulance via the 9th Avenue flyover to Holy Family Hospital.
+
+---
+
+## 💻 Tech Stack
+
+### Frontend
+* **Core:** React 18, TypeScript 5.9.3, Vite 5.3
+* **Styling:** Tailwind CSS, PostCSS, Autoprefixer
+* **GIS / Mapping:** Leaflet 1.9, React-Leaflet 4.2
+* **Icons:** Lucide React
+* **Networking:** Native Fetch, Socket.IO Client 4.7
+* **Performance:** Vite Code-Splitting (`manualChunks`), Canvas 2D Compressor, `React.memo`
+
+### Backend
+* **Runtime:** Node.js (ES Modules, v20+)
+* **Server Framework:** Express 4.19 (with 25MB payload limits)
+* **Real-Time:** Socket.IO 4.7, Server-Sent Events (SSE)
+* **Storage:** Atomic File-Backed ACID JSON Store (`server/data/emergency_db.json`)
+* **Vision AI:** Alibaba Qwen-VL (`qwen-vl-max` via DashScope SDK & API)
+
+---
+
+## 🚀 Quickstart & Installation
+
+### Prerequisites
+* **Node.js**: v18.0.0 or higher
+* **npm**: v9.0.0 or higher
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/CrisisMap-Pakistan.git
+cd CrisisMap-Pakistan
