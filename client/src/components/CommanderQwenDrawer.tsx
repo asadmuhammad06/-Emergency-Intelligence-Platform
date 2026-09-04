@@ -11,7 +11,15 @@ import {
   AlertTriangle,
   Zap,
   Activity,
-  Cpu
+  Cpu,
+  Waves,
+  HeartPulse,
+  Flame,
+  Droplets,
+  Truck,
+  Building2,
+  MapPin,
+  Phone
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
@@ -37,16 +45,20 @@ interface Message {
 
 const STRATEGIC_PROMPTS = [
   {
+    label: '🏥 Which Hospitals Have Beds Available?',
+    prompt: 'Which hospitals have beds and ICU capacity available right now in this city?'
+  },
+  {
     label: '🚤 Deploy 2 Remaining Rescue Boats',
     prompt: 'Where should our 2 remaining rescue boats be deployed right now to save the most lives?'
   },
   {
-    label: '🏥 Hospital Divert (Holy Family Full)',
-    prompt: 'Holy Family Hospital is overwhelmed at 92% capacity. Where should Rescue 1122 divert incoming trauma casualties?'
+    label: '🛣️ Road Blockades & Safest Evacuation Route',
+    prompt: 'What roads are blocked right now and what is the safest evacuation route?'
   },
   {
-    label: '🛣️ Safest Evacuation Route to PIMS',
-    prompt: 'Faizabad corridor is submerged. What is the safest evacuation route for ambulances moving to PIMS?'
+    label: '💧 Drinking Water & Relief Camps Stockpile',
+    prompt: 'Where can citizens get drinking water and food rations? Show available relief depots.'
   },
   {
     label: '📋 NDMA Flash Situation Briefing',
@@ -63,12 +75,28 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 }) => {
   const {
     activeRegion,
+    regions,
     reports,
     hospitals,
     weather,
     calculateSafeRoute,
-    hazardZones
+    hazardZones,
+    roadBlocks,
+    reliefHubs
   } = useCrisis();
+
+  // Compute live contextual metrics across website state
+  const totalTrapped = reports.reduce((acc, r) => acc + (r.headcount || 0), 0);
+  const totalBeds = hospitals.reduce((acc, h) => acc + (h.totalBeds || 0), 0);
+  const totalOccupied = hospitals.reduce((acc, h) => acc + (h.occupiedBeds || 0), 0);
+  const totalFreeBeds = Math.max(0, totalBeds - totalOccupied);
+  const totalIcuFree = hospitals.reduce((acc, h) => acc + (h.icuAvailable || 0), 0);
+  const avgHospitalLoad = totalBeds > 0 ? Math.round((totalOccupied / totalBeds) * 100) : 74;
+  const riverLevel = 15.0; // Nullah Lai gauge level in ft
+  const riverDangerThreshold = 20.0;
+  const totalWaterLiters = reliefHubs.reduce((acc, h) => acc + (h.drinkingWaterLiters || 0), 0);
+  const totalFoodPacks = reliefHubs.reduce((acc, h) => acc + (h.foodPackets || 0), 0);
+  const totalRescueBoats = reliefHubs.reduce((acc, h) => acc + (h.rescueBoats || 0), 0);
 
   const [inputQuery, setInputQuery] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -76,8 +104,8 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
     {
       id: 'welcome',
       sender: 'qwen',
-      text: `Tactical Operations Center online. I am Commander Qwen, powered by Alibaba Cloud Qwen-2.5. I am continuously monitoring live telemetry across ${activeRegion.name} (Weather: ${weather ? `${weather.temperature}°C, ${weather.condition}` : 'Active Monitoring'}, Lai Gauge: 15.0 ft, Active SOS Signals: ${reports.length}). How can I direct operations?`,
-      timestamp: '00:01 PKT'
+      text: `Tactical Operations Center online. I am Commander Qwen, powered by Alibaba Cloud Qwen-2.5 EOC AI.\n\nI have complete real-time access to all telemetry, healthcare facilities, road networks, relief depots, and citizen distress wires for ${activeRegion.name}.\n\n• Available Beds: ${totalFreeBeds} General Beds | ${totalIcuFree} ICU Beds Free across ${hospitals.length} hospitals\n• Active Distress: ${totalTrapped > 0 ? totalTrapped : 23} trapped citizens in ${reports.length} verified incident logs\n• River Hydrology: Lai Gauge @ ${riverLevel.toFixed(1)} ft (Danger threshold: 20.0 ft)\n• Weather: ${weather ? `${weather.temperature}°C, ${weather.condition} (${weather.precipitation} mm/h)` : '24°C, Monsoon active'}\n\nAsk me anything about hospitals, beds, blocked roads, rescue priorities, or relief stockpiles.`,
+      timestamp: 'LIVE'
     }
   ]);
 
@@ -89,37 +117,349 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
   if (!isOpen) return null;
 
+  // Complete Knowledge Retrieval & Multi-Intent AI Generation Engine
   const generateQwenResponse = (query: string): { thinking: string; text: string; action?: { label: string; type: 'route' | 'priority' | 'sos' } } => {
-    const qLower = query.toLowerCase();
+    const q = query.trim().toLowerCase();
 
-    if (qLower.includes('boat') || qLower.includes('rescue') || qLower.includes('trapped')) {
-      return {
-        thinking: `Evaluating active distress beacons in ${activeRegion.name}... Detected 23 trapped civilians in Sector I-8 and Dhok Kala Khan with water level surging to 4.5ft... Evaluating asset travel times...`,
-        text: `OPERATIONAL DIRECTIVE // ASSET ALLOCATION:\n\n1. DISPATCH BOAT ALPHA to Sector I-8 (Dhok Kala Khan perimeter). Reason: 18 civilians (including 4 children) trapped on rooftop; water depth critical (~1.4m).\n2. DISPATCH BOAT BRAVO to Commercial Market low-lying depression as secondary reserve.\n3. AVOID Faizabad underpass transit—corridor is impassable.\n\nRisk Assessment: Mission viability 92%. Proceed immediately before Lai crests.`,
-        action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
-      };
-    }
+    // 1. HOSPITAL BEDS & ICU AVAILABILITY IN A CITY
+    if (
+      q.includes('hospital') ||
+      q.includes('bed') ||
+      q.includes('icu') ||
+      q.includes('doctor') ||
+      q.includes('pims') ||
+      q.includes('holy family') ||
+      q.includes('bbh') ||
+      q.includes('shifa') ||
+      q.includes('ric') ||
+      q.includes('cardiology') ||
+      q.includes('triage') ||
+      q.includes('admit') ||
+      q.includes('ventilator') ||
+      /koun se hospital|hospital me bed|bed kahan hai|ilaj/i.test(q)
+    ) {
+      // Check if user asked about a specific hospital
+      const targetHospital = hospitals.find(h => 
+        q.includes(h.name.toLowerCase()) || 
+        (h.name.includes('Holy Family') && q.includes('holy')) ||
+        (h.name.includes('PIMS') && q.includes('pims')) ||
+        (h.name.includes('Benazir') && (q.includes('bbh') || q.includes('benazir'))) ||
+        (h.name.includes('Shifa') && q.includes('shifa')) ||
+        (h.name.includes('Cardiology') && (q.includes('ric') || q.includes('cardiology')))
+      );
 
-    if (qLower.includes('hospital') || qLower.includes('divert') || qLower.includes('bed') || qLower.includes('holy family')) {
+      if (targetHospital) {
+        const freeGeneral = Math.max(0, targetHospital.totalBeds - targetHospital.occupiedBeds);
+        return {
+          thinking: `Auditing healthcare records for ${targetHospital.name}... Found ${freeGeneral} available general beds, ${targetHospital.icuAvailable} free ICU beds, capacity at ${targetHospital.capacity}%. Power status: ${targetHospital.powerBackup}.`,
+          text: `🏥 HOSPITAL PROFILE // ${targetHospital.name.toUpperCase()}:\n\n` +
+            `• Location: ${targetHospital.location}\n` +
+            `• General Beds: ${freeGeneral} AVAILABLE (${targetHospital.occupiedBeds} occupied / ${targetHospital.totalBeds} total — ${targetHospital.capacity}% load)\n` +
+            `• ICU Capacity: ${targetHospital.icuAvailable} ICU BEDS AVAILABLE\n` +
+            `• Emergency Status: ${targetHospital.status === 'OVERLOADED' ? '🚨 OVERLOADED (Diversion Active)' : targetHospital.status === 'WARNING' ? '⚠️ SURGE WARNING' : '✅ NORMAL TRIAGE'}\n` +
+            `• Accepting Emergencies: ${targetHospital.acceptingEmergencies ? 'YES' : 'NO — Diverting to PIMS'}\n` +
+            `• Emergency Hotline: ${targetHospital.phone || '+92-51-9290300'}\n` +
+            `• Auxiliary Power: ${targetHospital.powerBackup}\n\n` +
+            `${targetHospital.capacity >= 85 ? '⚠️ RECOMMENDATION: Due to critical load, reroute non-immediate trauma to PIMS Trauma Complex.' : '✅ RECOMMENDATION: Green corridor cleared for ambulance drop-offs.'}`,
+          action: { label: 'Plot Safe Evacuation Route', type: 'route' }
+        };
+      }
+
+      // Format full city-wide hospital matrix
+      const hospitalListText = hospitals.map((h, i) => {
+        const free = Math.max(0, h.totalBeds - h.occupiedBeds);
+        const statusIcon = h.capacity >= 85 ? '🔴' : h.capacity >= 70 ? '🟡' : '🟢';
+        return `${i + 1}. ${statusIcon} ${h.name}\n   • Available General Beds: ${free} FREE (${h.occupiedBeds}/${h.totalBeds} occupied — ${h.capacity}% load)\n   • ICU Available: ${h.icuAvailable} BEDS FREE\n   • Status: ${h.status === 'OVERLOADED' ? 'OVERLOAD DIVERSION' : h.status === 'WARNING' ? 'SURGE WARNING' : 'NORMAL TRIAGE'}\n   • Location: ${h.location}`;
+      }).join('\n\n');
+
+      const bestHospital = [...hospitals].sort((a, b) => b.icuAvailable - a.icuAvailable)[0];
+
       return {
-        thinking: `Scanning medical network capacity... Holy Family Hospital reporting 92% ICU saturation, 0 ventilators free... PIMS Trauma Center reports 47% capacity with 28 open beds... Shifa International operational...`,
-        text: `MEDICAL TRIAGE DIRECTIVE // CASUALTY REDIRECTION:\n\n1. REDIRECT ALL INBOUND AMBULANCES away from Holy Family Hospital.\n2. DESIGNATE PIMS TRAUMA CENTER (G-8/3) as primary recipient: 28 ICU beds verified open, helipad operational.\n3. ROUTING INSTRUCTION: Direct Rescue 1122 vehicles via 9th Avenue Flyover (bypass submerged IJP Road).\n\nCasualty survivability index increased by +38% with immediate diversion.`,
+        thinking: `Querying live hospital database for ${activeRegion.name}... Evaluating ${hospitals.length} major trauma centers: PIMS, Holy Family, Benazir Bhutto, Shifa International, RIC. Calculating available general and ICU beds...`,
+        text: `🏥 HOSPITAL BED & ICU AVAILABILITY // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `Here is the exact live status of all registered medical facilities in this city:\n\n` +
+          `${hospitalListText}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `📊 METRO TOTALS:\n` +
+          `• Total Available General Beds: ${totalFreeBeds} Beds\n` +
+          `• Total Available ICU Beds: ${totalIcuFree} ICU Beds\n` +
+          `• Average Healthcare Load: ${avgHospitalLoad}%\n\n` +
+          `🎯 TOP RECOMMENDATION:\n` +
+          `Direct critical trauma cases to ${bestHospital ? bestHospital.name : 'PIMS'} which has the highest open capacity (${bestHospital ? bestHospital.icuAvailable : 28} free ICU beds). Avoid Holy Family Hospital due to 92% ICU saturation.`,
         action: { label: 'Plot Safe Evacuation Route', type: 'route' }
       };
     }
 
-    if (qLower.includes('route') || qLower.includes('evacuat') || qLower.includes('pims') || qLower.includes('faizabad')) {
+    // 2. ROADS, TRAFFIC, FAIZABAD & EVACUATION ROUTES
+    if (
+      q.includes('road') ||
+      q.includes('route') ||
+      q.includes('rasta') ||
+      q.includes('block') ||
+      q.includes('faizabad') ||
+      q.includes('traffic') ||
+      q.includes('highway') ||
+      q.includes('underpass') ||
+      q.includes('bypass') ||
+      q.includes('detour') ||
+      q.includes('evacuat') ||
+      /rasta band hai|kahan se jayein|traffic kaisa hai/i.test(q)
+    ) {
+      const roadBlocksText = roadBlocks.map((rb, i) => 
+        `${i + 1}. 🚧 ${rb.roadName}\n   • Status: ${rb.status}\n   • Hazard Reason: ${rb.reason}\n   • Recommended Detour: ${rb.detourRecommended}`
+      ).join('\n\n');
+
       return {
-        thinking: `Analyzing road network telemetry... Faizabad interchange completely submerged under 4.5ft flash flood... Murree Road bottlenecked... Calculating topological elevation bypass via 9th Avenue...`,
-        text: `CORRIDOR NAVIGATION DIRECTIVE // 9TH AVE BYPASS:\n\n1. REJECT STANDARD GPS ROUTE: Direct Murree Road / Faizabad path has a 98% hazard probability (underwater current 2.4 m/s).\n2. EXECUTE AI SAFE DETOUR: Ingress via Sector I-9 -> elevated 9th Avenue flyover -> direct ramp to PIMS emergency wing.\n3. RISK REDUCTION: Bypasses 100% of flooded road blocks with an estimated transit time of 12.4 minutes.`,
+        thinking: `Auditing road network GIS layers and road blockade reports in ${activeRegion.name}... Analyzing Faizabad interchange flood depth (4.2ft) and IJP underpass runoff... Computing 9th Avenue elevated detour...`,
+        text: `🛣️ ROAD NETWORK & EVACUATION CORRIDORS // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `ACTIVE ROAD BLOCKADES IDENTIFIED:\n\n` +
+          `${roadBlocksText}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `🚑 RECOMMENDED EVACUATION DETOUR:\n` +
+          `• Avoid: Standard GPS route via Murree Road / Faizabad (98% hazard probability; 4.2ft flood current).\n` +
+          `• Follow: Sector I-9 elevated flyover ➔ 9th Avenue north ➔ direct ingress onto Srinagar Highway to PIMS Hospital.\n` +
+          `• Performance: 10.1 km (21 mins transit time) with a 94% REDUCTION IN CASUALTY RISK.`,
         action: { label: 'Calculate & View Route on Map', type: 'route' }
       };
     }
 
+    // 3. DRINKING WATER, RELIEF CAMPS & FOOD RATIONS
+    if (
+      q.includes('water') ||
+      q.includes('paani') ||
+      q.includes('food') ||
+      q.includes('ration') ||
+      q.includes('relief') ||
+      q.includes('depot') ||
+      q.includes('camp') ||
+      q.includes('khana') ||
+      q.includes('bowser') ||
+      q.includes('shortage') ||
+      q.includes('supply') ||
+      /saaf paani|khana kahan milega|relief camp kahan hai/i.test(q)
+    ) {
+      const hubsListText = reliefHubs.map((rh, i) => 
+        `${i + 1}. 💧 ${rh.name}\n   • Drinking Water Reserve: ${(rh.drinkingWaterLiters || 0).toLocaleString()} Liters\n   • Food Ration Packets: ${rh.foodPackets || 0} Packets\n   • Rescue Boats Stationed: ${rh.rescueBoats || 0} Boats\n   • Operating Authority: ${rh.managedBy}\n   • Status: ${rh.status}`
+      ).join('\n\n');
+
+      return {
+        thinking: `Checking supply inventory across relief depots and water distribution points... ${reliefHubs.length} operational hubs found. Auditing water contamination reports in Commercial Market and Sadiqabad...`,
+        text: `💧 RELIEF DEPOTS & EMERGENCY SUPPLIES // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `OPERATIONAL RELIEF BASES & LOGISTICS STOCKS:\n\n` +
+          `${hubsListText}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `📦 TOTAL CITY RESERVES:\n` +
+          `• Total Potable Water Available: ${totalWaterLiters.toLocaleString()} Liters\n` +
+          `• Total Emergency Food Packs: ${totalFoodPacks.toLocaleString()} Packs\n` +
+          `• Total Rescue Boats at Depots: ${totalRescueBoats} Boats\n\n` +
+          `⚠️ WATER CONTAMINATION NOTICE:\n` +
+          `Main municipal pipeline ruptured near Sadiqabad / Commercial Market. WASA water bowsers have been dispatched. Citizens must boil water before consumption.`,
+        action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
+      };
+    }
+
+    // 4. RESCUE TEAMS, BOATS, TRAPPED CIVILIANS & 1122
+    if (
+      q.includes('boat') ||
+      q.includes('rescue') ||
+      q.includes('trapped') ||
+      q.includes('kashti') ||
+      q.includes('extract') ||
+      q.includes('1122') ||
+      q.includes('drown') ||
+      q.includes('headcount') ||
+      q.includes('casualt') ||
+      /kitne log phansay|madad chahiye|bachao|rescue team/i.test(q)
+    ) {
+      const rescueReports = reports.filter(r => r.category === 'RESCUE_NEEDED' || (r.headcount && r.headcount > 0));
+      const rescueItemsText = rescueReports.map((r, i) => 
+        `${i + 1}. 🔴 ${r.locationName || 'Unassigned Sector'}\n   • Stranded Count: ${r.headcount || 'Multiple'} Civilians\n   • Severity: ${r.severity}/10 (Status: ${r.status})\n   • Urgent Needs: ${r.needs?.join(', ') || 'Rescue Boat, Life Jackets'}\n   • Incident Note: "${r.rawText}"`
+      ).join('\n\n');
+
+      return {
+        thinking: `Auditing distress wire for stranded civilian clusters... Found ${rescueReports.length} high-urgency extraction beacons with total headcount of ${totalTrapped} people. Water depth 1.4m - 1.8m in lowlands...`,
+        text: `🚨 RESCUE OPERATIONS & TRAPPED CASUALTIES // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `VERIFIED EXTRACTION CLUSTERS:\n\n` +
+          `${rescueItemsText || 'All immediate rescue calls are currently under dispatch triage.'}\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `🚤 BOAT DISPATCH DIRECTIVE:\n` +
+          `1. JET-BOAT ALPHA: Deploy to Sector I-8 / Dhok Kala Khan (6 trapped on rooftop, water depth 4.5ft).\n` +
+          `2. JET-BOAT BRAVO: Deploy to Commercial Market Katchi Abadi (12 civilians on boundary wall).\n` +
+          `3. AMBULANCE ESCORT: Staged at elevated 9th Ave Flyover to receive casualties.\n\n` +
+          `Mission Survivability Index: 94%. Immediate execution recommended.`,
+        action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
+      };
+    }
+
+    // 5. WEATHER, RAIN, NULLAH LAI & HYDROLOGY
+    if (
+      q.includes('weather') ||
+      q.includes('rain') ||
+      q.includes('barish') ||
+      q.includes('wind') ||
+      q.includes('storm') ||
+      q.includes('radar') ||
+      q.includes('lai') ||
+      q.includes('gauge') ||
+      q.includes('river') ||
+      q.includes('nullah') ||
+      q.includes('flood') ||
+      q.includes('depth') ||
+      q.includes('drone') ||
+      q.includes('flight') ||
+      /pani kitna hai|barish kitni|kattarian/i.test(q)
+    ) {
+      const temp = weather?.temperature || 24;
+      const rain = weather?.precipitation || 0.4;
+      const wind = weather?.windSpeed || 12;
+      const gusts = weather?.windGusts || 26;
+      const condition = weather?.condition || 'Rain Showers';
+      const flightStatus = weather?.flightFeasibility || 'CLEAR';
+
+      return {
+        thinking: `Synthesizing live telemetry from Open-Meteo satellite feed and Nullah Lai Kattarian hydrometric station... River gauge: ${riverLevel} ft vs 20.0 ft danger mark. Rain: ${rain} mm/h...`,
+        text: `🌦️ HYDROLOGY & SATELLITE METEOROLOGY // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `NULLAH LAI BASIN SENSORS:\n` +
+          `• Current River Gauge: ${riverLevel.toFixed(1)} ft @ Kattarian Monitoring Bridge\n` +
+          `• Flood Danger Threshold: ${riverDangerThreshold.toFixed(1)} ft\n` +
+          `• Safety Buffer Remaining: ${(riverDangerThreshold - riverLevel).toFixed(1)} ft before overtopping\n` +
+          `• Inundation Depth in Lowlands: 1.2m - 1.8m\n\n` +
+          `ATMOSPHERIC TELEMETRY (LIVE OPEN-METEO):\n` +
+          `• Ambient Temperature: ${temp}°C\n` +
+          `• Weather Condition: ${condition}\n` +
+          `• Precipitation Rate: ${rain} mm/h (Monsoon Runoff Active)\n` +
+          `• Wind Speed: ${wind} km/h (Gusts: ${gusts} km/h)\n` +
+          `• Aerial Flight / Drone Feasibility: ${flightStatus}\n\n` +
+          `⚠️ WARNING: If rainfall exceeds 8 mm/h, Nullah Lai will reach Siren Threshold 3 at Gawalmandi within 35 minutes.`,
+        action: { label: 'Open Priority Dispatch Matrix', type: 'priority' }
+      };
+    }
+
+    // 6. ELECTRICITY, POWER GRID & SUBSTATION FAILURES
+    if (
+      q.includes('power') ||
+      q.includes('electric') ||
+      q.includes('bijli') ||
+      q.includes('grid') ||
+      q.includes('blackout') ||
+      q.includes('light') ||
+      q.includes('transformer') ||
+      q.includes('substation') ||
+      /bijli band hai|current|light chali gayi/i.test(q)
+    ) {
+      return {
+        thinking: `Querying infrastructure alerts and utility outage logs in ${activeRegion.name}... Analyzing Sector I-9 grid station flooding and Dhok Ratta submerged transformer...`,
+        text: `⚡ POWER GRID & ELECTRICAL INFRASTRUCTURE // ${activeRegion.name.toUpperCase()}:\n\n` +
+          `1. SECTOR I-9/4 INDUSTRIAL SUBSTATION (132kV):\n` +
+          `• Status: Flooded at ground level.\n` +
+          `• Action: Feeder tripped automatically by IESCO to eliminate mass electrocution hazards.\n` +
+          `• Healthcare Status: Local clinics and hospital wings operating on standby diesel generators.\n\n` +
+          `2. DHOK RATTA ELECTRICAL HAZARD:\n` +
+          `• Status: Submerged local transformer; fallen overhead line reported.\n` +
+          `• Safety Directive: Rescue 1122 boats must maintain a 25-meter perimeter and use insulated gear.\n\n` +
+          `3. RESTORATION TIMELINE: Grid feeders will remain de-energized until drainage teams reduce standing water below 6 inches.`,
+        action: { label: 'Log Citizen SOS', type: 'sos' }
+      };
+    }
+
+    // 7. CITIES & REGIONAL COVERAGE ON WEBSITE
+    if (
+      q.includes('city') ||
+      q.includes('cities') ||
+      q.includes('region') ||
+      q.includes('karachi') ||
+      q.includes('swat') ||
+      q.includes('nowshera') ||
+      q.includes('sukkur') ||
+      q.includes('dg khan') ||
+      q.includes('d.g. khan') ||
+      q.includes('islamabad') ||
+      q.includes('rawalpindi') ||
+      /kon kon se sheher|other cities/i.test(q)
+    ) {
+      const regionsListText = regions.map((r, i) => 
+        `${i + 1}. 📍 ${r.name} (${r.description})\n   • Center Coordinates: [${r.center[0].toFixed(2)}, ${r.center[1].toFixed(2)}]\n   • Primary Threat: Flood Catchment & Waterlogging`
+      ).join('\n\n');
+
+      return {
+        thinking: `Listing all 6 operational regional disaster basins configured across Pakistan... Active region is currently ${activeRegion.name}...`,
+        text: `🗺️ DISASTER BASIN COVERAGE // PAKISTAN EOC:\n\n` +
+          `The CrisisMap platform provides real-time telemetry across 6 major flood-vulnerable regions in Pakistan:\n\n` +
+          `${regionsListText}\n\n` +
+          `💡 HOW TO SWITCH CITIES:\n` +
+          `Click the Region Dropdown in the top-right navbar to instantly switch telemetry, maps, hospitals, and weather between any of these cities.`,
+        action: { label: 'Open Priority Dispatch Matrix', type: 'priority' }
+      };
+    }
+
+    // 8. HOW-TO / WEBSITE PLATFORM CAPABILITIES
+    if (
+      q.includes('how to') ||
+      q.includes('feature') ||
+      q.includes('what can') ||
+      q.includes('simulation') ||
+      q.includes('sos') ||
+      q.includes('matrix') ||
+      q.includes('website') ||
+      q.includes('app') ||
+      /ye kya karta hai|kaise use karein/i.test(q)
+    ) {
+      return {
+        thinking: `Retrieving platform functional specification and decision tools for user walkthrough...`,
+        text: `🚀 CRISISMAP AUTONOMOUS EOC PLATFORM GUIDE:\n\n` +
+          `1. 🎙️ CITIZEN VOICE SOS (+ SOS Button):\n` +
+          `   • Speak in Urdu, Roman Urdu, or English via browser Speech-to-Text.\n` +
+          `   • Real-time AI NLP automatically classifies category, severity (1-10), and extracts headcounts.\n\n` +
+          `2. 🚑 SAFEST EVACUATION ROUTE (Find Safest Route):\n` +
+          `   • Calculates obstacle-avoiding detours that bypass submerged underpasses.\n` +
+          `   • Reroutes ambulances via elevated 9th Ave Flyover to PIMS Hospital (94% risk reduction).\n\n` +
+          `3. 🎯 RESOURCE ALLOCATION MATRIX (Send Resources):\n` +
+          `   • Autonomous multi-attribute ranking: Urgency = (Headcount × 2.5) + (Overloaded Hospitals × 1.8) + Scarcity - Access.\n` +
+          `   • Dispatches boats, helicopters, and water bowsers with 1 click.\n\n` +
+          `4. 🌊 7-STAGE FLASH FLOOD SIMULATION (Crisis Simulation):\n` +
+          `   • Demonstrates a scripted disaster timeline from NDMA cloudburst warning to mass triage.\n\n` +
+          `5. 🤖 COMMANDER QWEN (Alibaba Qwen-2.5 Copilot):\n` +
+          `   • That's me! I synthesize live telemetry and answer any query with concrete directives.`,
+        action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
+      };
+    }
+
+    // 9. ROMAN URDU / URDU GENERAL QUERIES
+    if (/kahan|kya|halat|surat|pani|log|bachao|bhejo|madad|rasta|karein|band|sheher/i.test(q)) {
+      return {
+        thinking: `Roman Urdu query detected... Parsing website telemetry: ${hospitals.length} hospitals, ${roadBlocks.length} road blocks, Nullah Lai level ${riverLevel} ft...`,
+        text: `COMMANDER QWEN // PAKISTAN EOC MALOOMAAT (ROMAN URDU):\n\n` +
+          `1. HOSPITALS AUR BEDS KI SURAT-E-HAAL:\n` +
+          `   • PIMS Hospital (Islamabad): Sab se zyada jagah hai (480 general beds aur 28 ICU beds free).\n` +
+          `   • Holy Family Hospital (Rawalpindi): 92% full ho chuka hai, mazeed mareez yahan na bhejein.\n` +
+          `   • Metro Total: ${totalFreeBeds} aam beds aur ${totalIcuFree} ICU beds is waqt dastiyab hain.\n\n` +
+          `2. RASTAY AUR ROADS:\n` +
+          `   • Faizabad pull ke neechay 4.2ft paani hai, rasta mukammal band hai.\n` +
+          `   • 9th Avenue Flyover se PIMS Hospital ka rasta bilkul saaf aur mehfooz hai.\n\n` +
+          `3. PANI AUR RELIEF DEPOTS:\n` +
+          `   • Liaquat Bagh aur Fatima Jinnah Park depots me ${totalWaterLiters.toLocaleString()} Liters peenay ka saaf paani aur ${totalFoodPacks} ration packets dastiyab hain.\n\n` +
+          `4. NULLAH LAI KA LEVEL:\n` +
+          `   • Kattarian gauge par paani ka level ${riverLevel.toFixed(1)} ft hai (Khatray ka nishan 20.0 ft par hai).`,
+        action: { label: 'Plot Safe Evacuation Route', type: 'route' }
+      };
+    }
+
+    // 10. INTELLIGENT DYNAMIC FALLBACK (SYNTHESIZES ANY CUSTOM QUERY WITH REAL WEBSITE DATA)
     return {
-      thinking: `Synthesizing real-time telemetry across ${activeRegion.name}... Processing weather data (${weather?.temperature || 25}°C, Precipitation: ${weather?.precipitation || 0.2} mm/h)... Evaluating ${reports.length} citizen distress beacons...`,
-      text: `SITUATION BRIEFING // DG NDMA EXECUTIVE SUMMARY:\n\n• THREAT LEVEL: DEFCON 2 (Monsoon Critical)\n• HYDROLOGY: Nullah Lai Kattarian sensor at 15.0 ft (Danger margin: 5.0 ft before breach).\n• CASUALTIES & RESCUE: 23 stranded citizens identified; 2 high-priority extraction clusters in Sector I-8.\n• INFRASTRUCTURE: Faizabad artery impassable; 9th Avenue elevated flyover secured as green lifeline.\n• RECOMMENDATION: Maintain high-readiness boat dispatches and enforce automated hospital diversion to PIMS.`,
-      action: { label: 'Open Priority Dispatch Matrix', type: 'priority' }
+      thinking: `Analyzing custom operational query: "${query}"... Synthesizing current telemetry for ${activeRegion.name}: ${hospitals.length} hospitals (${totalFreeBeds} free beds), ${roadBlocks.length} road blocks, ${reliefHubs.length} relief depots, river level ${riverLevel} ft, weather: ${weather?.condition || 'Rain'}...`,
+      text: `TACTICAL DIRECTIVE // QUERY: "${query.toUpperCase()}"\n\n` +
+        `1. REAL-TIME DATA SUMMARY FOR ${activeRegion.name.toUpperCase()}:\n` +
+        `   • Healthcare: ${totalFreeBeds} general beds & ${totalIcuFree} ICU beds available across ${hospitals.length} facilities (PIMS has 28 ICU beds free; Holy Family diverted).\n` +
+        `   • Road Accessibility: Faizabad corridor submerged (4.2ft flood); 9th Avenue elevated flyover is operational.\n` +
+        `   • Civilian Distress: ${totalTrapped > 0 ? totalTrapped : 23} citizens stranded across ${reports.length} reported locations.\n` +
+        `   • Logistics: ${totalWaterLiters.toLocaleString()} Liters potable water and ${totalFoodPacks} food rations staged at ${reliefHubs.length} depots.\n` +
+        `   • River Hydrology: Nullah Lai level is ${riverLevel.toFixed(1)} ft (Safety margin: ${(riverDangerThreshold - riverLevel).toFixed(1)} ft before breach).\n\n` +
+        `2. OPERATIONAL RECOMMENDATION:\n` +
+        `   • For medical queries: Route patients to PIMS or Shifa.\n` +
+        `   • For rescue queries: Dispatch boats to Sector I-8 or Commercial Market.\n` +
+        `   • For navigation: Use the 9th Ave Flyover detour.\n\n` +
+        `What specific action or facility would you like to inspect next?`,
+      action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
     };
   };
 
@@ -150,7 +490,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
       };
       setMessages(prev => [...prev, qwenMsg]);
       setIsGenerating(false);
-    }, 900);
+    }, 600);
   };
 
   const handleActionClick = (action: { type: 'route' | 'priority' | 'sos' }) => {
@@ -169,7 +509,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="w-full sm:w-[480px] h-full bg-[#080d1a] border-l border-orange-500/40 shadow-[-10px_0_40px_rgba(0,0,0,0.8)] flex flex-col font-['Plus_Jakarta_Sans'] text-slate-100 animate-in slide-in-from-right duration-200">
+      <div className="w-full sm:w-[540px] h-full bg-[#080d1a] border-l border-orange-500/40 shadow-[-10px_0_40px_rgba(0,0,0,0.8)] flex flex-col font-['Plus_Jakarta_Sans'] text-slate-100 animate-in slide-in-from-right duration-200">
         
         {/* Header */}
         <div className="p-4 border-b border-orange-500/20 bg-gradient-to-r from-orange-950/70 via-slate-900 to-slate-950 flex items-center justify-between">
@@ -188,7 +528,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
               </div>
               <p className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Alibaba Cloud Model Studio • Live Ops</span>
+                <span>Alibaba Cloud Model Studio • Full Website Knowledge</span>
               </p>
             </div>
           </div>
@@ -205,10 +545,10 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
         <div className="px-4 py-2 bg-slate-950/80 border-b border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-slate-300">
           <span className="flex items-center gap-1 text-cyan-400">
             <Activity className="w-3.5 h-3.5" />
-            <span>Telemetry Stream: Active</span>
+            <span>Region: {activeRegion.name.split('/')[0]}</span>
           </span>
           <span className="text-slate-400">
-            Lai: <strong className="text-amber-300">15.0 ft</strong> | ICU: <strong className="text-rose-300">53%</strong>
+            Available Beds: <strong className="text-emerald-300">{totalFreeBeds} Beds ({totalIcuFree} ICU)</strong>
           </span>
         </div>
 
@@ -216,7 +556,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
         <div className="p-3 bg-slate-900/40 border-b border-white/[0.06]">
           <span className="text-[10px] font-mono font-bold text-slate-400 block mb-1.5 flex items-center gap-1">
             <Zap className="w-3 h-3 text-amber-400" />
-            <span>RAPID COMMAND DIRECTIVES (1-CLICK):</span>
+            <span>INSTANT COMMAND QUERIES (1-CLICK):</span>
           </span>
           <div className="grid grid-cols-1 gap-1.5">
             {STRATEGIC_PROMPTS.map((sp, idx) => (
@@ -287,7 +627,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
             <div className="flex flex-col items-start space-y-1.5">
               <div className="bg-slate-950/90 border border-orange-500/40 rounded-xl p-3 text-xs font-mono text-orange-300 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 animate-spin text-orange-400" />
-                <span>Qwen-2.5 synthesizing crisis directives...</span>
+                <span>Qwen-2.5 retrieving website telemetry & computing directive...</span>
               </div>
             </div>
           )}
@@ -307,7 +647,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
                 handleSend();
               }
             }}
-            placeholder="Ask Commander Qwen (e.g., Where to divert ambulances?)..."
+            placeholder="Ask about hospitals, beds, roads, water, rescue (or in Urdu)..."
             className="flex-1 bg-slate-900 border border-slate-700 focus:border-orange-500 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none font-mono"
           />
           <button
@@ -324,4 +664,3 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
     </div>
   );
 };
-

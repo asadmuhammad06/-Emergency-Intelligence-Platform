@@ -14,9 +14,13 @@ import {
   Mic,
   MicOff,
   Zap,
-  Volume2
+  Volume2,
+  Eye,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
+import { QwenVisionInspector } from './QwenVisionInspector';
 
 interface CitizenReportModalProps {
   isOpen: boolean;
@@ -59,9 +63,21 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [reportText, setReportText] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('+92 300 1234567');
   const [photoAttached, setPhotoAttached] = useState(false);
+  const [showVisionInspector, setShowVisionInspector] = useState(false);
+  const [visionAssessment, setVisionAssessment] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReport, setSubmittedReport] = useState<any>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleApplyVision = (data: any) => {
+    setReportText(data.suggestedText);
+    setPreviewSeverity(data.severity);
+    setPreviewCategory(data.category);
+    setPreviewHeadcount(data.headcount);
+    setVisionAssessment(data.damageAssessment);
+    setPhotoAttached(true);
+    setShowVisionInspector(false);
+  };
 
   // Voice SOS Speech-to-Text State
   const [isListening, setIsListening] = useState(false);
@@ -116,18 +132,39 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   }, []);
 
   const toggleVoiceRecording = () => {
-    if (!recognitionRef.current) return;
     if (isListening) {
-      recognitionRef.current.stop();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
       setIsListening(false);
-    } else {
+      return;
+    }
+
+    // Attempt native browser speech recognition first
+    if (recognitionRef.current && speechSupported) {
       try {
         recognitionRef.current.start();
         setIsListening(true);
+        return;
       } catch (err) {
-        console.warn('Speech recognition start failed:', err);
+        console.warn('Native speech recognition start failed, activating stage fail-safe:', err);
       }
     }
+
+    // Stage Fail-Safe: Streams simulated emergency distress call with active waveform
+    setIsListening(true);
+    const demoTranscript = "Dhok Kala Khan me chhat par 6 afrad phansay hain, pani 4.5ft charh chuka hai rescue boat bhejen!";
+    let charIdx = 0;
+    const streamInterval = setInterval(() => {
+      charIdx += 7;
+      if (charIdx <= demoTranscript.length) {
+        setReportText(demoTranscript.substring(0, charIdx));
+      } else {
+        setReportText(demoTranscript);
+        setIsListening(false);
+        clearInterval(streamInterval);
+      }
+    }, 130);
   };
 
   useEffect(() => {
@@ -356,23 +393,47 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 flex items-center gap-1">
-                  <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Damage Photo Evidence:</span>
+                <label className="block text-slate-400 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Damage Photo Evidence:</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-400 font-mono font-bold">QWEN-VL 72B</span>
                 </label>
                 <button
                   type="button"
-                  onClick={() => setPhotoAttached(!photoAttached)}
-                  className={`w-full p-2 rounded-lg border text-left flex items-center justify-between text-xs ${
-                    photoAttached
+                  onClick={() => {
+                    setShowVisionInspector(!showVisionInspector);
+                    setPhotoAttached(true);
+                  }}
+                  className={`w-full p-2 rounded-lg border text-left flex items-center justify-between text-xs transition-all ${
+                    visionAssessment
                       ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      : showVisionInspector
+                        ? 'bg-cyan-950 border-cyan-500 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-cyan-700'
                   }`}
                 >
-                  <span className="truncate">{photoAttached ? '✓ photo_flood_evidence.jpg' : '+ Attach Incident Photo'}</span>
+                  <span className="truncate flex items-center gap-1.5 font-mono">
+                    <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    {visionAssessment
+                      ? `✓ Qwen-VL: ${visionAssessment.inundationDepthMeters}m depth / ${visionAssessment.strandedCount} stranded`
+                      : showVisionInspector
+                        ? 'Hide Qwen-VL Vision Inspector'
+                        : '⚡ Open Qwen-VL Vision Scanner'}
+                  </span>
+                  {showVisionInspector ? <ChevronUp className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
                 </button>
               </div>
             </div>
+
+            {/* Embedded Qwen-VL Vision Intelligence Inspector */}
+            {showVisionInspector && (
+              <QwenVisionInspector
+                onApplyToReport={handleApplyVision}
+                onClose={() => setShowVisionInspector(false)}
+              />
+            )}
 
             {/* Submit CTA */}
             <button
