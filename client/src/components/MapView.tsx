@@ -241,6 +241,7 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
   // Default to Tactical Dark
   const [mapTheme, setMapTheme] = useState<MapThemeOption>('tactical_dark');
   const [isWeatherExpanded, setIsWeatherExpanded] = useState<boolean>(false);
+  const [isLayersOpenMobile, setIsLayersOpenMobile] = useState<boolean>(false);
 
     const currentTileConfig = useMemo(() => {
     // All free — no API key required
@@ -341,113 +342,120 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
       </div>
 
       {/* Floating Layer Controls - High Density Tactical Toggle Matrix */}
+      <div className="absolute top-[4.2rem] sm:top-4 right-3 sm:right-4 z-[1000] font-mono select-none flex flex-col items-end">
+        {/* Mobile toggle button when on small screens */}
+        <button
+          onClick={() => setIsLayersOpenMobile(!isLayersOpenMobile)}
+          className="sm:hidden bg-slate-950/95 border border-cyan-800/80 text-cyan-300 px-2.5 py-1.5 rounded-xl shadow-xl flex items-center gap-1.5 text-xs font-bold"
+        >
+          <Layers className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Overlays</span>
+          {isLayersOpenMobile ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
 
+        {/* Full overlay matrix: Always visible on desktop (sm:block), toggleable on mobile */}
+        <div className={`${isLayersOpenMobile ? 'block mt-1.5' : 'hidden'} sm:block bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100vw-2rem))]`}>
+          <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              TACTICAL OVERLAYS
+            </span>
+            <span className="text-[9px] text-cyan-400">SIMULATED</span>
+          </div>
 
+          <button
+            onClick={() => toggleLayer('floods')}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+              layers.floods
+                ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/60'
+                : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${layers.floods ? 'bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]' : 'bg-slate-600'}`}></span>
+              Flood Inundation
+            </span>
+            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-800/40">
+              {hazardZones.length} <span className="text-[8px]">SIMULATED</span>
+            </span>
+          </button>
 
+          <button
+            onClick={() => toggleLayer('hospitals')}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+              layers.hospitals
+                ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60'
+                : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${layers.hospitals ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`}></span>
+              Medical Facilities
+            </span>
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-800/40">
+              {hospitals.length} <span className="text-[8px]">SIMULATED</span>
+            </span>
+          </button>
 
+          <button
+            onClick={() => toggleLayer('roadBlocks')}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+              layers.roadBlocks
+                ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
+                : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${layers.roadBlocks ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-slate-600'}`}></span>
+              Road Blockades
+            </span>
+            <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-800/40">
+              {roadBlocks.length} <span className="text-[8px]">SIMULATED</span>
+            </span>
+          </button>
 
-      <div className="absolute top-[4.5rem] sm:top-4 right-3 sm:right-4 z-[1000] bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 rounded-xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-xs space-y-1 font-mono w-[min(200px,calc(100%-1.5rem))] select-none">
-      
-        <div className="flex items-center justify-between text-slate-400 font-bold px-1.5 pb-1.5 border-b border-slate-800 text-[10px] tracking-wider uppercase">
-          <span className="flex items-center gap-1.5 text-slate-300">
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            TACTICAL OVERLAYS
-          </span>
-          <span className="text-[9px] text-cyan-400">SIMULATED</span>
+          <button
+            onClick={() => toggleLayer('reliefHubs')}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+              layers.reliefHubs
+                ? 'bg-sky-950/60 text-sky-300 border border-sky-800/60'
+                : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${layers.reliefHubs ? 'bg-sky-400 shadow-[0_0_6px_rgba(14,165,233,0.8)]' : 'bg-slate-600'}`}></span>
+              Relief & Water Depots
+            </span>
+            <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-800/40">
+              {reliefHubs.length} <span className="text-[8px]">SIMULATED</span>
+            </span>
+          </button>
+
+          <button
+            onClick={() => toggleLayer('sosPins')}
+            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
+              layers.sosPins
+                ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
+                : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${layers.sosPins ? 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : 'bg-slate-600'}`}></span>
+              Citizen SOS Signals
+            </span>
+            <span className="text-[10px] font-bold text-rose-400 bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800/40">
+              {simulatedMetrics.activeSos} <span className="text-[8px]">SIMULATED</span>
+            </span>
+          </button>
         </div>
-
-        <button
-          onClick={() => toggleLayer('floods')}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
-            layers.floods
-              ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/60'
-              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${layers.floods ? 'bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]' : 'bg-slate-600'}`}></span>
-            Flood Inundation
-          </span>
-          <span className="text-[10px] font-bold text-cyan-400 bg-cyan-950/80 px-1.5 py-0.2 rounded border border-cyan-800/40">
-            {hazardZones.length} <span className="text-[8px]">SIMULATED</span>
-          </span>
-        </button>
-
-        <button
-          onClick={() => toggleLayer('hospitals')}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
-            layers.hospitals
-              ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60'
-              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${layers.hospitals ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`}></span>
-            Medical Facilities
-          </span>
-          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-800/40">
-            {hospitals.length} <span className="text-[8px]">SIMULATED</span>
-          </span>
-        </button>
-
-        <button
-          onClick={() => toggleLayer('roadBlocks')}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
-            layers.roadBlocks
-              ? 'bg-amber-950/60 text-amber-300 border border-amber-800/60'
-              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${layers.roadBlocks ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-slate-600'}`}></span>
-            Road Blockades
-          </span>
-          <span className="text-[10px] font-bold text-amber-400 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-800/40">
-            {roadBlocks.length} <span className="text-[8px]">SIMULATED</span>
-          </span>
-        </button>
-
-        <button
-          onClick={() => toggleLayer('reliefHubs')}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
-            layers.reliefHubs
-              ? 'bg-sky-950/60 text-sky-300 border border-sky-800/60'
-              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${layers.reliefHubs ? 'bg-sky-400 shadow-[0_0_6px_rgba(14,165,233,0.8)]' : 'bg-slate-600'}`}></span>
-            Relief & Water Depots
-          </span>
-          <span className="text-[10px] font-bold text-sky-400 bg-sky-950/80 px-1.5 py-0.2 rounded border border-sky-800/40">
-            {reliefHubs.length} <span className="text-[8px]">SIMULATED</span>
-          </span>
-        </button>
-
-        <button
-          onClick={() => toggleLayer('sosPins')}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] transition-all ${
-            layers.sosPins
-              ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
-              : 'text-slate-400 hover:bg-slate-900 border border-transparent opacity-60'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${layers.sosPins ? 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : 'bg-slate-600'}`}></span>
-            Citizen SOS Signals
-          </span>
-          <span className="text-[10px] font-bold text-rose-400 bg-rose-950/80 px-1.5 py-0.2 rounded border border-rose-800/40">
-            {simulatedMetrics.activeSos} <span className="text-[8px]">SIMULATED</span>
-          </span>
-        </button>
       </div>
 
       {/* Floating Tactical Hydro-Meteo Intelligence Panel — positioned bottom-LEFT to avoid overlap with right-side layer toggles */}
-      <div className="absolute bottom-5 left-4 z-30 font-mono select-none max-h-[calc(100%-4rem)] overflow-y-auto">
+      <div className="absolute bottom-5 left-3 sm:left-4 z-30 font-mono select-none max-h-[calc(100%-4rem)] overflow-y-auto max-w-[calc(100vw-1.5rem)]">
         {!isWeatherExpanded ? (
           <button
             onClick={() => setIsWeatherExpanded(true)}
-            className="bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md border border-cyan-800/80 text-cyan-300 px-3.5 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-bold transition-all hover:scale-105 active:scale-95"
+            className="bg-slate-900/95 hover:bg-slate-800 backdrop-blur-md border border-cyan-800/80 text-cyan-300 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-2xl flex items-center gap-1.5 sm:gap-2 text-xs font-bold transition-all hover:scale-105 active:scale-95"
             title="Open Live Hydro-Meteo Radar Telemetry"
           >
             <span className="relative flex h-2 w-2">
@@ -458,7 +466,7 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
               <>
                 <span>{weather.precipitation > 0 ? '🌧️' : '🌤️'}</span>
                 <span className="text-white">{weather.temperature}°C</span>
-                <span className="text-slate-400 text-[11px]">| 💨 {weather.windSpeed} km/h</span>
+                <span className="text-slate-400 text-[11px] hidden sm:inline">| 💨 {weather.windSpeed} km/h</span>
               </>
             ) : (
               <span>🛰️ Meteo Radar</span>
@@ -466,7 +474,7 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
             <ChevronUp className="w-3.5 h-3.5 text-slate-400 ml-1" />
           </button>
         ) : (
-          <div className="w-80 bg-slate-950/95 backdrop-blur-md border border-cyan-900/70 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(0,0,0,0.8)] text-xs text-slate-200">
+          <div className="w-[calc(100vw-1.5rem)] sm:w-80 bg-slate-950/95 backdrop-blur-md border border-cyan-900/70 rounded-2xl p-3.5 shadow-[0_0_30px_rgba(0,0,0,0.8)] text-xs text-slate-200">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2.5">
               <div className="flex items-center gap-2">
