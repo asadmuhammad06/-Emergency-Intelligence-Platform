@@ -40,6 +40,12 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
   );
   const [dispatchSuccessZone, setDispatchSuccessZone] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (priorityZones.length > 0 && !priorityZones.some(z => z.id === activeZoneId)) {
+      setActiveZoneId(priorityZones[0].id);
+    }
+  }, [priorityZones, activeZoneId]);
+
   if (!isOpen) return null;
 
   const selectedZone = priorityZones.find(z => z.id === activeZoneId) || priorityZones[0];

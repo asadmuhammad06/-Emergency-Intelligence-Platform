@@ -25,3 +25,4 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.log
+server/data/emergency_db.json

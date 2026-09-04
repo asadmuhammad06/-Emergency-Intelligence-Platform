@@ -13,21 +13,37 @@ function decodeWeatherCode(code) {
   return 'Cloudy';
 }
 
+export async function getRiverDischarge(lat, lng) {
+  try {
+    const url = `https://flood-api.open-meteo.com/v1/flood?latitude=${lat}&longitude=${lng}&daily=river_discharge&forecast_days=1`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const discharge = data.daily?.river_discharge?.[0];
+    return typeof discharge === 'number' ? Math.round(discharge * 10) / 10 : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function getCurrentWeather(lat, lng) {
-  const url =
+  const weatherUrl =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${lat}` +
     `&longitude=${lng}` +
     `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m` +
     `&timezone=auto`;
 
-  const response = await fetch(url);
+  const [weatherRes, riverDischargeM3s] = await Promise.all([
+    fetch(weatherUrl),
+    getRiverDischarge(lat, lng)
+  ]);
 
-  if (!response.ok) {
-    throw new Error(`Weather API error: ${response.status}`);
+  if (!weatherRes.ok) {
+    throw new Error(`Weather API error: ${weatherRes.status}`);
   }
 
-  const data = await response.json();
+  const data = await weatherRes.json();
   const current = data.current || {};
   const weatherCode = current.weather_code ?? 0;
   const condition = decodeWeatherCode(weatherCode);
@@ -44,6 +60,7 @@ export async function getCurrentWeather(lat, lng) {
     windSpeed,
     windGusts,
     time: current.time,
+    riverDischargeM3s: riverDischargeM3s ?? undefined,
     isHeavyRain: precipitation >= 5 || [65, 82, 95, 96, 99].includes(weatherCode),
     isHighWind: windGusts >= 40 || windSpeed >= 25,
     flightFeasibility: (windGusts > 45 || precipitation > 15) ? 'RESTRICTED' : (windGusts > 30 || precipitation > 5) ? 'CAUTION' : 'CLEAR',

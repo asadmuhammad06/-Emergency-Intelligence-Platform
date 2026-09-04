@@ -12,7 +12,8 @@ import {
   initialReliefHubs,
   initialReports
 } from './data/pakistanGeoData.js';
-import { simulationSteps } from './data/simulationEvents.js';
+import { simulationSteps, getSimulationSteps } from './data/simulationEvents.js';
+import { getCityCatalogEntry, CITY_CATALOG } from './data/cityDataCatalog.js';
 import { classifyEmergencyReport } from './services/aiClassifier.js';
 import { calculateSafestRoute } from './services/routingEngine.js';
 import { calculatePriorityZones } from './services/dispatchSolver.js';
@@ -188,54 +189,84 @@ const liveRegionCache = new Map();
 let liveRefreshPromise = null;
 
 const buildLiveSnapshot = (region, intel, radar) => {
+  const catalog = getCityCatalogEntry(region.id);
   const communityReports = getReports({ lat: region.center[0], lon: region.center[1] });
   
-  // Real Hospitals with realistic capacity and ICU tracking
-  const hospitals = (intel.hospitals && intel.hospitals.length > 0)
-    ? intel.hospitals.map((report, idx) => ({
-        id: report.id || `hosp_live_${idx}`,
-        name: report.title || `Medical Center ${idx + 1}`,
-        location: report.location || region.name,
-        coords: report.coords || region.center,
-        totalBeds: 600 + (idx * 150),
-        occupiedBeds: 450 + (idx * 120),
-        capacity: Math.min(95, Math.round(((450 + (idx * 120)) / (600 + (idx * 150))) * 100)),
-        icuAvailable: Math.max(3, 25 - idx * 6),
-        powerBackup: 'Operational',
-        status: idx === 0 ? 'OVERLOADED' : 'NORMAL',
-        acceptingEmergencies: idx !== 0,
-        phone: '+92-51-9290300',
-        source: report.source || 'VERIFIED_HEALTH'
-      }))
-    : initialHospitals;
+  // Hospitals: authentic city catalog or initialHospitals + live health telemetry
+  let hospitals = catalog ? catalog.hospitals : initialHospitals;
+  if (intel.hospitals && intel.hospitals.length > 0) {
+    const liveHosp = intel.hospitals.map((report, idx) => ({
+      id: report.id || `hosp_live_${idx}`,
+      name: report.title || `Medical Center ${idx + 1}`,
+      location: report.location || region.name,
+      coords: report.coords || region.center,
+      totalBeds: 600 + (idx * 150),
+      occupiedBeds: 450 + (idx * 120),
+      capacity: Math.min(95, Math.round(((450 + (idx * 120)) / (600 + (idx * 150))) * 100)),
+      icuAvailable: Math.max(3, 25 - idx * 6),
+      powerBackup: 'Operational',
+      status: idx === 0 ? 'OVERLOADED' : 'NORMAL',
+      acceptingEmergencies: idx !== 0,
+      phone: '+92-51-9290300',
+      source: report.source || 'VERIFIED_HEALTH'
+    }));
+    hospitals = [...hospitals, ...liveHosp];
+  }
 
-  const reliefHubs = (intel.waterPoints && intel.waterPoints.length > 0)
-    ? intel.waterPoints.map((report, idx) => ({
-        id: report.id || `depot_live_${idx}`,
-        name: report.title || `Relief Depot ${idx + 1}`,
-        coords: report.coords || region.center,
-        type: 'DISASTER_RELIEF_STATION',
-        status: 'OPERATIONAL',
-        managedBy: 'NDMA & Rescue 1122',
-        waterAvailable: true,
-        drinkingWaterLiters: 5000 + (idx * 1500),
-        foodPackets: 400 + (idx * 100),
-        rescueBoats: 3 + idx,
-        source: report.source || 'EOC_REGISTERED'
-      }))
-    : initialReliefHubs;
+  let reliefHubs = catalog ? catalog.reliefHubs : initialReliefHubs;
+  if (intel.waterPoints && intel.waterPoints.length > 0) {
+    const liveHubs = intel.waterPoints.map((report, idx) => ({
+      id: report.id || `depot_live_${idx}`,
+      name: report.title || `Relief Depot ${idx + 1}`,
+      coords: report.coords || region.center,
+      type: 'DISASTER_RELIEF_STATION',
+      status: 'OPERATIONAL',
+      managedBy: 'NDMA & Rescue 1122',
+      waterAvailable: true,
+      drinkingWaterLiters: 5000 + (idx * 1500),
+      foodPackets: 400 + (idx * 100),
+      rescueBoats: 3 + idx,
+      source: report.source || 'EOC_REGISTERED'
+    }));
+    reliefHubs = [...reliefHubs, ...liveHubs];
+  }
 
-  const hazardZones = initialHazardZones;
-  const roadBlocks = initialRoadBlocks;
-  const reports = [...currentState.reports, ...communityReports, ...intel.incidents];
+  const hazardZones = catalog ? catalog.hazardZones : initialHazardZones;
+  const roadBlocks = catalog ? catalog.roadBlocks : initialRoadBlocks;
+
+  // City-specific reports
+  const baseReports = catalog ? catalog.reports : (region.id === 'isb_rwp' ? currentState.reports : []);
+  // Include user-submitted reports that belong to this region
+  const userReportsForRegion = currentState.reports.filter(r => {
+    if (!r.coords) return false;
+    const dLat = Math.abs(r.coords[0] - region.center[0]);
+    const dLon = Math.abs(r.coords[1] - region.center[1]);
+    return dLat < 0.6 && dLon < 0.6;
+  });
+
+  const reportsMap = new Map();
+  [...baseReports, ...userReportsForRegion, ...communityReports, ...(intel.incidents || [])].forEach(r => {
+    if (r && r.id && !reportsMap.has(r.id)) {
+      reportsMap.set(r.id, r);
+    }
+  });
+  const reports = Array.from(reportsMap.values());
+
+  const priorityZones = calculatePriorityZones(reports, hospitals, hazardZones, roadBlocks, region.id);
+
   return {
-    activeRegion: region,
+    activeRegion: {
+      ...region,
+      riverBasin: catalog?.riverBasin || region.riverBasin,
+      sensorName: catalog?.sensorName || region.sensorName,
+      dangerLimitFeet: catalog?.dangerLimitFeet || region.dangerLimitFeet
+    },
     hospitals,
     hazardZones,
     roadBlocks,
     reliefHubs,
     reports,
-    priorityZones: [],
+    priorityZones,
     dispatchedUnits: [],
     disasterAlert: null,
     weather: intel.weather ? {
@@ -393,16 +424,17 @@ app.get('/api/vision/status', (req, res) => {
 });
 
 app.get('/api/vision/presets', (req, res) => {
+  const regionId = req.query.regionId || 'isb_rwp';
   res.json({
     success: true,
-    presets: getPresetDisasterImages()
+    presets: getPresetDisasterImages(regionId)
   });
 });
 
 app.post('/api/vision/analyze-damage', async (req, res) => {
   try {
-    const { imageBase64, imageUrl, presetId, prompt } = req.body;
-    const analysis = await analyzeDisasterImage({ imageBase64, imageUrl, presetId, prompt });
+    const { imageBase64, imageUrl, presetId, prompt, regionId } = req.body;
+    const analysis = await analyzeDisasterImage({ imageBase64, imageUrl, presetId, prompt, regionId });
     res.json({
       success: true,
       analysis
@@ -418,10 +450,30 @@ app.post('/api/vision/analyze-damage', async (req, res) => {
 
 // Safe Route Calculation
 app.post('/api/route/calculate', (req, res) => {
-  const { startCoords, hospitalId } = req.body;
-  const targetHospital = hospitalId
-    ? currentState.hospitals.find(h => h.id === hospitalId)
-    : currentState.hospitals.find(h => h.status !== 'OVERLOADED') || currentState.hospitals[1];
+  const { startCoords, hospitalId, hospitals } = req.body;
+  
+  let pool = Array.isArray(hospitals) && hospitals.length > 0
+    ? hospitals
+    : currentState.hospitals;
+
+  let targetHospital = hospitalId
+    ? pool.find(h => h.id === hospitalId)
+    : null;
+
+  if (!targetHospital && hospitalId) {
+    for (const cat of Object.values(CITY_CATALOG)) {
+      const found = cat.hospitals.find(h => h.id === hospitalId);
+      if (found) {
+        targetHospital = found;
+        break;
+      }
+    }
+  }
+
+  if (!targetHospital) {
+    targetHospital = pool.find(h => h.status !== 'OVERLOADED') || pool[0];
+  }
+
   if (!targetHospital) {
     return res.status(409).json({ success: false, error: 'No live medical facility is available for routing' });
   }
@@ -481,17 +533,23 @@ app.post('/api/simulation/reset', (req, res) => {
     activeSimulationTimer = null;
   }
 
-  currentState.hospitals = JSON.parse(JSON.stringify(initialHospitals));
-  currentState.hazardZones = JSON.parse(JSON.stringify(initialHazardZones));
-  currentState.roadBlocks = JSON.parse(JSON.stringify(initialRoadBlocks));
-  currentState.reports = JSON.parse(JSON.stringify(initialReports));
+  const { regionId } = req.body || {};
+  const targetRegionId = regionId || currentState.simulationRegionId || 'isb_rwp';
+  const cat = getCityCatalogEntry(targetRegionId);
+
+  currentState.hospitals = cat ? JSON.parse(JSON.stringify(cat.hospitals)) : JSON.parse(JSON.stringify(initialHospitals));
+  currentState.hazardZones = cat ? JSON.parse(JSON.stringify(cat.hazardZones)) : JSON.parse(JSON.stringify(initialHazardZones));
+  currentState.roadBlocks = cat ? JSON.parse(JSON.stringify(cat.roadBlocks)) : JSON.parse(JSON.stringify(initialRoadBlocks));
+  currentState.reports = cat ? JSON.parse(JSON.stringify(cat.reports)) : JSON.parse(JSON.stringify(initialReports));
   currentState.simulationRunning = false;
   currentState.simulationStepIndex = 0;
+  currentState.disasterAlert = null;
   currentState.priorityZones = calculatePriorityZones(
     currentState.reports,
     currentState.hospitals,
     currentState.hazardZones,
-    currentState.roadBlocks
+    currentState.roadBlocks,
+    targetRegionId
   );
 
   io.emit('state_reset', currentState);
@@ -504,20 +562,25 @@ app.post('/api/simulation/start', (req, res) => {
     return res.json({ success: true, message: "Simulation is already running" });
   }
 
+  const { regionId } = req.body || {};
+  const targetRegionId = regionId || currentState.simulationRegionId || 'isb_rwp';
+  const activeSteps = getSimulationSteps(targetRegionId);
+
   currentState.simulationRunning = true;
   currentState.simulationStepIndex = 0;
-  io.emit('simulation_started', { totalSteps: simulationSteps.length });
+  currentState.simulationRegionId = targetRegionId;
+  io.emit('simulation_started', { totalSteps: activeSteps.length, regionId: targetRegionId });
 
   let stepIdx = 0;
 
   function runNextStep() {
-    if (!currentState.simulationRunning || stepIdx >= simulationSteps.length) {
+    if (!currentState.simulationRunning || stepIdx >= activeSteps.length) {
       currentState.simulationRunning = false;
       io.emit('simulation_completed', { message: "Disaster scenario fully simulated." });
       return;
     }
 
-    const currentEvent = simulationSteps[stepIdx];
+    const currentEvent = activeSteps[stepIdx];
     currentState.simulationStepIndex = stepIdx + 1;
 
     // Apply simulation event to in-memory state
@@ -541,7 +604,13 @@ app.post('/api/simulation/start', (req, res) => {
       currentState.reports.unshift(newRep);
       io.emit('new_report', newRep);
     } else if (currentEvent.type === "HOSPITAL_TELEMETRY_UPDATE") {
-      const targetHosp = currentState.hospitals.find(h => h.id === currentEvent.hospitalId);
+      let targetHosp = currentState.hospitals.find(h => h.id === currentEvent.hospitalId);
+      if (!targetHosp) {
+        const cat = getCityCatalogEntry(targetRegionId);
+        if (cat) {
+          targetHosp = cat.hospitals.find(h => h.id === currentEvent.hospitalId);
+        }
+      }
       if (targetHosp) {
         Object.assign(targetHosp, currentEvent.update);
         io.emit('hospital_update', targetHosp);
@@ -562,20 +631,22 @@ app.post('/api/simulation/start', (req, res) => {
       currentState.reports,
       currentState.hospitals,
       currentState.hazardZones,
-      currentState.roadBlocks
+      currentState.roadBlocks,
+      targetRegionId
     );
     io.emit('priority_update', currentState.priorityZones);
-    io.emit('simulation_step', { step: stepIdx + 1, event: currentEvent });
+    io.emit('simulation_step', { step: stepIdx + 1, total: activeSteps.length, event: currentEvent });
 
     stepIdx++;
-    activeSimulationTimer = setTimeout(runNextStep, currentEvent.delayMs);
+    activeSimulationTimer = setTimeout(runNextStep, currentEvent.delayMs || 3500);
   }
 
   activeSimulationTimer = setTimeout(runNextStep, 1500);
 
   res.json({
     success: true,
-    message: "Simulation launched across real-time WebSocket mesh."
+    message: "Simulation launched across real-time WebSocket mesh.",
+    totalSteps: activeSteps.length
   });
 });
 

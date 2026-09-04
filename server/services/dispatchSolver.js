@@ -1,18 +1,13 @@
 // Dynamic Multi-Criteria Decision Intelligence Solver for Resource Allocation & Priority Zones
 
-export function calculatePriorityZones(reports = [], hospitals = [], hazardZones = [], roadBlocks = []) {
-  // Overloaded hospitals count in the network
-  const overloadedHospitals = hospitals.filter(h => (h.capacity || 0) >= 85);
-  const overloadedCount = overloadedHospitals.length;
-
-  // Base clusters representing established municipal disaster basins
-  const baseClusters = [
+const REGIONAL_CLUSTERS = {
+  isb_rwp: [
     {
       id: "zone_rwp_nullah_lai",
       zoneName: "Priority Zone #1 — Rawalpindi Nullah Lai & Dhok Kala Khan Basin",
       subDistricts: ["Dhok Kala Khan", "Gawalmandi", "Committee Chowk", "Nullah Lai Riverbed"],
       centerCoords: [33.6280, 73.0680],
-      baseHeadcount: 23,
+      baseHeadcount: 20,
       roadAccessibility: "LOW",
       accessibilityScore: 2.2,
       waterShortageReported: true,
@@ -55,7 +50,199 @@ export function calculatePriorityZones(reports = [], hospitals = [], hazardZones
         "Set up mobile medical hydration camp at Sector I-9 community school"
       ]
     }
-  ];
+  ],
+  karachi: [
+    {
+      id: "zone_khi_lyari",
+      zoneName: "Priority Zone #1 — Lyari River Basin & Chakiwara Cluster",
+      subDistricts: ["Lyari", "Chakiwara", "Golimar", "Lyari Nadi"],
+      centerCoords: [24.8720, 66.9950],
+      baseHeadcount: 27,
+      roadAccessibility: "CRITICAL_BLOCKED",
+      accessibilityScore: 1.8,
+      waterShortageReported: true,
+      powerOutageReported: true,
+      actionPlan: [
+        "Deploy Rescue 1122 Jet-Boats via Mauripur Road access",
+        "Establish field casualty triage camp redirecting to Civil Hospital Karachi",
+        "Deploy mobile high-discharge dewatering bowsers to Chakiwara underpass"
+      ]
+    },
+    {
+      id: "zone_khi_malir",
+      zoneName: "Priority Zone #2 — Malir River & Korangi Causeway Crossing",
+      subDistricts: ["Korangi", "Malir", "Korangi Creek", "Causeway"],
+      centerCoords: [24.8350, 67.0980],
+      baseHeadcount: 18,
+      roadAccessibility: "LOW",
+      accessibilityScore: 2.5,
+      waterShortageReported: true,
+      powerOutageReported: false,
+      actionPlan: [
+        "Deploy Army Aviation / Navy evacuation hovercrafts",
+        "Reroute industrial freight via Jam Sadiq Bridge",
+        "Stage mobile drinking water filtration bowsers at Korangi Crossing"
+      ]
+    },
+    {
+      id: "zone_khi_faisal",
+      zoneName: "Priority Zone #3 — Shahrah-e-Faisal & Clifton Drainage Belt",
+      subDistricts: ["Shahrah-e-Faisal", "Karsaz", "Clifton", "Orangi"],
+      centerCoords: [24.8780, 67.0860],
+      baseHeadcount: 12,
+      roadAccessibility: "MODERATE",
+      accessibilityScore: 5.0,
+      waterShortageReported: false,
+      powerOutageReported: true,
+      actionPlan: [
+        "Mobilize K-Electric emergency substation restoration squad",
+        "Deploy heavy drainage tractors to clear Karsaz underpass"
+      ]
+    }
+  ],
+  lahore: [
+    {
+      id: "zone_lhr_ravi",
+      zoneName: "Priority Zone #1 — River Ravi Spillway & Shahdara Belt",
+      subDistricts: ["Shahdara", "Ravi", "Badami Bagh"],
+      centerCoords: [31.6210, 74.2880],
+      baseHeadcount: 23,
+      roadAccessibility: "LOW",
+      accessibilityScore: 2.4,
+      waterShortageReported: true,
+      powerOutageReported: true,
+      actionPlan: [
+        "Deploy Rescue 1122 flood rescue flotilla via Ring Road ingress",
+        "Direct trauma casualties to Mayo and Services hospitals",
+        "Air-drop dry rations and lifejackets along Shahdara riverbed"
+      ]
+    },
+    {
+      id: "zone_lhr_lakshmi",
+      zoneName: "Priority Zone #2 — Lakshmi Chowk & Central Depression Basin",
+      subDistricts: ["Lakshmi Chowk", "Anarkali", "Mozang", "Qartaba"],
+      centerCoords: [31.5680, 74.3210],
+      baseHeadcount: 19,
+      roadAccessibility: "CRITICAL_BLOCKED",
+      accessibilityScore: 2.0,
+      waterShortageReported: true,
+      powerOutageReported: true,
+      actionPlan: [
+        "WASA Lahore heavy dewatering pump deployment",
+        "Evacuate shopkeeper rooftop clusters via shallow draft boats"
+      ]
+    }
+  ],
+  nowshera: [
+    {
+      id: "zone_nws_kabul",
+      zoneName: "Priority Zone #1 — Kabul River Inundation & Hakimabad Basin",
+      subDistricts: ["Hakimabad", "Nowshera Cantt", "Kabul River", "Nowshera Kalan"],
+      centerCoords: [34.0180, 71.9620],
+      baseHeadcount: 33,
+      roadAccessibility: "CRITICAL_BLOCKED",
+      accessibilityScore: 1.6,
+      waterShortageReported: true,
+      powerOutageReported: true,
+      actionPlan: [
+        "Deploy Army Aviation winch helicopters for stranded rooftop families",
+        "Operate 8 jet-boats from Nowshera Sports Complex depot",
+        "Reroute highway traffic to M-1 motorway"
+      ]
+    }
+  ],
+  swat: [
+    {
+      id: "zone_swt_mingora",
+      zoneName: "Priority Zone #1 — Swat River Torrent & Fizagat Riverside",
+      subDistricts: ["Fizagat", "Madyan", "Mingora", "Bahrain"],
+      centerCoords: [34.7950, 72.3780],
+      baseHeadcount: 23,
+      roadAccessibility: "CRITICAL_BLOCKED",
+      accessibilityScore: 1.5,
+      waterShortageReported: true,
+      powerOutageReported: true,
+      actionPlan: [
+        "Aviation helicopter rescue for stranded tourists at Fizagat",
+        "Rescue 1122 alpine rope teams deployment to Madyan road"
+      ]
+    }
+  ],
+  sukkur: [
+    {
+      id: "zone_skr_barrage",
+      zoneName: "Priority Zone #1 — Indus River Bund & Rohri Seepage Zone",
+      subDistricts: ["Rohri", "Bund", "Bandar Road", "Sukkur Barrage"],
+      centerCoords: [27.6920, 68.8950],
+      baseHeadcount: 18,
+      roadAccessibility: "LOW",
+      accessibilityScore: 3.0,
+      waterShortageReported: true,
+      powerOutageReported: false,
+      actionPlan: [
+        "Deploy Sindh Irrigation emergency sandbagging unit",
+        "Rescue motorboats deployment from Ayub Gate depot"
+      ]
+    }
+  ],
+  dgkhan: [
+    {
+      id: "zone_dgk_vidor",
+      zoneName: "Priority Zone #1 — Vidor Hill Torrent & Indus Highway Breach",
+      subDistricts: ["Vidor", "Indus Highway", "Taunsa", "KM-45"],
+      centerCoords: [30.0620, 70.5850],
+      baseHeadcount: 20,
+      roadAccessibility: "CRITICAL_BLOCKED",
+      accessibilityScore: 1.7,
+      waterShortageReported: true,
+      powerOutageReported: false,
+      actionPlan: [
+        "Deploy 4x4 high-clearance rescue troop carriers",
+        "Emergency road earthwork and diversion via Multan highway"
+      ]
+    }
+  ],
+  quetta: [
+    {
+      id: "zone_qta_hanna",
+      zoneName: "Priority Zone #1 — Hanna Urak & Sariab Road Flash Runoff",
+      subDistricts: ["Hanna", "Sariab", "Western Bypass", "Brewery"],
+      centerCoords: [30.2520, 67.0980],
+      baseHeadcount: 22,
+      roadAccessibility: "LOW",
+      accessibilityScore: 2.8,
+      waterShortageReported: false,
+      powerOutageReported: true,
+      actionPlan: [
+        "Deploy Frontier Corps (FC) mountain rescue units",
+        "Evacuate adobe houses along Sariab road"
+      ]
+    }
+  ]
+};
+
+export function calculatePriorityZones(reports = [], hospitals = [], hazardZones = [], roadBlocks = [], regionId = null) {
+  // Overloaded hospitals count in the network
+  const overloadedHospitals = hospitals.filter(h => (h.capacity || 0) >= 85);
+  const overloadedCount = overloadedHospitals.length;
+
+  // Detect city/region if not passed
+  let matchedRegionId = regionId;
+  if (!matchedRegionId && reports.length > 0) {
+    const rep = reports[0];
+    const coords = rep.coords || [0, 0];
+    if (coords[0] < 26) matchedRegionId = 'karachi';
+    else if (coords[0] > 27 && coords[0] < 28.5) matchedRegionId = 'sukkur';
+    else if (coords[0] >= 29.5 && coords[0] <= 31 && coords[1] < 68) matchedRegionId = 'quetta';
+    else if (coords[0] >= 29.5 && coords[0] <= 31 && coords[1] >= 70) matchedRegionId = 'dgkhan';
+    else if (coords[0] > 31 && coords[0] < 32.5) matchedRegionId = 'lahore';
+    else if (coords[0] > 34.5) matchedRegionId = 'swat';
+    else if (coords[0] > 33.9 && coords[0] < 34.5) matchedRegionId = 'nowshera';
+    else matchedRegionId = 'isb_rwp';
+  }
+
+  // Pick base clusters for detected region
+  const baseClusters = REGIONAL_CLUSTERS[matchedRegionId] || REGIONAL_CLUSTERS.isb_rwp;
 
   // Dynamically aggregate arbitrary reports into clusters
   const dynamicClusters = baseClusters.map(cluster => {

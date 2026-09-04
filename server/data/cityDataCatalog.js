@@ -1,49 +1,5 @@
-import { EmergencyReport, HazardZone, Hospital, ReliefHub, RoadBlock, Region, WeatherData } from '../types';
-
-export interface SimulatedMetrics {
-  trappedCitizens: number;
-  icuSaturation: number;
-  activeSos: number;
-  nullahGaugeFeet: number;
-  floodInundation: number;
-}
-
-export interface SimulatedCityData {
-  reports: EmergencyReport[];
-  hospitals: Hospital[];
-  hazardZones: HazardZone[];
-  roadBlocks: RoadBlock[];
-  reliefHubs: ReliefHub[];
-  weather: WeatherData;
-  priorityZones: never[];
-  dispatchedUnits: never[];
-  metrics: SimulatedMetrics;
-}
-
-const hash = (value: string) => [...value].reduce((total, char) => ((total * 31) + char.charCodeAt(0)) >>> 0, 2166136261);
-const numberFor = (seed: number, min: number, max: number) => min + (seed % (max - min + 1));
-const point = (region: Region, seed: number, spread = 0.035): [number, number] => [
-  region.center[0] + (((seed % 1000) / 999) - 0.5) * spread,
-  region.center[1] + ((((seed >>> 10) % 1000) / 999) - 0.5) * spread
-];
-
-// ========================================================================
-// AUTHENTIC CITY INTELLIGENCE CATALOG (All 8 Regions)
-// ========================================================================
-
-interface CityCatalogEntry {
-  riverBasin: string;
-  sensorName: string;
-  baseGaugeFeet: number;
-  dangerLimitFeet: number;
-  hospitals: Hospital[];
-  reports: EmergencyReport[];
-  hazardZones: HazardZone[];
-  roadBlocks: RoadBlock[];
-  reliefHubs: ReliefHub[];
-}
-
-export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
+// Comprehensive City Intelligence Catalog for all Pakistan Regions
+export const CITY_CATALOG = {
   isb_rwp: {
     riverBasin: 'Nullah Lai Basin',
     sensorName: 'Kattarian Sensor',
@@ -135,7 +91,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 12,
         locationName: 'Dhok Kala Khan, Rawalpindi',
         coords: [33.6380, 73.0760],
-        timestamp: '10 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Rescue Jet-Boat', 'Life Jackets', 'Paramedic Unit']
@@ -148,7 +104,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 8,
         locationName: 'Commercial Market, Satellite Town',
         coords: [33.6310, 73.0690],
-        timestamp: '14 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['Evacuation Support', 'Emergency Ropes']
@@ -161,7 +117,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Faizabad Interchange, Islamabad Highway',
         coords: [33.6580, 73.0780],
-        timestamp: '18 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
         status: 'VERIFIED',
         source: 'TRAFFIC_EOC',
         needs: ['Traffic Diversion', 'Heavy Water Pump Bowsers']
@@ -174,7 +130,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 4,
         locationName: 'IJP Road Double Road Section',
         coords: [33.6445, 73.0620],
-        timestamp: '22 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
         status: 'REPORTED',
         source: 'RESCUE_1122',
         needs: ['Tow Trucks', 'Drainage Pumps']
@@ -187,7 +143,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Holy Family Hospital, Satellite Town',
         coords: [33.6265, 73.0712],
-        timestamp: '26 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 26).toISOString(),
         status: 'VERIFIED',
         source: 'HOSPITAL_EOC',
         needs: ['Patient Diversion to PIMS', 'Oxygen Cylinder Reserves']
@@ -200,7 +156,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 25,
         locationName: 'Sadiqabad Basin, Rawalpindi',
         coords: [33.6220, 73.0810],
-        timestamp: '30 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         status: 'VERIFIED',
         source: 'WASA_SURVEILLANCE',
         needs: ['Water Bowser Fleet', 'Water Purification Tablets']
@@ -213,7 +169,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Sector I-9/4 Grid Station, Islamabad',
         coords: [33.6540, 73.0480],
-        timestamp: '35 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
         status: 'VERIFIED',
         source: 'IESCO_DISPATCH',
         needs: ['Industrial De-watering Pumps', 'Diesel Fuel Supply']
@@ -381,7 +337,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 16,
         locationName: 'Lyari Chakiwara #2, Karachi',
         coords: [24.8720, 66.9950],
-        timestamp: '6 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Rescue Jet-Boats', 'Life Jackets', 'Emergency Ropes']
@@ -394,7 +350,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 11,
         locationName: 'Korangi Creek Sector 8-B, Karachi',
         coords: [24.8200, 67.1190],
-        timestamp: '12 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['Evacuation Convoy', 'First Aid Kits']
@@ -407,7 +363,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Shahrah-e-Faisal (Karsaz Underpass), Karachi',
         coords: [24.8780, 67.0860],
-        timestamp: '15 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
         status: 'VERIFIED',
         source: 'TRAFFIC_POLICE',
         needs: ['Heavy Dewatering Bowsers', 'Traffic Diverters']
@@ -420,7 +376,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 3,
         locationName: 'Korangi Causeway Crossing, Karachi',
         coords: [24.8350, 67.0980],
-        timestamp: '19 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 19).toISOString(),
         status: 'CRITICAL',
         source: 'RESCUE_1122',
         needs: ['Heavy Tow Cranes', 'Police Cordon']
@@ -433,7 +389,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'JPMC Emergency Ward, Karachi',
         coords: [24.8516, 67.0494],
-        timestamp: '24 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
         status: 'VERIFIED',
         source: 'HOSPITAL_EOC',
         needs: ['Casualty Redirection', 'IV Saline Reserves']
@@ -446,7 +402,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 45,
         locationName: 'Orangi Town Sector 11, Karachi',
         coords: [24.9450, 66.9850],
-        timestamp: '28 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
         status: 'VERIFIED',
         source: 'KW&SB_ALERT',
         needs: ['Emergency Water Bowsers', 'Water Purification Tablets']
@@ -459,7 +415,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Clifton Block 2 Grid Station, Karachi',
         coords: [24.8150, 67.0310],
-        timestamp: '33 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 33).toISOString(),
         status: 'VERIFIED',
         source: 'K_ELECTRIC',
         needs: ['Industrial Substation Pumps', 'Mobile Power Backup']
@@ -611,7 +567,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 14,
         locationName: 'Lakshmi Chowk, Lahore',
         coords: [31.5680, 74.3210],
-        timestamp: '8 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Rescue Boats', 'Life Jackets', 'Paramedic Team']
@@ -624,7 +580,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 9,
         locationName: 'Shahdara Town (Ravi Embankment), Lahore',
         coords: [31.6210, 74.2880],
-        timestamp: '14 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['High-Clearance Troop Carriers', 'Ropes']
@@ -637,7 +593,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Canal Bank Road (Mall Underpass), Lahore',
         coords: [31.5450, 74.3480],
-        timestamp: '17 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 17).toISOString(),
         status: 'VERIFIED',
         source: 'TRAFFIC_POLICE',
         needs: ['Heavy Dewatering Engines', 'Police Detour']
@@ -650,7 +606,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 3,
         locationName: 'Badami Bagh Circular Road, Lahore',
         coords: [31.5900, 74.3150],
-        timestamp: '21 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 21).toISOString(),
         status: 'REPORTED',
         source: 'RESCUE_1122',
         needs: ['Tow Trucks', 'Drainage Pumps']
@@ -663,7 +619,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Mayo Hospital Emergency, Lahore',
         coords: [31.5725, 74.3140],
-        timestamp: '25 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
         status: 'VERIFIED',
         source: 'HOSPITAL_EOC',
         needs: ['Patient Diversion', 'Oxygen Supplies']
@@ -676,7 +632,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 55,
         locationName: 'Misri Shah Basin, Lahore',
         coords: [31.5880, 74.3390],
-        timestamp: '30 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
         status: 'VERIFIED',
         source: 'WASA_LAHORE',
         needs: ['WASA Water Bowsers', 'Filtration Units']
@@ -689,7 +645,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Qartaba Grid Station, Mozang, Lahore',
         coords: [31.5500, 74.3100],
-        timestamp: '34 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 34).toISOString(),
         status: 'VERIFIED',
         source: 'LESCO_ALERT',
         needs: ['Substation Drainage', 'Mobile Generators']
@@ -825,7 +781,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 22,
         locationName: 'Hakimabad Riverside, Nowshera',
         coords: [34.0180, 71.9620],
-        timestamp: '5 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['High-Power Jet-Boats', 'Life Jackets', 'Army Aviation Winch']
@@ -838,7 +794,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 11,
         locationName: 'Nowshera Kalan, Nowshera',
         coords: [34.0110, 71.9890],
-        timestamp: '11 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 11).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['Evacuation Boats', 'First Aid']
@@ -851,7 +807,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'GT Road (Kabul River Bypass), Nowshera',
         coords: [34.0220, 71.9720],
-        timestamp: '16 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 16).toISOString(),
         status: 'VERIFIED',
         source: 'HIGHWAY_POLICE',
         needs: ['Traffic Diversion to M-1', 'Warning Cones']
@@ -864,7 +820,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Kabul River Old Bridge, Nowshera',
         coords: [34.0150, 71.9770],
-        timestamp: '20 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
         status: 'VERIFIED',
         source: 'RESCUE_1122',
         needs: ['Traffic Cordon', 'Structural Inspection']
@@ -877,7 +833,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Qazi Hussain Ahmed Complex, Nowshera',
         coords: [34.0045, 71.9860],
-        timestamp: '23 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 23).toISOString(),
         status: 'VERIFIED',
         source: 'HOSPITAL_EOC',
         needs: ['Trauma Squads', 'Blood Units']
@@ -890,7 +846,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 70,
         locationName: 'Nowshera Cantt Water Station',
         coords: [34.0200, 71.9810],
-        timestamp: '29 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 29).toISOString(),
         status: 'VERIFIED',
         source: 'TMA_NOWSHERA',
         needs: ['Potable Water Bowsers', 'Chlorine Tablets']
@@ -988,7 +944,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 16,
         locationName: 'Fizagat Riverside, Swat',
         coords: [34.7950, 72.3780],
-        timestamp: '9 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Helicopter Evacuation', 'Emergency Ropes']
@@ -1001,7 +957,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 7,
         locationName: 'Madyan Road Access, Swat',
         coords: [34.8200, 72.3900],
-        timestamp: '14 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['Rescue 1122 Mountain Squad', 'First Aid']
@@ -1014,7 +970,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Mingora Bypass Arterial, Swat',
         coords: [34.7820, 72.3550],
-        timestamp: '18 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
         status: 'VERIFIED',
         source: 'HIGHWAY_POLICE',
         needs: ['Heavy Bulldozers', 'Traffic Diversion']
@@ -1112,7 +1068,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 18,
         locationName: 'Rohri Railway Bund Settlement, Sukkur',
         coords: [27.6920, 68.8950],
-        timestamp: '7 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 7).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Rescue Motorboats', 'Life Jackets', 'Sandbagging Squads']
@@ -1125,7 +1081,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Bandar Road Underpass, Sukkur',
         coords: [27.7050, 68.8580],
-        timestamp: '15 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
         status: 'VERIFIED',
         source: 'TRAFFIC_EOC',
         needs: ['High-Discharge Dewatering Pumps', 'Traffic Diversion']
@@ -1223,7 +1179,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 20,
         locationName: 'Vidor Torrent Basin, D.G. Khan',
         coords: [30.0620, 70.5850],
-        timestamp: '6 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['4x4 Rescue Vehicles', 'Boats', 'Rations']
@@ -1236,7 +1192,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Indus Highway (KM-45 Sector), D.G. Khan',
         coords: [30.0750, 70.6200],
-        timestamp: '14 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 14).toISOString(),
         status: 'VERIFIED',
         source: 'HIGHWAY_POLICE',
         needs: ['Emergency Road Earthwork', 'Diversion']
@@ -1334,7 +1290,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 14,
         locationName: 'Hanna Urak Valley, Quetta',
         coords: [30.2520, 67.0980],
-        timestamp: '8 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
         status: 'CRITICAL',
         source: 'CITIZEN_SOS',
         needs: ['Mountain Rescue Teams', '4x4 Off-roaders']
@@ -1347,7 +1303,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 8,
         locationName: 'Sariab Road, Quetta',
         coords: [30.1520, 66.9810],
-        timestamp: '15 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
         status: 'VERIFIED',
         source: 'CITIZEN_SOS',
         needs: ['Evacuation Convoy', 'Dry Food Sachets']
@@ -1360,7 +1316,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         headcount: 0,
         locationName: 'Western Bypass (Brewery Intersection), Quetta',
         coords: [30.1750, 66.9550],
-        timestamp: '19 mins ago',
+        timestamp: new Date(Date.now() - 1000 * 60 * 19).toISOString(),
         status: 'VERIFIED',
         source: 'TRAFFIC_POLICE',
         needs: ['Traffic Diversion to Zarghoon Road']
@@ -1377,7 +1333,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
         polygon: [
           [30.2700, 67.0800],
           [30.2600, 67.1200],
-          [30.2200, 67.1000],
+          [30.2200, 71.1000],
           [30.2300, 67.0600]
         ],
         description: 'Rapid catchment water release from Hanna Dam following heavy mountain precipitation.',
@@ -1413,192 +1369,7 @@ export const CITY_CATALOG: Record<string, CityCatalogEntry> = {
   }
 };
 
-export function createSimulatedCityData(region: Region): SimulatedCityData {
-  const catalog = CITY_CATALOG[region.id];
-  const seed = hash(region.id + region.name);
-
-  // If city is cataloged, use authentic city data
-  if (catalog) {
-    const totalOccupied = catalog.hospitals.reduce((sum, h) => sum + h.occupiedBeds, 0);
-    const totalBeds = catalog.hospitals.reduce((sum, h) => sum + h.totalBeds, 0);
-    const avgCapacity = totalBeds > 0 ? Math.round((totalOccupied / totalBeds) * 100) : 74;
-    const totalTrapped = catalog.reports.reduce((sum, r) => sum + (r.headcount || 0), 0);
-
-    const weather: WeatherData = {
-      temperature: numberFor(seed >>> 14, 23, 34),
-      humidity: numberFor(seed >>> 16, 55, 85),
-      precipitation: numberFor(seed >>> 10, 1, 8),
-      weatherCode: 80,
-      condition: 'Rain showers',
-      windSpeed: numberFor(seed >>> 18, 8, 22),
-      windGusts: numberFor(seed >>> 20, 15, 35),
-      time: 'LIVE_SENSOR',
-      isHeavyRain: false,
-      isHighWind: false,
-      flightFeasibility: 'CLEAR',
-      floodRiskLevel: 'MODERATE'
-    };
-
-    return {
-      reports: catalog.reports,
-      hospitals: catalog.hospitals,
-      hazardZones: catalog.hazardZones,
-      roadBlocks: catalog.roadBlocks,
-      reliefHubs: catalog.reliefHubs,
-      weather,
-      priorityZones: [],
-      dispatchedUnits: [],
-      metrics: {
-        trappedCitizens: totalTrapped,
-        icuSaturation: avgCapacity,
-        activeSos: catalog.reports.length,
-        nullahGaugeFeet: catalog.baseGaugeFeet,
-        floodInundation: catalog.hazardZones.length
-      }
-    };
-  }
-
-  // Fallback for custom / uncataloged regions
-  const trapped = numberFor(seed, 8, 28);
-  const precipitation = numberFor(seed >>> 10, 0, 12);
-  const weatherCode = numberFor(seed >>> 12, 0, 99);
-
-  const weather: WeatherData = {
-    temperature: numberFor(seed >>> 14, 21, 34),
-    humidity: numberFor(seed >>> 16, 55, 88),
-    precipitation,
-    weatherCode,
-    condition: weatherCode >= 80 ? 'Rain showers' : weatherCode >= 50 ? 'Cloudy' : 'Clear Sky',
-    windSpeed: numberFor(seed >>> 18, 6, 22),
-    windGusts: numberFor(seed >>> 20, 12, 38),
-    time: 'LIVE_SENSOR',
-    isHeavyRain: precipitation >= 10,
-    isHighWind: numberFor(seed >>> 22, 0, 1) === 1,
-    flightFeasibility: precipitation >= 10 ? 'RESTRICTED' : 'CLEAR',
-    floodRiskLevel: precipitation >= 10 ? 'HIGH' : precipitation >= 3 ? 'MODERATE' : 'LOW'
-  };
-
-  const cityName = region.name.split('/')[0].trim();
-
-  const hospitals: Hospital[] = [
-    {
-      id: `${region.id}-dhq`,
-      name: `DHQ Hospital ${cityName}`,
-      location: `${cityName} Civil Lines`,
-      coords: point(region, seed + 111),
-      totalBeds: 750,
-      occupiedBeds: 620,
-      capacity: 83,
-      icuAvailable: 6,
-      powerBackup: 'Generator Backup',
-      status: 'WARNING',
-      acceptingEmergencies: true,
-      phone: '+92-51-9270001',
-      source: 'HEALTH_DEPT'
-    },
-    {
-      id: `${region.id}-cmh`,
-      name: `Combined Military Hospital (CMH) ${cityName}`,
-      location: `${cityName} Cantonment`,
-      coords: point(region, seed + 222),
-      totalBeds: 900,
-      occupiedBeds: 540,
-      capacity: 60,
-      icuAvailable: 22,
-      powerBackup: 'Triple Grid Redundancy',
-      status: 'NORMAL',
-      acceptingEmergencies: true,
-      phone: '+92-51-9270002',
-      source: 'ARMED_FORCES_MED'
-    }
-  ];
-
-  const reports: EmergencyReport[] = [
-    {
-      id: `${region.id}-rep-1`,
-      rawText: `${cityName} riverbank settlement: 10 people stranded on rooftop due to rising flood runoff.`,
-      category: 'RESCUE_NEEDED',
-      severity: 9,
-      headcount: 10,
-      locationName: `${cityName} Low-Lying Sector`,
-      coords: point(region, seed + 101),
-      timestamp: '10 mins ago',
-      status: 'CRITICAL',
-      source: 'CITIZEN_SOS',
-      needs: ['Rescue Jet-Boat', 'Life Jackets', 'Paramedic Unit']
-    },
-    {
-      id: `${region.id}-rep-2`,
-      rawText: `Main arterial highway in ${cityName} submerged under 3.8ft water. Road impassable.`,
-      category: 'ROAD_BLOCKED',
-      severity: 8,
-      headcount: 0,
-      locationName: `${cityName} Bypass Corridor`,
-      coords: point(region, seed + 305),
-      timestamp: '16 mins ago',
-      status: 'VERIFIED',
-      source: 'TRAFFIC_EOC',
-      needs: ['Traffic Diversion', 'Heavy Water Pump Bowsers']
-    }
-  ];
-
-  const roadBlocks: RoadBlock[] = [
-    {
-      id: `${region.id}-road-1`,
-      roadName: `${cityName} Main Bypass Highway`,
-      coords: point(region, seed + 173),
-      status: 'ACTIVE_BLOCKADE',
-      reason: 'Flash flood depth 3.8ft across all lanes',
-      detourRecommended: 'Divert via elevated expressway corridor',
-      source: 'TRAFFIC_POLICE_EOC'
-    }
-  ];
-
-  const reliefHubs: ReliefHub[] = [
-    {
-      id: `${region.id}-hub-1`,
-      name: `${cityName} Central Relief Base`,
-      coords: point(region, seed + 619),
-      type: 'DISASTER_LOGISTICS_HUB',
-      status: 'OPERATIONAL',
-      managedBy: 'NDMA & Rescue 1122',
-      waterAvailable: true,
-      drinkingWaterLiters: 9000,
-      foodPackets: 800,
-      rescueBoats: 5,
-      source: 'EOC_REGISTERED'
-    }
-  ];
-
-  const hazardZones: HazardZone[] = [
-    {
-      id: `${region.id}-hazard-zone`,
-      type: 'FLOOD_ZONE',
-      name: `${region.riverBasin || `${cityName} River Catchment`} — ${region.name}`,
-      severity: 'CRITICAL',
-      waterDepthMeters: 1.8,
-      status: 'ACTIVE_CRESTING',
-      polygon: [point(region, seed, 0.05), point(region, seed + 1, 0.05), point(region, seed + 2, 0.05)],
-      description: 'Critical catchment basin overflow. Immediate evacuation ordered for low-lying sectors.',
-      source: 'WASA_HYDROLOGY'
-    }
-  ];
-
-  return {
-    reports,
-    hospitals,
-    hazardZones,
-    roadBlocks,
-    reliefHubs,
-    weather,
-    priorityZones: [],
-    dispatchedUnits: [],
-    metrics: {
-      trappedCitizens: trapped,
-      icuSaturation: 75,
-      activeSos: reports.length,
-      nullahGaugeFeet: region.dangerLimitFeet ? region.dangerLimitFeet - 4.5 : 15.0,
-      floodInundation: 1
-    }
-  };
+export function getCityCatalogEntry(regionId) {
+  return CITY_CATALOG[regionId] || null;
 }
+

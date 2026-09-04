@@ -1,12 +1,14 @@
 import { Hospital, HazardZone, RoadBlock, ReliefHub, EmergencyReport, Region, PriorityZone } from '../types';
 
 export const defaultRegions: Region[] = [
-  { id: "isb_rwp", name: "Islamabad / Rawalpindi (Live Crisis)", center: [33.6500, 73.0600], zoom: 12, status: "CRITICAL_ALERT" },
-  { id: "nowshera", name: "Nowshera / KP Basin", center: [34.0150, 71.9747], zoom: 11, status: "WATCH" },
-  { id: "swat", name: "Swat Valley / Kalam", center: [35.2227, 72.4258], zoom: 10, status: "ADVISORY" },
-  { id: "karachi", name: "Karachi Coastal / Malir", center: [24.8607, 67.0011], zoom: 11, status: "NORMAL" },
-  { id: "sukkur", name: "Sukkur / Indus River", center: [27.7052, 68.8574], zoom: 11, status: "WATCH" },
-  { id: "dgkhan", name: "D.G. Khan / Taunsa", center: [30.0561, 70.6403], zoom: 11, status: "NORMAL" },
+  { id: "isb_rwp", name: "Islamabad / Rawalpindi (Live Crisis)", center: [33.6500, 73.0600], zoom: 12, status: "CRITICAL_ALERT", riverBasin: "Nullah Lai Basin", sensorName: "Kattarian Sensor", dangerLimitFeet: 20.0 },
+  { id: "karachi", name: "Karachi Metropolitan / Coastal", center: [24.8607, 67.0011], zoom: 11, status: "WARNING", riverBasin: "Lyari / Malir Basin", sensorName: "Lyari Nadi Gauge", dangerLimitFeet: 16.0 },
+  { id: "lahore", name: "Lahore Division / Ravi", center: [31.5497, 74.3436], zoom: 11, status: "WATCH", riverBasin: "Ravi River Basin", sensorName: "Shahdara Gauging Post", dangerLimitFeet: 19.0 },
+  { id: "nowshera", name: "Nowshera / KP Basin", center: [34.0150, 71.9747], zoom: 11, status: "WATCH", riverBasin: "Kabul River Basin", sensorName: "Nowshera Bridge Sensor", dangerLimitFeet: 24.0 },
+  { id: "swat", name: "Swat Valley / Kalam", center: [35.2227, 72.4258], zoom: 10, status: "ADVISORY", riverBasin: "Swat River Basin", sensorName: "Chakdara Hydrology Post", dangerLimitFeet: 18.0 },
+  { id: "sukkur", name: "Sukkur / Indus River", center: [27.7052, 68.8574], zoom: 11, status: "WATCH", riverBasin: "Indus River Basin", sensorName: "Sukkur Barrage Gauge", dangerLimitFeet: 28.0 },
+  { id: "dgkhan", name: "D.G. Khan / Taunsa", center: [30.0561, 70.6403], zoom: 11, status: "NORMAL", riverBasin: "Taunsa Hill Torrents", sensorName: "Taunsa Barrage Sensor", dangerLimitFeet: 22.0 },
+  { id: "quetta", name: "Quetta Valley / Chaman", center: [30.1798, 66.9750], zoom: 11, status: "NORMAL", riverBasin: "Hanna Urak Basin", sensorName: "Spin Karez Sensor", dangerLimitFeet: 15.0 },
 ];
 
 export const initialHospitals: Hospital[] = [
