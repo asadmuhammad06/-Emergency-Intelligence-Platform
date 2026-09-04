@@ -1,8 +1,4 @@
-Here is a complete, production-grade `README.md` for your repository. It covers the full architecture, tech stack, workflows, disaster management pipelines, setup steps, and stage demo walkthrough.
 
-You can directly copy and paste this into your `README.md`:
-
-```markdown
 # 🚨 CrisisMap Pakistan — Autonomous Emergency Intelligence & Tactical Decision Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
