@@ -1,5 +1,4 @@
-// Data: live city list, report count, hospital count, and weather from CrisisContext.
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ShieldAlert,
   PlusCircle,
@@ -23,7 +22,7 @@ interface NavbarProps {
   onOpenLayersModal?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
+export const Navbar: React.FC<NavbarProps> = React.memo(({
   activeTab,
   onSelectTab,
   onOpenCitizenModal
@@ -38,15 +37,15 @@ export const Navbar: React.FC<NavbarProps> = ({
     weather
   } = useCrisis();
 
-  const overloadedCount = hospitals.filter(h => h.capacity >= 85).length;
+  const overloadedCount = useMemo(() => hospitals.filter(h => h.capacity >= 85).length, [hospitals]);
 
-  const tabs: { id: DashboardTab; label: string; icon: React.FC<{ className?: string }>; badge?: string | number; badgeColor?: string }[] = [
+  const tabs: { id: DashboardTab; label: string; icon: React.FC<{ className?: string }>; badge?: string | number; badgeColor?: string }[] = useMemo(() => [
     { id: 'all',       label: 'Overview',       icon: LayoutDashboard },
     { id: 'map',       label: 'Tactical Map',   icon: MapPin },
     { id: 'reports',   label: 'Distress Wire',  icon: Radio,     badge: reports.length,                                      badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
     { id: 'hospitals', label: 'Hospitals & ICU', icon: Hospital, badge: overloadedCount > 0 ? `${overloadedCount} Alert` : undefined, badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
     { id: 'sensors',   label: 'Hydrology',      icon: Droplets },
-  ];
+  ], [reports.length, overloadedCount]);
 
   const handleOpenInNewTab = (tabId: DashboardTab, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -146,4 +145,5 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
     </header>
   );
-};
+});
+Navbar.displayName = 'Navbar';

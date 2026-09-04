@@ -143,6 +143,41 @@ const createRouteWaypointIcon = (label: string, isDest: boolean) => {
   });
 };
 
+// High-Performance In-Memory Icon Cache
+const iconCache = new Map<string, L.DivIcon>();
+
+const getSosIcon = (headcount: number, severity: number) => {
+  const key = `sos_${headcount || 0}_${severity || 0}`;
+  let icon = iconCache.get(key);
+  if (!icon) {
+    icon = createSosIcon(headcount, severity);
+    iconCache.set(key, icon);
+  }
+  return icon;
+};
+
+const getHospitalIcon = (capacity: number, status: string) => {
+  const key = `hosp_${capacity}_${status}`;
+  let icon = iconCache.get(key);
+  if (!icon) {
+    icon = createHospitalIcon(capacity, status);
+    iconCache.set(key, icon);
+  }
+  return icon;
+};
+
+let cachedRoadBlockIcon: L.DivIcon | null = null;
+const getRoadBlockIcon = () => {
+  if (!cachedRoadBlockIcon) cachedRoadBlockIcon = createRoadBlockIcon();
+  return cachedRoadBlockIcon;
+};
+
+let cachedReliefHubIcon: L.DivIcon | null = null;
+const getReliefHubIcon = () => {
+  if (!cachedReliefHubIcon) cachedReliefHubIcon = createReliefHubIcon();
+  return cachedReliefHubIcon;
+};
+
 // Map Viewport Synchronizer
 function MapController({ center, zoom, highlightedCoords }: { center: [number, number]; zoom: number; highlightedCoords: [number, number] | null }) {
   const map = useMap();
@@ -166,11 +201,9 @@ function MapSizeSynchronizer() {
     const invalidate = () => map.invalidateSize({ pan: false, debounceMoveend: true });
     const frame = window.requestAnimationFrame(invalidate);
     window.addEventListener('resize', invalidate);
-    map.on('zoomend moveend', invalidate);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('resize', invalidate);
-      map.off('zoomend moveend', invalidate);
     };
   }, [map]);
 
@@ -184,7 +217,7 @@ interface MapViewProps {
 
 type MapThemeOption = 'tactical_dark' | 'carto_dark' | 'carto_voyager' | 'osm';
 
-export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
+export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector }) => {
   const {
     activeRegion,
     reports,
@@ -624,7 +657,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           <Marker
             key={hosp.id}
             position={hosp.coords}
-            icon={createHospitalIcon(hosp.capacity, hosp.status)}
+            icon={getHospitalIcon(hosp.capacity, hosp.status)}
           >
             <Popup className="custom-popup">
               <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
@@ -676,7 +709,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           <Marker
             key={block.id}
             position={block.coords}
-            icon={createRoadBlockIcon()}
+            icon={getRoadBlockIcon()}
           >
             <Popup className="custom-popup">
               <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
@@ -702,7 +735,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           <Marker
             key={hub.id}
             position={hub.coords}
-            icon={createReliefHubIcon()}
+            icon={getReliefHubIcon()}
           >
             <Popup className="custom-popup">
               <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
@@ -736,7 +769,7 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
           <Marker
             key={rep.id}
             position={rep.coords}
-            icon={createSosIcon(rep.headcount, rep.severity)}
+            icon={getSosIcon(rep.headcount, rep.severity)}
           >
             <Popup className="custom-popup">
               <div className="p-3 bg-slate-950/95 text-slate-100 max-w-xs font-['Plus_Jakarta_Sans']">
@@ -851,4 +884,5 @@ export const MapView: React.FC<MapViewProps> = ({ onDispatchToSector }) => {
       </MapContainer>
     </div>
   );
-};
+});
+MapView.displayName = 'MapView';

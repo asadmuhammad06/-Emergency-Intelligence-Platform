@@ -19,6 +19,8 @@ import { calculatePriorityZones } from './services/dispatchSolver.js';
 import { fetchExternalDistress } from './services/externalFeed.js';
 import { fetchCityIntel } from './services/liveIntel.js';
 import { getReports, submitReport, subscribeToReports } from './services/reportStore.js';
+import { emergencyDb } from './services/persistence.js';
+import { analyzeDisasterImage, getPresetDisasterImages, getVisionStatus } from './services/qwenVlVision.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -43,7 +45,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 async function getRadarData() {
   const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
@@ -73,8 +76,8 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
-// In-Memory Disaster Operations State
-let currentState = {
+// Persistent Disaster Operations State (Survives Server Restarts)
+const defaultState = {
   activeRegion: regions[0],
   hospitals: JSON.parse(JSON.stringify(initialHospitals)),
   hazardZones: JSON.parse(JSON.stringify(initialHazardZones)),
@@ -104,13 +107,16 @@ let currentState = {
   simulationStepIndex: 0
 };
 
-// Compute initial priority zones
+let currentState = emergencyDb.init(defaultState);
+
+// Compute initial priority zones dynamically with multi-criteria solver
 currentState.priorityZones = calculatePriorityZones(
   currentState.reports,
   currentState.hospitals,
   currentState.hazardZones,
   currentState.roadBlocks
 );
+emergencyDb.save(currentState);
 
 // REST API Endpoints
 app.get('/api/regions', (req, res) => {
@@ -304,6 +310,14 @@ app.get('/api/live-data', async (req, res) => {
   }
 });
 
+// Database Telemetry & Persistence Health Endpoint
+app.get('/api/database/status', (req, res) => {
+  res.json({
+    success: true,
+    data: emergencyDb.getStatus(currentState)
+  });
+});
+
 // Citizen Report Ingestion
 app.post('/api/reports', (req, res) => {
   const { rawText, coords, callerPhone } = req.body;
@@ -311,35 +325,53 @@ app.post('/api/reports', (req, res) => {
     return res.status(400).json({ success: false, error: 'Report text and coordinates are required' });
   }
   const text = rawText.toLowerCase();
+
+  // Dynamic Headcount Extraction (e.g. "12 people", "6 afrad", "4 civilians")
+  const headcountMatch = rawText.match(/(\d+)\s*(people|persons|afrad|log|individuals|civilians|bachay|bache)/i);
+  const headcount = headcountMatch 
+    ? parseInt(headcountMatch[1], 10) 
+    : (text.includes('trapped') || text.includes('phans') ? 5 : 0);
+
   const category = text.includes('road') || text.includes('rasta') || text.includes('blocked')
-    ? 'road_block'
+    ? 'ROAD_BLOCKED'
     : text.includes('power') || text.includes('bijli') || text.includes('grid')
-      ? 'power_outage'
+      ? 'POWER_OUTAGE'
       : text.includes('water') || text.includes('paani')
-        ? 'water_shortage'
-        : 'sos';
-  const classifiedReport = submitReport({
+        ? 'WATER_SHORTAGE'
+        : text.includes('hospital') || text.includes('bed') || text.includes('icu')
+          ? 'HOSPITAL_CAPACITY'
+          : 'RESCUE_NEEDED';
+
+  const isUrgent = text.includes('urgent') || text.includes('trapped') || text.includes('phans') || headcount > 0;
+
+  const classifiedReport = {
+    id: `rep_live_${Date.now()}`,
     category,
-    severity: text.includes('urgent') || text.includes('trapped') ? 9 : 5,
-    title: `${category.replace('_', ' ')} community report`,
+    severity: isUrgent ? 9 : 6,
+    headcount,
+    locationName: `Field Report (${coords[0].toFixed(3)}, ${coords[1].toFixed(3)})`,
+    rawText: rawText.trim(),
+    title: `${category.replace('_', ' ')}: ${rawText.trim().substring(0, 48)}...`,
     description: rawText.trim(),
-    language: 'English',
-    needs: [],
-    lat: coords[0],
-    lon: coords[1],
-    callerPhone
-  });
+    coords,
+    timestamp: new Date().toISOString(),
+    status: 'VERIFIED',
+    source: 'CITIZEN_SOS',
+    needs: headcount > 0 ? ['Rescue Boat', 'Paramedic Team'] : ['Field Assessment Team'],
+    callerPhone: callerPhone || '+92 300 1234567'
+  };
 
-  // Prepend to active reports
-  currentState.reports.unshift(classifiedReport);
+  // Prepend to active reports and commit to persistent database
+  emergencyDb.insertReport(currentState, classifiedReport);
 
-  // Recalculate Priority Zones
+  // Recalculate Priority Zones dynamically with multi-criteria solver
   currentState.priorityZones = calculatePriorityZones(
     currentState.reports,
     currentState.hospitals,
     currentState.hazardZones,
     currentState.roadBlocks
   );
+  emergencyDb.save(currentState);
 
   // Broadcast to all connected clients via Socket.IO
   io.emit('new_report', classifiedReport);
@@ -350,6 +382,38 @@ app.post('/api/reports', (req, res) => {
     report: classifiedReport,
     updatedPriorityZones: currentState.priorityZones
   });
+});
+
+// Qwen-VL Vision Multimodal Damage Assessment Endpoints
+app.get('/api/vision/status', (req, res) => {
+  res.json({
+    success: true,
+    data: getVisionStatus()
+  });
+});
+
+app.get('/api/vision/presets', (req, res) => {
+  res.json({
+    success: true,
+    presets: getPresetDisasterImages()
+  });
+});
+
+app.post('/api/vision/analyze-damage', async (req, res) => {
+  try {
+    const { imageBase64, imageUrl, presetId, prompt } = req.body;
+    const analysis = await analyzeDisasterImage({ imageBase64, imageUrl, presetId, prompt });
+    res.json({
+      success: true,
+      analysis
+    });
+  } catch (err) {
+    console.error('Qwen-VL vision analysis error:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to analyze disaster image with Qwen-VL'
+    });
+  }
 });
 
 // Safe Route Calculation

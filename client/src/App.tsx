@@ -1,5 +1,4 @@
-// Data: live API weather, facilities, overlays, and distress; community reports arrive over SSE.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { CrisisProvider, useCrisis } from './context/CrisisContext';
 import { Navbar, DashboardTab } from './components/Navbar';
 import { LiveFeed } from './components/LiveFeed';
@@ -9,6 +8,7 @@ import { PriorityDispatch } from './components/PriorityDispatch';
 import { CitizenReportModal } from './components/CitizenReportModal';
 import { EmergencyTicker } from './components/EmergencyTicker';
 import { CommanderQwenDrawer } from './components/CommanderQwenDrawer';
+import { QwenVisionInspector } from './components/QwenVisionInspector';
 import {
   Navigation,
   Send,
@@ -21,7 +21,8 @@ import {
   Activity,
   Radio,
   Users,
-  Bot
+  Bot,
+  Eye
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -45,6 +46,7 @@ function DashboardContent() {
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isCitizenOpen, setIsCitizenOpen] = useState(false);
   const [isQwenOpen, setIsQwenOpen] = useState(false);
+  const [isVisionOpen, setIsVisionOpen] = useState(false);
   const [routeOriginCoords, setRouteOriginCoords] = useState<[number, number] | undefined>(undefined);
 
   // Sync activeTab with URL hash so tabs can be opened in new windows/tabs
@@ -60,23 +62,43 @@ function DashboardContent() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleOpenSafeRoute = (coords?: [number, number]) => {
+  const handleOpenSafeRoute = useCallback((coords?: [number, number]) => {
     if (coords) setRouteOriginCoords(coords);
     setIsSafeRouteOpen(true);
-  };
+  }, []);
 
-  const scrollToMap = () => {
+  const scrollToMap = useCallback(() => {
     const mapEl = document.getElementById('tactical-map');
     if (mapEl) {
       mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
+  }, []);
 
-  const overloadedHospitals = hospitals.filter(h => h.capacity >= 85).length;
-  const availableIcu = hospitals.reduce((sum, h) => sum + h.icuAvailable, 0);
-  const totalDrinkingWater = reliefHubs.reduce((sum, h) => sum + (h.drinkingWaterLiters || 0), 0);
-  const totalFoodPacks = reliefHubs.reduce((sum, h) => sum + (h.foodPackets || 0), 0);
-  const totalBoats = reliefHubs.reduce((sum, h) => sum + (h.rescueBoats || 0), 0);
+  const overloadedHospitals = useMemo(() => hospitals.filter(h => h.capacity >= 85).length, [hospitals]);
+  const availableIcu = useMemo(() => hospitals.reduce((sum, h) => sum + h.icuAvailable, 0), [hospitals]);
+  const totalDrinkingWater = useMemo(() => reliefHubs.reduce((sum, h) => sum + (h.drinkingWaterLiters || 0), 0), [reliefHubs]);
+  const totalFoodPacks = useMemo(() => reliefHubs.reduce((sum, h) => sum + (h.foodPackets || 0), 0), [reliefHubs]);
+  const totalBoats = useMemo(() => reliefHubs.reduce((sum, h) => sum + (h.rescueBoats || 0), 0), [reliefHubs]);
+
+  // Live Reactive Metrics for Dashboard Telemetry Pods (Memoized to eliminate re-render lag)
+  const liveTrappedCitizens = useMemo(() => {
+    return reports.reduce((sum, r) => sum + (r.headcount || 0), 0) || simulatedMetrics.trappedCitizens;
+  }, [reports, simulatedMetrics.trappedCitizens]);
+
+  const liveIcuSaturation = useMemo(() => {
+    const totalHospitalBeds = hospitals.reduce((sum, h) => sum + (h.totalBeds || 0), 0);
+    const totalOccupiedBeds = hospitals.reduce((sum, h) => sum + (h.occupiedBeds || 0), 0);
+    return totalHospitalBeds > 0
+      ? Math.round((totalOccupiedBeds / totalHospitalBeds) * 100)
+      : simulatedMetrics.icuSaturation;
+  }, [hospitals, simulatedMetrics.icuSaturation]);
+
+  const liveActiveSos = useMemo(() => reports.length || simulatedMetrics.activeSos, [reports.length, simulatedMetrics.activeSos]);
+
+  const liveRiverLevel = useMemo(() => {
+    const rainOffset = (weather?.precipitation && weather.precipitation > 0) ? Math.min(3.5, weather.precipitation * 0.3) : 0;
+    return (simulatedMetrics.nullahGaugeFeet + rainOffset).toFixed(1);
+  }, [weather?.precipitation, simulatedMetrics.nullahGaugeFeet]);
 
   return (
     <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] overflow-x-hidden">
@@ -319,7 +341,7 @@ function DashboardContent() {
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Trapped Civilians</span>
                     <div className="flex items-baseline gap-2">
                       <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.5)]">
-                        {simulatedMetrics.trappedCitizens}
+                        {liveTrappedCitizens}
                       </span>
                       <span className="text-[10px] text-rose-400 font-mono font-bold">SO-1122</span>
                     </div>
@@ -349,7 +371,7 @@ function DashboardContent() {
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">ICU Saturation</span>
                     <div className="flex items-baseline gap-2">
                       <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-                        {simulatedMetrics.icuSaturation}%
+                        {liveIcuSaturation}%
                       </span>
                       <span className="text-[10px] text-amber-400 font-mono font-bold">{availableIcu} Beds Free</span>
                     </div>
@@ -379,7 +401,7 @@ function DashboardContent() {
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Active SOS Beacons</span>
                     <div className="flex items-baseline gap-2">
                       <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]">
-                        {simulatedMetrics.activeSos}
+                        {liveActiveSos}
                       </span>
                       <span className="text-[10px] text-cyan-400 font-mono font-bold">{reports.length} Total Logs</span>
                     </div>
@@ -409,7 +431,7 @@ function DashboardContent() {
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Nullah Lai Level</span>
                     <div className="flex items-baseline gap-1">
                       <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]">
-                        {simulatedMetrics.nullahGaugeFeet}
+                        {liveRiverLevel}
                       </span>
                       <span className="text-sm font-bold text-emerald-400 font-mono ml-0.5">ft</span>
                       <span className="text-[10px] text-slate-500 font-mono ml-1.5 hidden sm:inline">(Limit 20.0ft)</span>
@@ -741,8 +763,25 @@ function DashboardContent() {
         onClose={() => setIsCitizenOpen(false)}
       />
 
-      {/* Floating Commander Qwen AI Copilot Trigger */}
-      <div className="fixed bottom-5 right-5 z-40">
+      {/* Floating Dual AI Copilot Triggers */}
+      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5">
+        {/* Qwen-VL Vision Intelligence Trigger */}
+        <button
+          onClick={() => setIsVisionOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 hover:from-cyan-500 hover:to-teal-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(6,182,212,0.6)] border border-cyan-400/50 transition-all hover:scale-105 active:scale-95 group"
+          title="Open Qwen-VL Vision Multimodal Damage Assessment Engine"
+        >
+          <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
+            <Eye className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+          </div>
+          <span className="hidden sm:inline">QWEN-VL VISION</span>
+          <span className="sm:hidden">VISION</span>
+          <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded border border-white/20 text-cyan-200 font-bold">
+            72B
+          </span>
+        </button>
+
+        {/* Floating Commander Qwen AI Copilot Trigger */}
         <button
           onClick={() => setIsQwenOpen(true)}
           className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(234,88,12,0.6)] border border-orange-400/50 transition-all hover:scale-105 active:scale-95 group"
@@ -759,6 +798,18 @@ function DashboardContent() {
           </span>
         </button>
       </div>
+
+      {/* Standalone Qwen-VL Multimodal Vision Modal */}
+      {isVisionOpen && (
+        <QwenVisionInspector
+          standalone
+          onClose={() => setIsVisionOpen(false)}
+          onApplyToReport={() => {
+            setIsVisionOpen(false);
+            setIsCitizenOpen(true);
+          }}
+        />
+      )}
 
       {/* Commander Qwen EOC AI Drawer */}
       <CommanderQwenDrawer

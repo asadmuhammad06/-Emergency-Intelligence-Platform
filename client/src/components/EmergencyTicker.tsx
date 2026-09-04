@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCrisis } from '../context/CrisisContext';
 import {
   AlertTriangle,
@@ -16,7 +16,7 @@ interface EmergencyTickerProps {
   onOpenSafeRoute?: () => void;
 }
 
-export const EmergencyTicker: React.FC<EmergencyTickerProps> = () => {
+export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => {
   const {
     simulatedMetrics,
     hospitals,
@@ -44,41 +44,43 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const overloadedCount = hospitals.filter(h => h.capacity >= 85).length;
-  const availableIcu = hospitals.reduce((sum, h) => sum + (h.icuAvailable || 0), 0);
+  const items = useMemo(() => {
+    const overloadedCount = hospitals.filter(h => h.capacity >= 85).length;
+    const availableIcu = hospitals.reduce((sum, h) => sum + (h.icuAvailable || 0), 0);
 
-  const items = [
-    {
-      icon: AlertTriangle,
-      color: 'text-rose-400 bg-rose-950/80 border-rose-800/80',
-      label: 'FLASH FLOOD ACTIVE',
-      detail: `Nullah Lai @ Kattarian gauge at ${simulatedMetrics.nullahGaugeFeet} ft (Danger Threshold: 20.0 ft)`
-    },
-    {
-      icon: Users,
-      color: 'text-amber-400 bg-amber-950/80 border-amber-800/80',
-      label: 'CASUALTY TRIAGE',
-      detail: `${simulatedMetrics.trappedCitizens} Civilians Stranded • ${simulatedMetrics.activeSos} Active SOS Beacons`
-    },
-    {
-      icon: Hospital,
-      color: 'text-emerald-400 bg-emerald-950/80 border-emerald-800/80',
-      label: 'MEDICAL SURGE',
-      detail: `${availableIcu} ICU Beds Available across Twin Cities • ${overloadedCount} Facilities Diverting`
-    },
-    {
-      icon: Truck,
-      color: 'text-cyan-400 bg-cyan-950/80 border-cyan-800/80',
-      label: 'FIELD MOBILIZATION',
-      detail: `${dispatchedUnits.length > 0 ? dispatchedUnits[0].unitName : 'Rescue 1122 Tactical Alpha'} En Route (ETA 8m)`
-    },
-    {
-      icon: CloudRain,
-      color: 'text-sky-400 bg-sky-950/80 border-sky-800/80',
-      label: `${activeRegion.name.toUpperCase()} METEO`,
-      detail: `${weather?.temperature ?? 26}°C • Rain: ${weather?.precipitation ?? 0} mm/h • Risk: ${weather?.floodRiskLevel ?? 'MODERATE'}`
-    }
-  ];
+    return [
+      {
+        icon: AlertTriangle,
+        color: 'text-rose-400 bg-rose-950/80 border-rose-800/80',
+        label: 'FLASH FLOOD ACTIVE',
+        detail: `Nullah Lai @ Kattarian gauge at ${simulatedMetrics.nullahGaugeFeet} ft (Danger Threshold: 20.0 ft)`
+      },
+      {
+        icon: Users,
+        color: 'text-amber-400 bg-amber-950/80 border-amber-800/80',
+        label: 'CASUALTY TRIAGE',
+        detail: `${simulatedMetrics.trappedCitizens} Civilians Stranded • ${simulatedMetrics.activeSos} Active SOS Beacons`
+      },
+      {
+        icon: Hospital,
+        color: 'text-emerald-400 bg-emerald-950/80 border-emerald-800/80',
+        label: 'MEDICAL SURGE',
+        detail: `${availableIcu} ICU Beds Available across Twin Cities • ${overloadedCount} Facilities Diverting`
+      },
+      {
+        icon: Truck,
+        color: 'text-cyan-400 bg-cyan-950/80 border-cyan-800/80',
+        label: 'FIELD MOBILIZATION',
+        detail: `${dispatchedUnits.length > 0 ? dispatchedUnits[0].unitName : 'Rescue 1122 Tactical Alpha'} En Route (ETA 8m)`
+      },
+      {
+        icon: CloudRain,
+        color: 'text-sky-400 bg-sky-950/80 border-sky-800/80',
+        label: `${activeRegion.name.toUpperCase()} METEO`,
+        detail: `${weather?.temperature ?? 26}°C • Rain: ${weather?.precipitation ?? 0} mm/h • Risk: ${weather?.floodRiskLevel ?? 'MODERATE'}`
+      }
+    ];
+  }, [hospitals, simulatedMetrics, dispatchedUnits, weather, activeRegion]);
 
   return (
     <div className="w-full bg-[#050813] border-b border-white/[0.08] text-slate-200 text-xs flex items-center h-8 relative overflow-hidden select-none z-50">
@@ -146,5 +148,6 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = () => {
       </div>
     </div>
   );
-};
+});
+EmergencyTicker.displayName = 'EmergencyTicker';
 
