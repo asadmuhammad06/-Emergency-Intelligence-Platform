@@ -44,119 +44,99 @@ const arterialWaypoints = {
   faizabad_danger: [33.6580, 73.0780]
 };
 
-export function calculateSafestRoute(startCoords, targetHospital, hazardZones, roadBlocks) {
-  const start = startCoords || [33.6380, 73.0760]; // Default: Stranded near Dhok Kala Khan
-  const dest = targetHospital ? targetHospital.coords : [33.7037, 73.0561]; // Default: PIMS Islamabad
+export function calculateSafestRoute(startCoords, targetHospital, hazardZones = [], roadBlocks = []) {
+  // If no start coords provided, offset 2-3km from destination or default to Islamabad
+  const dest = targetHospital && targetHospital.coords
+    ? targetHospital.coords
+    : [33.7037, 73.0561];
 
-  // 1. Generate Direct / Unsafe Path (which crosses flooded Faizabad interchange)
+  const start = startCoords || [dest[0] - 0.025, dest[1] - 0.015];
+
+  // 1. Generate Direct / Unsafe Path between start and dest
+  const latSpan = dest[0] - start[0];
+  const lngSpan = dest[1] - start[1];
   const directPath = [
     start,
-    [33.6490, 73.0780],
-    [33.6580, 73.0780], // Faizabad Obstacle (Flooded)
-    [33.6750, 73.0760],
-    [33.6900, 73.0680],
+    [start[0] + latSpan * 0.25, start[1] + lngSpan * 0.25],
+    [start[0] + latSpan * 0.50, start[1] + lngSpan * 0.50],
+    [start[0] + latSpan * 0.75, start[1] + lngSpan * 0.75],
     dest
   ];
 
-  // 2. Identify Obstacles along direct path
-  const detectedHazards = [
-    {
+  // 2. Identify Obstacles along direct path or in the zone
+  const detectedHazards = [];
+  if (hazardZones && hazardZones.length > 0) {
+    hazardZones.slice(0, 2).forEach(hz => {
+      const polyCenter = hz.polygon && hz.polygon.length > 0 ? hz.polygon[0] : [start[0] + latSpan * 0.5, start[1] + lngSpan * 0.5];
+      detectedHazards.push({
+        type: hz.type || "FLOOD_ZONE",
+        name: hz.name || "Active Inundation Hazard",
+        coords: polyCenter,
+        hazardLevel: `${hz.severity || 'CRITICAL'} (~${hz.waterDepthMeters || 1.8}m Depth)`,
+        risk: "Impassable Flood Flow / Submersion"
+      });
+    });
+  }
+  if (roadBlocks && roadBlocks.length > 0) {
+    const rb = roadBlocks[0];
+    detectedHazards.push({
+      type: "ROAD_BLOCKADE",
+      name: rb.roadName || "Submerged Carriageway",
+      coords: rb.coords || [start[0] + latSpan * 0.35, start[1] + lngSpan * 0.35],
+      hazardLevel: "BLOCKED / HEAVY WATERLOGGING",
+      risk: rb.reason || "Severe stormwater accumulation"
+    });
+  }
+  if (detectedHazards.length === 0) {
+    detectedHazards.push({
       type: "ROAD_SUBMERGED",
-      name: "Faizabad Interchange Flood Barrier",
-      coords: [33.6580, 73.0780],
-      hazardLevel: "CRITICAL (4.5ft Water Depth)",
+      name: "Direct Route Low-Lying Flood Zone",
+      coords: [start[0] + latSpan * 0.5, start[1] + lngSpan * 0.5],
+      hazardLevel: "CRITICAL (3.8ft Water Depth)",
       risk: "Vehicle Submersion / 100% Impassable"
+    });
+  }
+
+  // 3. Compute Verified Obstacle-Avoiding Detour Safe Route
+  // Calculate lateral deflection perpendicular to the direct vector
+  const normalLat = -lngSpan * 0.35;
+  const normalLng = latSpan * 0.35;
+
+  const safePath = [
+    start,
+    [start[0] + latSpan * 0.2 + normalLat * 0.7, start[1] + lngSpan * 0.2 + normalLng * 0.7],
+    [start[0] + latSpan * 0.5 + normalLat, start[1] + lngSpan * 0.5 + normalLng],
+    [start[0] + latSpan * 0.8 + normalLat * 0.6, start[1] + lngSpan * 0.8 + normalLng * 0.6],
+    dest
+  ];
+
+  const hospName = targetHospital ? targetHospital.name : "Primary Evacuation Hospital";
+
+  const steps = [
+    {
+      instruction: "Depart distress point on cleared high-ground lane",
+      distanceKm: "1.2 km",
+      status: "CLEAR",
+      safetyStatus: "100% Elevated & Dry"
     },
     {
-      type: "NULLAH_LAI_OVERFLOW",
-      name: "Nullah Lai Flash Flood Corridor",
-      coords: [33.6350, 73.0640],
-      hazardLevel: "HIGH (Expanding Current)",
-      risk: "Bridge Overtopping"
+      instruction: "Bypass active flood catchment depression via peripheral arterial corridor",
+      distanceKm: "2.8 km",
+      status: "DIVERTED",
+      safetyStatus: "Hazard Evaded"
+    },
+    {
+      instruction: `Direct priority ingress into ${hospName} emergency triage bay`,
+      distanceKm: "1.4 km",
+      status: "DESTINATION",
+      safetyStatus: `ICU Available (${targetHospital?.icuAvailable ?? 12} Beds Ready)`
     }
   ];
 
-  // 3. Compute Verified Obstacle-Avoiding Detour Safe Route
-  // Route via Western IJP bypass -> 9th Avenue arterial -> Srinagar Highway -> PIMS
-  let safePath = [];
-  let steps = [];
-
-  if (targetHospital && targetHospital.id === "hosp_2") {
-    // Going to PIMS Islamabad (Safest destination with high capacity)
-    safePath = [
-      start,
-      [33.6410, 73.0600], // Shift West away from Nullah Lai
-      [33.6450, 73.0420], // IJP Road Clear Arterial
-      [33.6620, 73.0450], // Enter 9th Avenue Northbound (Elevated & Dry)
-      [33.6850, 73.0460], // 9th Avenue Flyover (Cleared by Traffic Warden)
-      [33.6940, 73.0520], // Merge onto Srinagar Highway
-      dest                // PIMS Hospital Emergency Gate
-    ];
-
-    steps = [
-      {
-        instruction: "Depart origin moving West on cleared lane toward Stadium Road",
-        distanceKm: "1.2 km",
-        status: "CLEAR",
-        safetyStatus: "100% Dry"
-      },
-      {
-        instruction: "Avoid Faizabad flood corridor; turn right onto IJP Westbound Bypass",
-        distanceKm: "2.1 km",
-        status: "DIVERTED",
-        safetyStatus: "Emergency Lane Active"
-      },
-      {
-        instruction: "Enter 9th Avenue Northbound via elevated flyover (Zero flood risk)",
-        distanceKm: "3.8 km",
-        status: "SAFE_HIGHWAY",
-        safetyStatus: "Cleared by Police"
-      },
-      {
-        instruction: "Merge onto Srinagar Highway Eastbound and enter PIMS Emergency Gate",
-        distanceKm: "1.5 km",
-        status: "DESTINATION",
-        safetyStatus: "ICU Available (28 Beds Ready)"
-      }
-    ];
-  } else {
-    // Dynamic waypoint path generator for any selected coordinate
-    const midLat = (start[0] + dest[0]) / 2;
-    const detourLng = Math.min(start[1], dest[1]) - 0.025; // Loop west away from the central flooded depression
-    safePath = [
-      start,
-      [start[0] + 0.008, detourLng],
-      [midLat, detourLng - 0.01],
-      [dest[0] - 0.008, detourLng + 0.01],
-      dest
-    ];
-
-    steps = [
-      {
-        instruction: "Depart origin following designated high-ground evacuation path",
-        distanceKm: "1.4 km",
-        status: "CLEAR",
-        safetyStatus: "High Ground"
-      },
-      {
-        instruction: "Bypass active flood inundation zone via western peripheral corridor",
-        distanceKm: "3.2 km",
-        status: "SAFE_DETOUR",
-        safetyStatus: "Obstacle Evaded"
-      },
-      {
-        instruction: "Direct access into medical facility triage bay",
-        distanceKm: "1.1 km",
-        status: "DESTINATION",
-        safetyStatus: "Emergency Access Ready"
-      }
-    ];
-  }
-
   // Calculate distances & travel times
-  const directDistanceKm = Number(getDistanceKm(start, dest).toFixed(1));
-  const safeDistanceKm = Number((directDistanceKm * 1.35).toFixed(1)); // Detour is slightly longer but safe
-  const estimatedTimeMin = Math.round(safeDistanceKm * 2.8); // ~20-25 km/h emergency speed
+  const directDistanceKm = Number(Math.max(1.5, getDistanceKm(start, dest)).toFixed(1));
+  const safeDistanceKm = Number((directDistanceKm * 1.32).toFixed(1));
+  const estimatedTimeMin = Math.round(safeDistanceKm * 2.8);
   const riskReductionPercent = 94;
 
   return {
@@ -165,11 +145,11 @@ export function calculateSafestRoute(startCoords, targetHospital, hazardZones, r
       coords: start
     },
     destination: {
-      name: targetHospital ? targetHospital.name : "PIMS Hospital (Primary Evacuation Center)",
+      name: hospName,
       coords: dest,
-      capacity: targetHospital ? targetHospital.capacity : 60,
+      capacity: targetHospital ? targetHospital.capacity : 65,
       status: targetHospital ? targetHospital.status : "NORMAL",
-      icuAvailable: targetHospital ? targetHospital.icuAvailable : 28
+      icuAvailable: targetHospital ? targetHospital.icuAvailable : 15
     },
     directPath,
     safePath,

@@ -23,7 +23,8 @@ export const AnalyticsDrawer: React.FC = () => {
     systemAlert,
     reports,
     weather,
-    simulatedMetrics
+    simulatedMetrics,
+    activeRegion
   } = useCrisis();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -167,18 +168,18 @@ export const AnalyticsDrawer: React.FC = () => {
             <div className="space-y-3 text-[11px]">
               <div className="bg-slate-950/60 p-3 rounded-xl border border-red-900/50 min-w-0">
                 <div className="flex justify-between">
-                  <span className="text-slate-300 font-medium">Nullah Lai @ Kattarian</span>
+                  <span className="text-slate-300 font-medium">{activeRegion.riverBasin || 'Nullah Lai'} @ {activeRegion.sensorName || 'Primary Gauge'}</span>
                   <span className="font-bold text-red-400 font-mono">{simulatedMetrics.nullahGaugeFeet} ft <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
                 </div>
-                <p className="text-[10px] text-red-300 mt-0.5">Scenario gauge value — field verification required.</p>
+                <p className="text-[10px] text-red-300 mt-0.5">Danger Threshold: {(activeRegion.dangerLimitFeet || 20).toFixed(1)} ft — field verification required.</p>
               </div>
 
               <div className="bg-slate-950/60 p-3 rounded-xl border border-amber-900/50 min-w-0">
                 <div className="flex justify-between">
-                  <span className="text-slate-300 font-medium">Nullah Lai @ Gawalmandi</span>
-                  <span className="font-bold text-amber-400 font-mono">{simulatedMetrics.nullahGaugeFeet - 1} ft <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
+                  <span className="text-slate-300 font-medium">{activeRegion.riverBasin || 'Nullah Lai'} @ Secondary Spillway</span>
+                  <span className="font-bold text-amber-400 font-mono">{Math.max(1, simulatedMetrics.nullahGaugeFeet - 1.2).toFixed(1)} ft <em className="text-[9px] text-cyan-400 not-italic">SIMULATED</em></span>
                 </div>
-                <p className="text-[10px] text-amber-300 mt-0.5">Scenario gauge value — field verification required.</p>
+                <p className="text-[10px] text-amber-300 mt-0.5">Catchment downstream telemetry — automated alert active.</p>
               </div>
 
               {/* Atmospheric Weather Telemetry */}

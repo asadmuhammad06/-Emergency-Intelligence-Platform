@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-09-04T12:55:14.548Z",
+  "lastUpdated": "2026-09-04T16:03:52.884Z",
   "activeRegion": {
     "id": "isb_rwp",
     "name": "Islamabad / Rawalpindi",
@@ -462,7 +462,7 @@
         33.628,
         73.068
       ],
-      "affectedPeopleCount": 45,
+      "affectedPeopleCount": 42,
       "overloadedHospitalsCount": 2,
       "waterShortageReported": true,
       "powerOutageReported": true,
@@ -475,10 +475,10 @@
         "helicopters": 1,
         "waterBowsersLiters": 10000,
         "medicalTeams": 3,
-        "emergencyRations": 1350
+        "emergencyRations": 1260
       },
       "status": "DISPATCH_PENDING",
-      "keySummary": "45 people identified in critical catchment. 2 nearby hospitals at surge. Road accessibility: LOW.",
+      "keySummary": "42 people identified in critical catchment. 2 nearby hospitals at surge. Road accessibility: LOW.",
       "actionPlan": [
         "Deploy Rescue 1122 Jet-Boats via Stadium Road entry point",
         "Divert all medical casualties north to PIMS Hospital via 9th Avenue bypass",
@@ -525,7 +525,7 @@
       "rank": 2
     },
     {
-      "id": "zone_arbitrary_1788526514547",
+      "id": "zone_arbitrary_1788537832884",
       "zoneName": "Priority Zone #3 — Field Report (33.650, 73.060)",
       "subDistricts": [
         "Field Report (33.650, 73.060)"

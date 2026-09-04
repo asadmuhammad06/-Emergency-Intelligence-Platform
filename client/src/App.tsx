@@ -9,6 +9,7 @@ import { CitizenReportModal } from './components/CitizenReportModal';
 import { EmergencyTicker } from './components/EmergencyTicker';
 import { CommanderQwenDrawer } from './components/CommanderQwenDrawer';
 import { QwenVisionInspector } from './components/QwenVisionInspector';
+import { SitrepModal } from './components/SitrepModal';
 import {
   Navigation,
   Send,
@@ -27,6 +28,7 @@ import {
 
 function DashboardContent() {
   const {
+    activeRegion,
     simulationRunning,
     simulationStep,
     startSimulation,
@@ -45,6 +47,7 @@ function DashboardContent() {
   const [isSafeRouteOpen, setIsSafeRouteOpen] = useState(false);
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isCitizenOpen, setIsCitizenOpen] = useState(false);
+  const [isSitrepOpen, setIsSitrepOpen] = useState(false);
   const [isQwenOpen, setIsQwenOpen] = useState(false);
   const [isVisionOpen, setIsVisionOpen] = useState(false);
   const [routeOriginCoords, setRouteOriginCoords] = useState<[number, number] | undefined>(undefined);
@@ -115,6 +118,7 @@ function DashboardContent() {
         onOpenSafeRouteModal={() => handleOpenSafeRoute()}
         onOpenPriorityModal={() => setIsPriorityOpen(true)}
         onOpenCitizenModal={() => setIsCitizenOpen(true)}
+        onOpenSitrepModal={() => setIsSitrepOpen(true)}
       />
 
       {/* VIEW MODE: Standalone Tactical Map Tab */}
@@ -419,8 +423,8 @@ function DashboardContent() {
                       HYDROLOGY GAUGE
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 px-1.5 py-0.5 rounded">
-                    KATTARIAN SENSOR
+                  <span className="text-[9px] font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 px-1.5 py-0.5 rounded truncate max-w-[130px]" title={activeRegion.sensorName || 'BASIN SENSOR'}>
+                    {activeRegion.sensorName || 'BASIN SENSOR'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3.5">
@@ -428,13 +432,22 @@ function DashboardContent() {
                     <Droplets className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Nullah Lai Level</span>
-                    <div className="flex items-baseline gap-1">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block truncate" title={activeRegion.riverBasin || 'Basin Hydrology Level'}>
+                      {activeRegion.riverBasin || 'Basin Hydrology Level'}
+                    </span>
+                    <div className="flex items-baseline gap-1 flex-wrap">
                       <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]">
                         {liveRiverLevel}
                       </span>
                       <span className="text-sm font-bold text-emerald-400 font-mono ml-0.5">ft</span>
-                      <span className="text-[10px] text-slate-500 font-mono ml-1.5 hidden sm:inline">(Limit 20.0ft)</span>
+                      {weather?.riverDischargeM3s !== undefined && (
+                        <span className="text-[10px] text-cyan-300 font-mono font-bold ml-1 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800/80" title="Live Copernicus GloFAS River Streamflow API">
+                          {weather.riverDischargeM3s.toLocaleString()} m³/s
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-mono ml-1 hidden sm:inline">
+                        (Limit {(activeRegion.dangerLimitFeet || 20.0).toFixed(1)}ft)
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -761,6 +774,11 @@ function DashboardContent() {
       <CitizenReportModal
         isOpen={isCitizenOpen}
         onClose={() => setIsCitizenOpen(false)}
+      />
+
+      <SitrepModal
+        isOpen={isSitrepOpen}
+        onClose={() => setIsSitrepOpen(false)}
       />
 
       {/* Floating Dual AI Copilot Triggers */}

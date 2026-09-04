@@ -35,10 +35,17 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
   } = useCrisis();
 
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>(
-    hospitals.find(h => h.capacity < 80)?.id || 'hosp_2'
+    hospitals.find(h => h.capacity < 80)?.id || hospitals[0]?.id || 'hosp_2'
   );
   const [isCalculating, setIsCalculating] = useState(false);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
+
+  useEffect(() => {
+    if (hospitals.length > 0 && !hospitals.some(h => h.id === selectedHospitalId)) {
+      const fallbackId = hospitals.find(h => h.capacity < 80)?.id || hospitals[0].id;
+      setSelectedHospitalId(fallbackId);
+    }
+  }, [hospitals, selectedHospitalId]);
 
   useEffect(() => {
     if (isOpen && (!activeSafeRoute || initialCoords)) {

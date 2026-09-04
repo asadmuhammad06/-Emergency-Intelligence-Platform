@@ -543,16 +543,32 @@ export const CrisisProvider: React.FC<{
       `weather_code` +
       `&timezone=auto`;
 
-    const res = await fetch(url);
+    const [weatherRes, floodRes] = await Promise.all([
+      fetch(url),
+      fetch(`https://flood-api.open-meteo.com/v1/flood?latitude=${lat}&longitude=${lng}&daily=river_discharge&forecast_days=1`).catch(() => null)
+    ]);
 
-    if (!res.ok) {
-      throw new Error(`Open-Meteo returned ${res.status}`);
+    if (!weatherRes.ok) {
+      throw new Error(`Open-Meteo returned ${weatherRes.status}`);
     }
 
-    const data = await res.json();
+    const data = await weatherRes.json();
 
     if (!data.current) {
       throw new Error("Open-Meteo returned no current weather");
+    }
+
+    let riverDischargeM3s: number | undefined = undefined;
+    if (floodRes && floodRes.ok) {
+      try {
+        const floodData = await floodRes.json();
+        const discharge = floodData.daily?.river_discharge?.[0];
+        if (typeof discharge === 'number') {
+          riverDischargeM3s = Math.round(discharge * 10) / 10;
+        }
+      } catch (e) {
+        // Fallback
+      }
     }
 
     const current = data.current;
@@ -565,12 +581,13 @@ export const CrisisProvider: React.FC<{
       windGusts: current.wind_gusts_10m,
       weatherCode: current.weather_code,
       time: current.time,
+      riverDischargeM3s,
       floodRiskLevel: (current.precipitation ?? 0) >= 10 ? 'HIGH' : (current.precipitation ?? 0) >= 2 ? 'MODERATE' : 'LOW',
     };
 
     setWeather(realWeather);
 
-    console.log("🌦️ REAL WEATHER:", realWeather);
+    console.log("🌦️ REAL WEATHER & GLOFAS RIVER FLOW:", realWeather);
   } catch (error) {
     console.warn("Failed to fetch real weather:", error);
   } finally {
@@ -1148,6 +1165,7 @@ export const CrisisProvider: React.FC<{
                 body: JSON.stringify({
                   startCoords,
                   hospitalId,
+                  hospitals,
                 }),
               }
             );
@@ -1335,6 +1353,12 @@ export const CrisisProvider: React.FC<{
               `${API_BASE}/api/simulation/start`,
               {
                 method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  regionId: activeRegion.id,
+                }),
               }
             );
 
@@ -1350,7 +1374,7 @@ export const CrisisProvider: React.FC<{
           );
         }
       },
-      []
+      [activeRegion.id]
     );
 
   // ==========================================================
@@ -1366,6 +1390,12 @@ export const CrisisProvider: React.FC<{
               `${API_BASE}/api/simulation/reset`,
               {
                 method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  regionId: activeRegion.id,
+                }),
               }
             );
 

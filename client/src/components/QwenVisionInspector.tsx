@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Info
 } from 'lucide-react';
+import { useCrisis } from '../context/CrisisContext';
 
 export interface QwenVlAnalysis {
   id: string;
@@ -67,29 +68,192 @@ interface QwenVisionInspectorProps {
   standalone?: boolean;
 }
 
-const PRESET_OPTIONS = [
-  {
-    id: 'preset_dhok_kala_khan',
-    label: 'Dhok Kala Khan Rooftop',
-    tag: 'Calibrated Scenario',
-    icon: '🌊',
-    desc: '4 citizens marooned on terrace, 1.85m water, 11kV electrical feeder submerged'
-  },
-  {
-    id: 'preset_faizabad',
-    label: 'Faizabad Underpass',
-    tag: 'Calibrated Scenario',
-    icon: '🚗',
-    desc: '2 trapped on submerged vehicle, 2.40m deep water, culvert drainage vortex'
-  },
-  {
-    id: 'preset_transformer',
-    label: 'Commercial Market Grid',
-    tag: 'Calibrated Scenario',
-    icon: '⚡',
-    desc: '6 workers trapped on balcony, 1.35m flood, arcing transformer sparks'
-  }
-];
+const REGIONAL_VISION_PRESETS: Record<string, Array<{ id: string; label: string; tag: string; icon: string; desc: string }>> = {
+  isb_rwp: [
+    {
+      id: 'preset_dhok_kala_khan',
+      label: 'Dhok Kala Khan Rooftop',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: '4 citizens marooned on terrace, 1.85m water, 11kV electrical feeder submerged'
+    },
+    {
+      id: 'preset_faizabad',
+      label: 'Faizabad Underpass',
+      tag: 'Calibrated Scenario',
+      icon: '🚗',
+      desc: '2 trapped on submerged vehicle, 2.40m deep water, culvert drainage vortex'
+    },
+    {
+      id: 'preset_transformer',
+      label: 'Commercial Market Grid',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: '6 workers trapped on balcony, 1.35m flood, arcing transformer sparks'
+    }
+  ],
+  karachi: [
+    {
+      id: 'preset_khi_causeway',
+      label: 'Korangi Causeway Artery',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: '3 passengers stranded on van, 2.20m raging flood current, Malir River backflow'
+    },
+    {
+      id: 'preset_khi_lyari',
+      label: 'Lyari Moach Goth Rooftops',
+      tag: 'Calibrated Scenario',
+      icon: '🏠',
+      desc: '5 residents marooned on single-story roof, 1.95m water, breached riverbank'
+    },
+    {
+      id: 'preset_khi_underpass',
+      label: 'Submarine Chowk Underpass',
+      tag: 'Calibrated Scenario',
+      icon: '🚗',
+      desc: '2.50m deep flood inundation, submerged transit corridor, pump station power loss'
+    }
+  ],
+  lahore: [
+    {
+      id: 'preset_lhr_underpass',
+      label: 'Do Moria Pul Underpass',
+      tag: 'Calibrated Scenario',
+      icon: '🚗',
+      desc: '2 trapped in waterlogged rickshaw, 2.40m depth, active sewer backflow'
+    },
+    {
+      id: 'preset_lhr_lakshmi',
+      label: 'Lakshmi Chowk Basin',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: '7 shopkeepers marooned on retail awning, 1.70m water, submerged LESCO panel'
+    },
+    {
+      id: 'preset_lhr_ravi',
+      label: 'Ravi Siphon Spillway',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: 'Ravi Riverbank breach, 2.10m flood surge, cattle and pastoral family stranded'
+    }
+  ],
+  nowshera: [
+    {
+      id: 'preset_now_bridge',
+      label: 'Kabul River GT Road Bridge',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: '3 cargo drivers stranded on elevated cab, 2.80m rapid river surge'
+    },
+    {
+      id: 'preset_now_cantt',
+      label: 'Nowshera Cantt Subway',
+      tag: 'Calibrated Scenario',
+      icon: '🚗',
+      desc: '2.10m flash flood inundation, severed railway connectivity'
+    },
+    {
+      id: 'preset_now_kaka',
+      label: 'Ziarat Kaka Sahib Nullah',
+      tag: 'Calibrated Scenario',
+      icon: '🏠',
+      desc: 'Flash torrent mudflow, 1.80m water, breached village perimeter'
+    }
+  ],
+  swat: [
+    {
+      id: 'preset_swt_bypass',
+      label: 'Bahrain Bypass Torrent',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: 'Swat River mountain flash flood, 2.60m depth with boulder silt, 3 tourists marooned'
+    },
+    {
+      id: 'preset_swt_hotel',
+      label: 'Madyan Riverside Hotel',
+      tag: 'Calibrated Scenario',
+      icon: '🏨',
+      desc: 'River surge into lower levels, 2.10m water, 5 guests stranded on upper terrace'
+    },
+    {
+      id: 'preset_swt_mingora',
+      label: 'Saidu Sharif Footbridge',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: 'Compromised cable anchor, 1.90m raging mountain stream, pedestrian cut-off'
+    }
+  ],
+  sukkur: [
+    {
+      id: 'preset_suk_katcha',
+      label: 'Sukkur Barrage Katcha Island',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: 'Indus River super-flood, 2.45m inundation, 8 villagers awaiting motor launch'
+    },
+    {
+      id: 'preset_suk_rohri',
+      label: 'Rohri Bypass Underpass',
+      tag: 'Calibrated Scenario',
+      icon: '🚗',
+      desc: '1.90m deep standing flood, trapped fuel truck, National Highway bypass cut'
+    },
+    {
+      id: 'preset_suk_bandar',
+      label: 'Bandar Road Riverbank',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: '1.65m water level, protective bund erosion, urban commercial threat'
+    }
+  ],
+  dgkhan: [
+    {
+      id: 'preset_dgk_choti',
+      label: 'Choti Zareen Rod-Kohi Torrent',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: 'Hill torrent flash flood, 2.35m depth, severed Indus Highway'
+    },
+    {
+      id: 'preset_dgk_kotchutta',
+      label: 'Kot Chutta Embankment Breach',
+      tag: 'Calibrated Scenario',
+      icon: '🏠',
+      desc: 'Canal branch rupture, 1.75m water, 6 farmers marooned on grain silo'
+    },
+    {
+      id: 'preset_dgk_taunsa',
+      label: 'Taunsa Barrage Downstream',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: '2.50m river surge, submerged tube-well pump houses, canal inlet breach'
+    }
+  ],
+  quetta: [
+    {
+      id: 'preset_qta_western',
+      label: 'Western Bypass Chiltan Torrent',
+      tag: 'Calibrated Scenario',
+      icon: '🌊',
+      desc: 'Mountain runoff flash flood, 1.85m mudflow, blocked highway'
+    },
+    {
+      id: 'preset_qta_spiny',
+      label: 'Spiny Road Urban Washout',
+      tag: 'Calibrated Scenario',
+      icon: '🏠',
+      desc: '1.55m urban flash flood, flooded basement shops, 4 trapped'
+    },
+    {
+      id: 'preset_qta_hanna',
+      label: 'Hanna Valley Spillway',
+      tag: 'Calibrated Scenario',
+      icon: '⚡',
+      desc: 'Dam spillway mountain wash, 2.05m torrential surge, bridge cutoff'
+    }
+  ]
+};
 
 // Client-side Canvas Image Resizer & Compressor (Prevents 413 Payload Too Large)
 const resizeAndCompressImage = (file: File): Promise<string> => {
@@ -144,7 +308,9 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
   onClose,
   standalone = false
 }) => {
-  const [selectedPreset, setSelectedPreset] = useState<string>('preset_dhok_kala_khan');
+  const { activeRegion } = useCrisis();
+  const currentPresets = REGIONAL_VISION_PRESETS[activeRegion?.id] || REGIONAL_VISION_PRESETS.isb_rwp;
+  const [selectedPreset, setSelectedPreset] = useState<string>(currentPresets[0]?.id || 'preset_dhok_kala_khan');
   const [customImage, setCustomImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysis, setAnalysis] = useState<QwenVlAnalysis | null>(null);
@@ -152,6 +318,15 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
   const [activeBoxHover, setActiveBoxHover] = useState<number | null>(null);
   const [liveApiConnected, setLiveApiConnected] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync selectedPreset when activeRegion changes
+  useEffect(() => {
+    const list = REGIONAL_VISION_PRESETS[activeRegion?.id] || REGIONAL_VISION_PRESETS.isb_rwp;
+    if (list[0]) {
+      setSelectedPreset(list[0].id);
+      setCustomImage(null);
+    }
+  }, [activeRegion?.id]);
 
   // Check backend vision API status on mount
   useEffect(() => {
@@ -172,7 +347,7 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
     setIsAnalyzing(true);
     setError(null);
     try {
-      const payload: any = {};
+      const payload: any = { regionId: activeRegion?.id };
       if (presetId) {
         payload.presetId = presetId;
       } else if (imageBase64) {
@@ -313,7 +488,7 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
 
           {/* Preset Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {PRESET_OPTIONS.map((opt) => {
+            {currentPresets.map((opt) => {
               const isSelected = selectedPreset === opt.id && !customImage;
               return (
                 <button

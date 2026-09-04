@@ -53,7 +53,7 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => 
         icon: AlertTriangle,
         color: 'text-rose-400 bg-rose-950/80 border-rose-800/80',
         label: 'FLASH FLOOD ACTIVE',
-        detail: `Nullah Lai @ Kattarian gauge at ${simulatedMetrics.nullahGaugeFeet} ft (Danger Threshold: 20.0 ft)`
+        detail: `${activeRegion.riverBasin || 'Nullah Lai'} @ ${activeRegion.sensorName || 'Kattarian'} gauge at ${simulatedMetrics.nullahGaugeFeet} ft (Danger Threshold: ${(activeRegion.dangerLimitFeet || 20).toFixed(1)} ft)`
       },
       {
         icon: Users,
@@ -65,7 +65,7 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => 
         icon: Hospital,
         color: 'text-emerald-400 bg-emerald-950/80 border-emerald-800/80',
         label: 'MEDICAL SURGE',
-        detail: `${availableIcu} ICU Beds Available across Twin Cities • ${overloadedCount} Facilities Diverting`
+        detail: `${availableIcu} ICU Beds Available across ${activeRegion.name} • ${overloadedCount} Facilities Diverting`
       },
       {
         icon: Truck,

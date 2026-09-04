@@ -203,6 +203,9 @@ export interface Region {
   center: [number, number];
   zoom: number;
   status: string;
+  riverBasin?: string;
+  sensorName?: string;
+  dangerLimitFeet?: number;
   [key: string]: any;
 }
 
@@ -228,6 +231,7 @@ export interface WeatherData {
   isHighWind?: boolean;
   flightFeasibility?: 'CLEAR' | 'CAUTION' | 'RESTRICTED';
   floodRiskLevel?: 'LOW' | 'MODERATE' | 'HIGH';
+  riverDischargeM3s?: number;
   [key: string]: any;
 }
 
