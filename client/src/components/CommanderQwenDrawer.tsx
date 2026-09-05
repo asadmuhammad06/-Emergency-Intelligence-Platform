@@ -66,6 +66,50 @@ const STRATEGIC_PROMPTS = [
   }
 ];
 
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://emergency-intelligence-platform.onrender.com');
+
+function calculateLevenshteinDistance(a: string, b: string): number {
+  const an = a ? a.length : 0;
+  const bn = b ? b.length : 0;
+  if (an === 0) return bn;
+  if (bn === 0) return an;
+  const matrix: number[][] = Array.from({ length: bn + 1 }, () => new Array(an + 1).fill(0));
+  for (let i = 0; i <= an; i++) matrix[0][i] = i;
+  for (let j = 0; j <= bn; j++) matrix[j][0] = j;
+
+  for (let j = 1; j <= bn; j++) {
+    for (let i = 1; i <= an; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j - 1][i] + 1,
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i - 1] + cost
+      );
+    }
+  }
+  return matrix[bn][an];
+}
+
+function wordsFuzzyMatch(queryWords: string[], targetVocab: string[], maxDist = 2): boolean {
+  for (const qWord of queryWords) {
+    if (qWord.length <= 2) continue;
+    for (const target of targetVocab) {
+      if (qWord === target) return true;
+      if (Math.abs(qWord.length - target.length) <= maxDist) {
+        const dist = calculateLevenshteinDistance(qWord, target);
+        if (dist <= (target.length <= 4 ? 1 : maxDist)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
   isOpen,
   onClose,
@@ -120,9 +164,42 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
   // Complete Knowledge Retrieval & Multi-Intent AI Generation Engine
   const generateQwenResponse = (query: string): { thinking: string; text: string; action?: { label: string; type: 'route' | 'priority' | 'sos' } } => {
     const q = query.trim().toLowerCase();
+    const queryTokens = q.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(Boolean);
+
+    const VOCAB_HOSPITAL = ['hospital', 'hospitals', 'hsptl', 'hspitl', 'hopsital', 'bed', 'beds', 'bad', 'icu', 'doctor', 'doctora', 'doctori', 'triage', 'ventilator', 'admit', 'treatment', 'ilaj', 'dawa', 'clinic', 'medical', 'pims', 'holy', 'family', 'bbh', 'benazir', 'bhutto', 'shifa', 'ric', 'cardiology'];
+    const VOCAB_ROAD = ['road', 'roads', 'rod', 'rasta', 'rastay', 'rasty', 'route', 'rute', 'faizabad', 'fiazabad', 'faizabd', 'block', 'blocked', 'traffic', 'jam', 'flyover', 'closed', 'band', 'submerged', 'waterlogged', 'path', 'highway', 'murree', 'expressway'];
+    const VOCAB_WATER = ['water', 'watr', 'pani', 'paani', 'pni', 'food', 'fud', 'khana', 'rashan', 'ration', 'drinking', 'bottles', 'relief', 'depot', 'camp', 'supplies', 'aid', 'imdad', 'peena', 'pyas', 'bhook'];
+    const VOCAB_RIVER = ['river', 'rivr', 'lai', 'nullah', 'nalla', 'nala', 'kattarian', 'gauge', 'level', 'flood', 'flooding', 'sailab', 'selab', 'water level', 'threshold', 'surge', 'flow', 'discharge', 'inundation', 'depth'];
+    const VOCAB_RESCUE = ['rescue', 'rskue', 'help', 'halp', 'madad', 'trapped', 'trap', 'phansay', 'phans', 'boat', 'boats', 'kashti', 'marooned', 'evacuate', 'evacuation', 'drown', 'drowning', 'roof', 'rooftop', 'chat', 'chhat', 'emergency', 'sos', 'save'];
+    const VOCAB_GREETING = ['hi', 'hello', 'hey', 'salam', 'assalam', 'aoa', 'kaun', 'who', 'help', 'features', 'guide', 'start', 'test', 'demo'];
+
+    const isHospital = wordsFuzzyMatch(queryTokens, VOCAB_HOSPITAL) || /hospital|bed|icu|doctor|triage|admit|ilaj|pims|holy|shifa|bbh/i.test(q);
+    const isRoad = wordsFuzzyMatch(queryTokens, VOCAB_ROAD) || /road|rasta|route|block|faizabad|traffic|flyover|band/i.test(q);
+    const isWater = wordsFuzzyMatch(queryTokens, VOCAB_WATER) || /water|pani|paani|food|khana|rashan|depot|relief|camp/i.test(q);
+    const isRiver = wordsFuzzyMatch(queryTokens, VOCAB_RIVER) || /lai|nullah|nala|gauge|river|flood|sailab|water level/i.test(q);
+    const isRescue = wordsFuzzyMatch(queryTokens, VOCAB_RESCUE) || /rescue|trapped|phans|boat|kashti|evacuat|chat|roof|madad/i.test(q);
+    const isGreeting = wordsFuzzyMatch(queryTokens, VOCAB_GREETING) || /hello|hi|salam|who are you|kaun ho|what can you do|features/i.test(q);
+
+    // 0. GREETING / COPILOT CAPABILITIES INTRO
+    if (isGreeting) {
+      return {
+        thinking: `Acknowledging commander greetings and displaying EOC AI Copilot capability roster for ${activeRegion.name}...`,
+        text: `COMMANDER QWEN // TACTICAL EOC COPILOT ONLINE\n\n` +
+          `Greetings, Commander. I am Qwen-2.5 EOC AI, synchronized with real-time field telemetry across ${activeRegion.name}.\n\n` +
+          `You can query me anytime (including typos or Roman Urdu) for:\n` +
+          `• 🏥 Medical: Available beds & ICU capacity (e.g. "hsptl bed kahan hy", "pims icu")\n` +
+          `• 🛣️ Road Corridors: Blockades & safe transit (e.g. "faizabd blok rasta", "route to pims")\n` +
+          `• 💧 Relief & Water: Food rations & drinking water depots (e.g. "pni", "relief camp")\n` +
+          `• 🚤 Search & Rescue: Trapped citizens & boat deployments (e.g. "boat dispatch", "phansay log")\n` +
+          `• 🌊 River Hydrology: Nullah Lai flood gauges & meteorological forecasts\n\n` +
+          `How can I assist your operational command right now?`,
+        action: { label: 'Open Resource Dispatch Matrix', type: 'priority' }
+      };
+    }
 
     // 1. HOSPITAL BEDS & ICU AVAILABILITY IN A CITY
     if (
+      isHospital ||
       q.includes('hospital') ||
       q.includes('bed') ||
       q.includes('icu') ||
@@ -192,6 +269,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
     // 2. ROADS, TRAFFIC, FAIZABAD & EVACUATION ROUTES
     if (
+      isRoad ||
       q.includes('road') ||
       q.includes('route') ||
       q.includes('rasta') ||
@@ -225,6 +303,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
     // 3. DRINKING WATER, RELIEF CAMPS & FOOD RATIONS
     if (
+      isWater ||
       q.includes('water') ||
       q.includes('paani') ||
       q.includes('food') ||
@@ -260,6 +339,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
     // 4. RESCUE TEAMS, BOATS, TRAPPED CIVILIANS & 1122
     if (
+      isRescue ||
       q.includes('boat') ||
       q.includes('rescue') ||
       q.includes('trapped') ||
@@ -293,6 +373,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
 
     // 5. WEATHER, RAIN, NULLAH LAI & HYDROLOGY
     if (
+      isRiver ||
       q.includes('weather') ||
       q.includes('rain') ||
       q.includes('barish') ||
@@ -463,9 +544,9 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
     };
   };
 
-  const handleSend = (textToSend?: string) => {
-    const q = textToSend || inputQuery;
-    if (!q.trim() || isGenerating) return;
+  const handleSend = async (textToSend?: string) => {
+    const q = (textToSend || inputQuery).trim();
+    if (!q || isGenerating) return;
 
     const userMsg: Message = {
       id: `u_${Date.now()}`,
@@ -478,6 +559,42 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
     setInputQuery('');
     setIsGenerating(true);
 
+    try {
+      const response = await fetch(`${API_BASE}/api/qwen-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: q,
+          telemetry: {
+            region: activeRegion,
+            hospitals,
+            reports,
+            roadBlocks,
+            reliefHubs,
+            weather
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const qwenMsg: Message = {
+          id: `q_${Date.now()}`,
+          sender: 'qwen',
+          text: data.text || 'Directive synthesized from operational telemetry.',
+          thinking: data.thinking || 'Context evaluated against active operational telemetry.',
+          action: data.action || undefined,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' PKT'
+        };
+        setMessages(prev => [...prev, qwenMsg]);
+        setIsGenerating(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('Backend Qwen chat endpoint unreachable, using client-side fallback:', err);
+    }
+
+    // Resilient client-side fallback if server endpoint is unreachable
     setTimeout(() => {
       const resp = generateQwenResponse(q);
       const qwenMsg: Message = {
@@ -490,7 +607,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
       };
       setMessages(prev => [...prev, qwenMsg]);
       setIsGenerating(false);
-    }, 600);
+    }, 400);
   };
 
   const handleActionClick = (action: { type: 'route' | 'priority' | 'sos' }) => {
