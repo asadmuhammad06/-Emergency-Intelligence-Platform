@@ -156,7 +156,10 @@ const EARTHQUAKE_API =
   'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson';
 
 const API_BASE =
-  'http://localhost:3001';
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://emergency-intelligence-platform.onrender.com');
 
 // ============================================================
 // CONTEXT

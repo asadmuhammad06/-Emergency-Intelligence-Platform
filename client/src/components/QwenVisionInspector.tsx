@@ -303,6 +303,12 @@ const resizeAndCompressImage = (file: File): Promise<string> => {
   });
 };
 
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://emergency-intelligence-platform.onrender.com');
+
 export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
   onApplyToReport,
   onClose,
@@ -330,7 +336,7 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
 
   // Check backend vision API status on mount
   useEffect(() => {
-    fetch('http://localhost:3001/api/vision/status')
+    fetch(`${API_BASE}/api/vision/status`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data?.liveApiConfigured) {
@@ -354,7 +360,7 @@ export const QwenVisionInspector: React.FC<QwenVisionInspectorProps> = ({
         payload.imageBase64 = imageBase64;
       }
 
-      const res = await fetch('http://localhost:3001/api/vision/analyze-damage', {
+      const res = await fetch(`${API_BASE}/api/vision/analyze-damage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
