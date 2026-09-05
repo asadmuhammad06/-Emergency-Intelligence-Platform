@@ -1440,7 +1440,7 @@ export function createSimulatedCityData(region: Region): SimulatedCityData {
     };
 
     return {
-      reports: catalog.reports,
+      reports: [],
       hospitals: catalog.hospitals,
       hazardZones: catalog.hazardZones,
       roadBlocks: catalog.roadBlocks,
@@ -1449,9 +1449,9 @@ export function createSimulatedCityData(region: Region): SimulatedCityData {
       priorityZones: [],
       dispatchedUnits: [],
       metrics: {
-        trappedCitizens: totalTrapped,
+        trappedCitizens: 0,
         icuSaturation: avgCapacity,
-        activeSos: catalog.reports.length,
+        activeSos: 0,
         nullahGaugeFeet: catalog.baseGaugeFeet,
         floodInundation: catalog.hazardZones.length
       }
@@ -1585,7 +1585,7 @@ export function createSimulatedCityData(region: Region): SimulatedCityData {
   ];
 
   return {
-    reports,
+    reports: [],
     hospitals,
     hazardZones,
     roadBlocks,
@@ -1594,9 +1594,9 @@ export function createSimulatedCityData(region: Region): SimulatedCityData {
     priorityZones: [],
     dispatchedUnits: [],
     metrics: {
-      trappedCitizens: trapped,
+      trappedCitizens: 0,
       icuSaturation: 75,
-      activeSos: reports.length,
+      activeSos: 0,
       nullahGaugeFeet: region.dangerLimitFeet ? region.dangerLimitFeet - 4.5 : 15.0,
       floodInundation: 1
     }

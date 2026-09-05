@@ -79,6 +79,9 @@ interface CrisisContextType {
     safeRouteOverlay: boolean;
   };
 
+  latestIncomingSos: EmergencyReport | null;
+  clearLatestIncomingSos: () => void;
+
   simulationRunning: boolean;
   simulationStep: number;
   isConnectedToServer: boolean;
@@ -246,11 +249,18 @@ export const CrisisProvider: React.FC<{
   const [layers, setLayers] = useState({
     floods: true,
     hospitals: true,
-    roadBlocks: true,
-    reliefHubs: true,
+    roadBlocks: false, // Default off to declutter map
+    reliefHubs: false, // Default off to declutter map
     sosPins: true,
     safeRouteOverlay: true,
   });
+
+  const [latestIncomingSos, setLatestIncomingSos] =
+    useState<EmergencyReport | null>(null);
+
+  const clearLatestIncomingSos = useCallback(() => {
+    setLatestIncomingSos(null);
+  }, []);
 
   const [weather, setWeather] =
     useState<WeatherData | null>(null);
@@ -358,9 +368,7 @@ export const CrisisProvider: React.FC<{
         // ------------------------------------------------------
 
         setReports(
-          data.reports?.length
-            ? data.reports
-            : simulated.reports
+          data.reports || []
         );
 
         setHospitals(
@@ -882,6 +890,7 @@ export const CrisisProvider: React.FC<{
         (
           newRep: EmergencyReport
         ) => {
+          setLatestIncomingSos(newRep);
           setReports(
             prev =>
               prev.some(
@@ -1112,6 +1121,7 @@ export const CrisisProvider: React.FC<{
             await res.json();
 
           if (data.success) {
+            setLatestIncomingSos(data.report);
             setReports(
               prev =>
                 prev.some(
@@ -1588,6 +1598,8 @@ export const CrisisProvider: React.FC<{
         // Filters / layers
         activeCategoryFilter,
         layers,
+        latestIncomingSos,
+        clearLatestIncomingSos,
 
         // Simulation
         simulationRunning,

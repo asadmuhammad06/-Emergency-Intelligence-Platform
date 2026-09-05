@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useCrisis } from '../context/CrisisContext';
 import {
   AlertCircle,
@@ -63,6 +63,18 @@ const EMERGENCY_PRESETS = [
   }
 ];
 
+function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
 export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
   onSwitchToCommander,
   onBackToGateway
@@ -75,44 +87,49 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReport, setSubmittedReport] = useState<any>(null);
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
 
   // GPS Location State
   const [gpsCoords, setGpsCoords] = useState<[number, number] | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<'LOCKING' | 'LOCKED' | 'FAILED'>('LOCKING');
-  const [locationName, setLocationName] = useState<string>('Detecting exact device location...');
+  const [gpsStatus, setGpsStatus] = useState<'IDLE' | 'LOCKING' | 'LOCKED' | 'FAILED'>('IDLE');
+  const [locationName, setLocationName] = useState<string>('Live device GPS required for pinpoint rescue');
+  const [gpsErrorMsg, setGpsErrorMsg] = useState<string | null>(null);
 
-  // Voice SOS State
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  // Auto-acquire Device GPS on mount
+  // Auto-acquire Device GPS on mount or on explicit user request
   const acquireGps = () => {
     setGpsStatus('LOCKING');
-    setLocationName('Acquiring satellite GPS lock...');
+    setGpsErrorMsg(null);
+    setLocationName('Connecting to satellite GPS receiver...');
 
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const lat = Number(position.coords.latitude.toFixed(6));
           const lng = Number(position.coords.longitude.toFixed(6));
-          const acc = Math.round(position.coords.accuracy || 10);
+          const acc = Math.round(position.coords.accuracy || 6);
           setGpsCoords([lat, lng]);
           setAccuracy(acc);
           setGpsStatus('LOCKED');
-          setLocationName(`GPS Fixed: [${lat}, ${lng}] (~${acc}m accuracy)`);
+          setLocationName(`GPS Fixed: [${lat}, ${lng}] (±${acc}m accuracy)`);
         },
         (error) => {
-          console.warn('Browser GPS acquisition failed, using regional centroid:', error.message);
+          console.warn('Browser GPS acquisition failed:', error.message);
           const fallback = activeRegion?.center || [33.65, 73.06];
           setGpsCoords(fallback);
           setAccuracy(null);
           setGpsStatus('FAILED');
-          setLocationName(`${activeRegion?.name || 'Rawalpindi / Islamabad'} (Regional Area Center)`);
+          if (error.code === error.PERMISSION_DENIED) {
+            setGpsErrorMsg('Browser location permission was denied. Tap the lock 🔒 icon in your browser address bar to Allow Location.');
+          } else {
+            setGpsErrorMsg('GPS signal timed out. Please tap "Detect My GPS" again.');
+          }
+          setLocationName(`${activeRegion?.name || 'Rawalpindi / Islamabad'} (Regional Area Fallback)`);
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
+          timeout: 12000,
           maximumAge: 0
         }
       );
@@ -120,11 +137,13 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
       const fallback = activeRegion?.center || [33.65, 73.06];
       setGpsCoords(fallback);
       setGpsStatus('FAILED');
+      setGpsErrorMsg('Geolocation is not supported by your device browser.');
       setLocationName(`${activeRegion?.name || 'Rawalpindi / Islamabad'} (Default)`);
     }
   };
 
   useEffect(() => {
+    // Proactively request on initial mount
     acquireGps();
   }, [activeRegion?.id]);
 
@@ -204,15 +223,33 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
     }
   };
 
-  // Find nearest relief hub for survival guidance
-  const nearestHub = reliefHubs && reliefHubs[0] ? reliefHubs[0] : {
-    name: 'Liaquat Bagh Relief Base',
-    type: 'DISASTER_LOGISTICS_HUB',
-    drinkingWaterLiters: 9500,
-    foodPackets: 850,
-    rescueBoats: 6,
-    managedBy: 'NDMA & Rescue 1122'
-  };
+  // Mathematically calculate nearest relief shelter using Haversine distance
+  const targetUserCoords = gpsCoords || activeRegion?.center || [33.65, 73.06];
+
+  const nearestHubData = useMemo(() => {
+    if (!reliefHubs || reliefHubs.length === 0) {
+      return {
+        hub: {
+          id: 'hub_fallback',
+          name: 'NDMA Primary Regional Relief Depot',
+          type: 'DISASTER_LOGISTICS_HUB',
+          drinkingWaterLiters: 15000,
+          foodPackets: 2500,
+          rescueBoats: 6,
+          managedBy: 'NDMA & Rescue 1122',
+          coords: [targetUserCoords[0] + 0.015, targetUserCoords[1] + 0.015] as [number, number]
+        },
+        distanceKm: 1.6
+      };
+    }
+
+    const sorted = [...reliefHubs].map(h => ({
+      hub: h,
+      distanceKm: getHaversineDistanceKm(targetUserCoords[0], targetUserCoords[1], h.coords[0], h.coords[1])
+    })).sort((a, b) => a.distanceKm - b.distanceKm);
+
+    return sorted[0];
+  }, [reliefHubs, targetUserCoords]);
 
   return (
     <div className="min-h-screen w-full bg-[#070b14] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col items-center justify-between p-3 sm:p-6 select-none">
@@ -280,36 +317,34 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
                 <h2 className="text-lg sm:text-xl font-black text-white">
                   Distress Broadcast Transmitted!
                 </h2>
-                <p className="text-xs text-slate-300 mt-1">
-                  Your incident ID is <span className="font-mono text-emerald-400 font-bold">{submittedReport.id}</span>. Rescue dispatchers have received your distress coordinates.
+                <p className="text-xs text-slate-300 mt-1 font-mono">
+                  Your incident ID is <span className="text-cyan-400 font-bold">{submittedReport.id}</span>. Rescue dispatchers have received your distress coordinates.
                 </p>
               </div>
             </div>
 
-            {/* Live Progress Tracker */}
-            <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800 flex flex-col gap-3">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                Live EOC Dispatch Telemetry
+            {/* Live Dispatch Telemetry Pod */}
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5 font-mono text-xs">
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">
+                LIVE EOC DISPATCH TELEMETRY
               </span>
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-3 text-xs">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/60 flex items-center justify-center font-mono font-bold text-[10px]">
+              <div className="space-y-1.5 text-slate-300">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-500/80 flex items-center justify-center text-emerald-400 text-[10px]">
                     ✓
                   </div>
-                  <span className="text-white font-medium">Distress Signal Logged at Central Command</span>
+                  <span>Distress Signal Logged at Central Command</span>
                 </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-emerald-950 border border-emerald-500/80 flex items-center justify-center text-emerald-400 text-[10px]">
                     ✓
                   </div>
-                  <span className="text-white font-medium">
-                    AI Triage Assigned: <span className="text-amber-400 font-bold font-mono">PRIORITY RESCUE</span>
+                  <span>
+                    AI Triage Assigned: <strong className="text-amber-400">PRIORITY RESCUE</strong>
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <div className="w-5 h-5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/60 flex items-center justify-center font-mono font-bold text-[10px] animate-pulse">
-                    🚤
-                  </div>
+                <div className="flex items-center gap-2 text-cyan-400">
+                  <span className="text-xs">🚤</span>
                   <span className="text-cyan-300 font-medium">
                     Rescue 1122 Quick Response Unit Alerted
                   </span>
@@ -317,23 +352,36 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
               </div>
             </div>
 
-            {/* Nearest Safe Relief Shelter */}
-            <div className="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-500/30 rounded-xl p-4 flex flex-col gap-2">
+            {/* Nearest Safe Relief Shelter (Haversine Distance Calculated) */}
+            <div className="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-500/40 rounded-xl p-4 flex flex-col gap-2.5 shadow-lg">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
                   <LifeBuoy className="w-3.5 h-3.5 text-cyan-400" />
-                  NEAREST SAFE RELIEF SHELTER
+                  NEAREST SAFE RELIEF SHELTER (FROM YOUR GPS)
                 </span>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60">
-                  OPERATIONAL
+                <span className="text-[10px] font-mono text-emerald-300 font-bold px-2 py-0.5 rounded bg-emerald-950 border border-emerald-600/70 shadow-sm">
+                  {nearestHubData.distanceKm} KM AWAY
                 </span>
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-white">
-                {nearestHub.name}
+              <h3 className="text-sm sm:text-base font-bold text-white flex items-center justify-between">
+                <span>{nearestHubData.hub.name}</span>
+                <span className="text-xs font-mono text-cyan-300">~{Math.max(5, Math.round(nearestHubData.distanceKm * 12))} min travel</span>
               </h3>
-              <p className="text-xs text-slate-300">
-                Stationed with clean drinking water ({nearestHub.drinkingWaterLiters?.toLocaleString()}L), food rations ({nearestHub.foodPackets} packs), and Rescue Jet-Boats.
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Stationed with clean drinking water ({(nearestHubData.hub.drinkingWaterLiters || 10000).toLocaleString()}L), food rations ({nearestHubData.hub.foodPackets || 1200} packs), and Rescue Jet-Boats.
               </p>
+              {nearestHubData.hub.coords && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${nearestHubData.hub.coords[0]},${nearestHubData.hub.coords[1]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 w-full py-2.5 rounded-lg bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                >
+                  <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Navigate to Shelter via Google Maps (Turn-by-Turn)</span>
+                  <ExternalLink className="w-3 h-3 text-cyan-400" />
+                </a>
+              )}
             </div>
 
             {/* Immediate Direct Hotlines */}
@@ -373,31 +421,56 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
             onSubmit={handleSubmit}
             className="bg-slate-900/90 border border-red-500/50 rounded-2xl p-4 sm:p-7 shadow-[0_0_50px_rgba(239,68,68,0.2)] flex flex-col gap-4 sm:gap-5"
           >
-            {/* Live GPS Bar */}
-            <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <MapPin
-                  className={`w-4 h-4 shrink-0 ${
+            {/* High-Precision Interactive GPS Card */}
+            <div className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
+              gpsStatus === 'LOCKED'
+                ? 'bg-emerald-950/40 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                : gpsStatus === 'LOCKING'
+                ? 'bg-amber-950/40 border-amber-500/60 animate-pulse'
+                : 'bg-slate-950/90 border-slate-800'
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    gpsStatus === 'LOCKED' ? 'bg-emerald-900/80 text-emerald-400 border border-emerald-500/50' : 'bg-slate-900 text-amber-400 border border-slate-700'
+                  }`}>
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white flex items-center gap-2">
+                      <span>{gpsStatus === 'LOCKED' ? 'LIVE SATELLITE GPS ACTIVE' : 'LIVE DEVICE GPS PINPOINT'}</span>
+                      {gpsStatus === 'LOCKED' && accuracy && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-900 text-emerald-300 border border-emerald-700 font-bold">
+                          ±{accuracy}m Accuracy
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-mono text-slate-300 mt-0.5">
+                      {locationName}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={acquireGps}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold font-mono border flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0 shadow-sm ${
                     gpsStatus === 'LOCKED'
-                      ? 'text-emerald-400'
-                      : gpsStatus === 'LOCKING'
-                      ? 'text-amber-400 animate-spin'
-                      : 'text-rose-400'
+                      ? 'bg-slate-900 hover:bg-slate-800 text-emerald-300 border-emerald-600/60'
+                      : 'bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
                   }`}
-                />
-                <span className="font-mono text-slate-300 truncate text-[11px] sm:text-xs">
-                  {locationName}
-                </span>
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${gpsStatus === 'LOCKING' ? 'animate-spin' : ''}`} />
+                  <span>{gpsStatus === 'LOCKED' ? 'REFRESH GPS' : '📍 DETECT MY EXACT GPS'}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={acquireGps}
-                className="shrink-0 ml-2 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-cyan-300 flex items-center gap-1 border border-slate-700"
-                title="Refresh GPS Coordinates"
-              >
-                <RefreshCw className="w-2.5 h-2.5" />
-                <span>REFRESH GPS</span>
-              </button>
+
+              {gpsErrorMsg && (
+                <div className="mt-2.5 p-2 rounded-lg bg-rose-950/80 border border-rose-800 text-[11px] text-rose-200 font-mono flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
+                  <span>{gpsErrorMsg}</span>
+                </div>
+              )}
             </div>
 
             {/* 1-Tap Rapid Distress Chips */}
