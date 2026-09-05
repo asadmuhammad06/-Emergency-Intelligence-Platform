@@ -34,33 +34,26 @@ import {
   Radio
 } from 'lucide-react';
 
-// Custom High-Precision Tactical DivIcons
+// Custom High-Precision Tactical DivIcons (Decluttered & High Contrast)
 const createSosIcon = (headcount: number, severity: number) => {
   const isExtreme = severity >= 9;
   return L.divIcon({
     className: 'custom-sos-marker',
     html: `
-      <div class="relative flex items-center justify-center w-10 h-10 select-none cursor-pointer group">
-        <span class="absolute w-9 h-9 rounded-full ${isExtreme ? 'bg-rose-500/40' : 'bg-amber-500/30'} animate-radar pointer-events-none"></span>
-        <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-slate-950 border-2 ${isExtreme ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.9)]' : 'border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.8)]'} transition-transform group-hover:scale-110">
-          <svg class="w-3.5 h-3.5 ${isExtreme ? 'text-rose-400' : 'text-amber-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
-            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
-            <circle cx="12" cy="12" r="2"/>
-            <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
-            <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/>
-          </svg>
+      <div class="relative flex items-center justify-center w-7 h-7 select-none cursor-pointer group">
+        <div class="relative flex items-center justify-center w-6 h-6 rounded-full bg-slate-950 border-2 ${isExtreme ? 'border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.9)]' : 'border-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'} transition-transform group-hover:scale-125">
+          <span class="w-2 h-2 rounded-full ${isExtreme ? 'bg-rose-500 animate-ping' : 'bg-amber-400'}"></span>
         </div>
         ${headcount > 0 ? `
-          <span class="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-mono font-black px-1 py-0.2 rounded-full border border-slate-900 shadow">
+          <span class="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[8px] font-mono font-black px-1 rounded-full border border-slate-950 shadow">
             ${headcount}
           </span>
         ` : ''}
       </div>
     `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20]
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -14]
   });
 };
 
@@ -805,17 +798,17 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
         />
        {/* Radar temporarily disabled - tile provider causing zoom errors */}
 
-        {/* 1. Flood Inundation Polygons */}
+        {/* 1. Flood Inundation Polygons (Subtle tactical boundary to prevent map obscuration) */}
         {layers.floods && hazardZones.map(zone => (
           <Polygon
             key={zone.id}
             positions={zone.polygon}
             pathOptions={{
               color: zone.severity === 'CRITICAL' ? '#ef4444' : '#06b6d4',
-              fillColor: zone.severity === 'CRITICAL' ? '#dc2626' : '#0284c7',
-              fillOpacity: 0.35,
-              weight: 2.5,
-              dashArray: '6, 6'
+              fillColor: zone.severity === 'CRITICAL' ? '#ef4444' : '#0284c7',
+              fillOpacity: 0.10,
+              weight: 1.5,
+              dashArray: '5, 5'
             }}
           >
             <Tooltip direction="center" permanent={false} opacity={0.9} className="custom-leaflet-tooltip">
@@ -957,6 +950,27 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
                     SEV {rep.severity}/10
                   </span>
                 </div>
+
+                {(rep.isLiveGps || rep.source === 'CITIZEN_LIVE_GPS' || rep.accuracyMeters) && (
+                  <div className="mb-2 px-2 py-1 rounded bg-emerald-950/90 border border-emerald-500/60 flex items-center justify-between text-[10px] font-mono text-emerald-300">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      LIVE GPS SATELLITE LOCKED
+                    </span>
+                    {rep.accuracyMeters && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-900 border border-emerald-600 font-bold">
+                        ±{rep.accuracyMeters}m
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {(rep.citizenName || rep.callerPhone) && (
+                  <div className="mb-2 text-[10px] font-mono text-cyan-300 bg-cyan-950/60 p-1.5 rounded border border-cyan-800/60 flex items-center justify-between">
+                    <span>👤 {rep.citizenName || 'Verified Citizen'}</span>
+                    {rep.callerPhone && <span className="text-slate-400">{rep.callerPhone}</span>}
+                  </div>
+                )}
 
                 <p className="text-xs text-slate-200 font-medium my-2 bg-slate-900/90 p-2 rounded-lg border border-slate-800/80 leading-relaxed italic">
                   "{rep.rawText}"
