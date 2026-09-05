@@ -258,6 +258,10 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
                   const targetCoord = activeSafeRoute.safePath?.[1] || activeSafeRoute.origin?.coords;
                   if (targetCoord) setHighlightedCoords(targetCoord);
                 }
+                const mapEl = document.getElementById('tactical-map');
+                if (mapEl) {
+                  mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
                 onClose();
               }}
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors"

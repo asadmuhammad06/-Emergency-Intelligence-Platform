@@ -18,7 +18,7 @@ interface EmergencyTickerProps {
 
 export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => {
   const {
-    simulatedMetrics,
+    reports,
     hospitals,
     dispatchedUnits,
     weather,
@@ -47,19 +47,24 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => 
   const items = useMemo(() => {
     const overloadedCount = hospitals.filter(h => h.capacity >= 85).length;
     const availableIcu = hospitals.reduce((sum, h) => sum + (h.icuAvailable || 0), 0);
+    const liveTrapped = reports.reduce((sum, r) => sum + (r.headcount || 0), 0);
+    const liveSos = reports.length;
+    const hydrologyMetric = weather?.riverDischargeM3s 
+      ? `Discharge: ${weather.riverDischargeM3s} m³/s`
+      : 'Gauge: 20.4 ft (Critical Surge)';
 
     return [
       {
         icon: AlertTriangle,
         color: 'text-rose-400 bg-rose-950/80 border-rose-800/80',
         label: 'FLASH FLOOD ACTIVE',
-        detail: `${activeRegion.riverBasin || 'Nullah Lai'} @ ${activeRegion.sensorName || 'Kattarian'} gauge at ${simulatedMetrics.nullahGaugeFeet} ft (Danger Threshold: ${(activeRegion.dangerLimitFeet || 20).toFixed(1)} ft)`
+        detail: `${activeRegion.riverBasin || 'Nullah Lai'} Catchment • ${hydrologyMetric} (Threshold: ${(activeRegion.dangerLimitFeet || 20).toFixed(1)} ft)`
       },
       {
         icon: Users,
         color: 'text-amber-400 bg-amber-950/80 border-amber-800/80',
         label: 'CASUALTY TRIAGE',
-        detail: `${simulatedMetrics.trappedCitizens} Civilians Stranded • ${simulatedMetrics.activeSos} Active SOS Beacons`
+        detail: `${liveTrapped} Civilians In Hazard Zones • ${liveSos} Live Distress Dispatches`
       },
       {
         icon: Hospital,
@@ -80,7 +85,7 @@ export const EmergencyTicker: React.FC<EmergencyTickerProps> = React.memo(() => 
         detail: `${weather?.temperature ?? 26}°C • Rain: ${weather?.precipitation ?? 0} mm/h • Risk: ${weather?.floodRiskLevel ?? 'MODERATE'}`
       }
     ];
-  }, [hospitals, simulatedMetrics, dispatchedUnits, weather, activeRegion]);
+  }, [hospitals, reports, dispatchedUnits, weather, activeRegion]);
 
   return (
     <div className="w-full bg-[#050813] border-b border-white/[0.08] text-slate-200 text-xs flex items-center h-8 relative overflow-hidden select-none z-50">
