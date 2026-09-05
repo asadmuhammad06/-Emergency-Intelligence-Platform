@@ -208,7 +208,8 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const createdReport = await submitCitizenReport(reportText, activeRegion.center, phoneNumber);
+      const coords = activeRegion?.center || [33.65, 73.06];
+      const createdReport = await submitCitizenReport(reportText, coords, phoneNumber);
       setSubmittedReport(createdReport);
 
       setTimeout(() => {
