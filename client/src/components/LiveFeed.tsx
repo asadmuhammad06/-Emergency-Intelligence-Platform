@@ -139,9 +139,15 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
                 <div className="flex items-center justify-between gap-2 mb-2.5">
                   <div className="min-w-0 flex items-center gap-2 flex-wrap">
                     {getCategoryBadge(report.category)}
-                   <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-800/60 px-2 py-0.5 rounded">
-                     source: {report.source === 'community-reported' ? 'community-reported' : 'live'}
-                   </span>
+                    {(report.isLiveGps || report.source === 'CITIZEN_LIVE_GPS') && (
+                      <span className="text-[10px] font-mono text-red-200 bg-red-950 border border-red-500/80 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                        LIVE GPS BEACON
+                      </span>
+                    )}
+                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/50 border border-emerald-800/60 px-2 py-0.5 rounded">
+                      source: {report.source === 'community-reported' ? 'community-reported' : report.source || 'live'}
+                    </span>
                     {report.source === 'SIMULATED' && (
                       <span className="text-[10px] font-mono bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800">
                         SIMULATED
@@ -168,9 +174,14 @@ export const LiveFeed: React.FC<LiveFeedProps> = ({ onOpenSafeRoute }) => {
 
                 {/* AI Extracted Entity Pills */}
                 <div className="space-y-2 text-xs sm:text-sm mb-3.5 font-mono">
-                  <div className="flex items-center gap-2 text-slate-300">
+                  <div className="flex items-center gap-2 text-slate-300 flex-wrap">
                     <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
                     <span className="truncate font-semibold">{report.location || report.locationName}</span>
+                    {report.coords && (
+                      <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800/80">
+                        [{report.coords[0].toFixed(4)}, {report.coords[1].toFixed(4)}]
+                      </span>
+                    )}
                   </div>
                   {report.description && report.description !== report.title && (
                     <p className="line-clamp-2 text-slate-400 text-xs pl-6">{report.description}</p>
