@@ -59,8 +59,8 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="bg-[#0e1628] border border-rose-500/40 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_0_50px_rgba(244,63,94,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
+      <div className="bg-[#0b1329] border border-red-500/40 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-[0_0_40px_rgba(239,68,68,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
           <div className="flex items-center gap-3">
