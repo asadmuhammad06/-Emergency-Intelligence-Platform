@@ -117,7 +117,10 @@ interface CrisisContextType {
   submitCitizenReport: (
     text: string,
     coords?: [number, number],
-    phone?: string
+    phone?: string,
+    citizenName?: string,
+    isLiveGps?: boolean,
+    accuracyMeters?: number
   ) => Promise<EmergencyReport>;
 
   calculateSafeRoute: (
@@ -1071,7 +1074,10 @@ export const CrisisProvider: React.FC<{
       async (
         text: string,
         coords?: [number, number],
-        phone?: string
+        phone?: string,
+        citizenName?: string,
+        isLiveGps?: boolean,
+        accuracyMeters?: number
       ): Promise<EmergencyReport> => {
         try {
           const res =
@@ -1089,6 +1095,9 @@ export const CrisisProvider: React.FC<{
                   rawText: text,
                   coords,
                   callerPhone: phone,
+                  citizenName,
+                  isLiveGps: !!isLiveGps,
+                  accuracyMeters,
                 }),
               }
             );
@@ -1159,18 +1168,23 @@ export const CrisisProvider: React.FC<{
           const fallbackReport: EmergencyReport = {
             id: `rep_sos_${Date.now()}`,
             category,
-            severity: isUrgent ? 9 : 6,
+            severity: isUrgent || isLiveGps ? 9 : 6,
             headcount: 4,
-            locationName: `Field SOS (${resolvedCoords[0].toFixed(3)}, ${resolvedCoords[1].toFixed(3)})`,
+            locationName: citizenName
+              ? `Live SOS (${citizenName})`
+              : `Field SOS (${resolvedCoords[0].toFixed(3)}, ${resolvedCoords[1].toFixed(3)})`,
             rawText: text.trim(),
             title: `${category.replace('_', ' ')}: ${text.trim().substring(0, 48)}...`,
             description: text.trim(),
             coords: resolvedCoords,
             timestamp: new Date().toISOString(),
             status: 'VERIFIED',
-            source: 'CITIZEN_SOS',
+            source: isLiveGps ? 'CITIZEN_LIVE_GPS' : 'CITIZEN_SOS',
             needs: ['Field Assessment Team', 'Rescue Support'],
-            callerPhone: phone || '+92 300 1234567'
+            callerPhone: phone || '+92 300 1234567',
+            citizenName,
+            isLiveGps: !!isLiveGps,
+            accuracyMeters,
           };
 
           setReports(prev => [fallbackReport, ...prev]);

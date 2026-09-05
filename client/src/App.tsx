@@ -10,6 +10,8 @@ import { EmergencyTicker } from './components/EmergencyTicker';
 import { CommanderQwenDrawer } from './components/CommanderQwenDrawer';
 import { QwenVisionInspector } from './components/QwenVisionInspector';
 import { SitrepModal } from './components/SitrepModal';
+import { CitizenSurvivalPortal } from './components/CitizenSurvivalPortal';
+import { CommanderAuthModal } from './components/CommanderAuthModal';
 import {
   Navigation,
   Send,
@@ -26,7 +28,7 @@ import {
   Eye
 } from 'lucide-react';
 
-function DashboardContent() {
+function DashboardContent({ onSwitchToCitizen }: { onSwitchToCitizen: () => void }) {
   const {
     activeRegion,
     simulationRunning,
@@ -119,6 +121,7 @@ function DashboardContent() {
         onOpenPriorityModal={() => setIsPriorityOpen(true)}
         onOpenCitizenModal={() => setIsCitizenOpen(true)}
         onOpenSitrepModal={() => setIsSitrepOpen(true)}
+        onSwitchToCitizen={onSwitchToCitizen}
       />
 
       {/* VIEW MODE: Standalone Tactical Map Tab */}
@@ -842,9 +845,54 @@ function DashboardContent() {
 }
 
 export default function App() {
+  const [role, setRole] = useState<'citizen' | 'commander'>(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (isMobile || hash === '#sos' || hash === '#citizen' || search.includes('role=citizen')) {
+        return 'citizen';
+      }
+    }
+    return 'commander';
+  });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isCommanderAuthenticated, setIsCommanderAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('eoc_commander_auth') === 'true';
+    }
+    return false;
+  });
+
+  const handleSwitchToCommander = () => {
+    if (isCommanderAuthenticated) {
+      setRole('commander');
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = (_officerName: string) => {
+    setIsCommanderAuthenticated(true);
+    setIsAuthModalOpen(false);
+    setRole('commander');
+  };
+
   return (
     <CrisisProvider>
-      <DashboardContent />
+      {role === 'citizen' ? (
+        <CitizenSurvivalPortal onSwitchToCommander={handleSwitchToCommander} />
+      ) : (
+        <DashboardContent onSwitchToCitizen={() => setRole('citizen')} />
+      )}
+
+      {/* Commander Auth Gate Modal */}
+      <CommanderAuthModal
+        isOpen={isAuthModalOpen}
+        onSuccess={handleAuthSuccess}
+        onCancel={() => setIsAuthModalOpen(false)}
+      />
     </CrisisProvider>
   );
 }
