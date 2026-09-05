@@ -143,6 +143,154 @@ const createRouteWaypointIcon = (label: string, isDest: boolean) => {
   });
 };
 
+const createAmbulanceIcon = (bearing: number, isAtDest: boolean) => {
+  return L.divIcon({
+    className: 'custom-ambulance-marker',
+    html: `
+      <div style="transform: rotate(${Math.round(bearing)}deg); transform-origin: center center; transition: transform 0.15s ease;" class="relative flex items-center justify-center w-12 h-12 select-none pointer-events-auto cursor-pointer">
+        <!-- Dual Emergency Flashing Siren Pulse Wave -->
+        <span class="absolute w-12 h-12 rounded-full ${isAtDest ? 'bg-emerald-500/30' : 'bg-red-500/30'} animate-ping pointer-events-none"></span>
+        <span class="absolute w-8 h-8 rounded-full ${isAtDest ? 'bg-emerald-500/40' : 'bg-cyan-500/40'} animate-pulse pointer-events-none"></span>
+
+        <!-- Realistic Emergency Ambulance Chassis (Facing North) -->
+        <div class="relative w-6 h-10 bg-white rounded-md border-2 border-slate-900 shadow-[0_0_16px_rgba(239,68,68,0.85)] flex flex-col items-center justify-between p-0.5 overflow-hidden">
+          <!-- Front Windshield & Headlights -->
+          <div class="w-full flex items-center justify-between px-0.5 pt-0.5">
+            <span class="w-1 h-1 rounded-full bg-amber-300 shadow-[0_0_4px_#fde047]"></span>
+            <div class="w-3.5 h-1.5 bg-slate-900 rounded-[2px]"></div>
+            <span class="w-1 h-1 rounded-full bg-amber-300 shadow-[0_0_4px_#fde047]"></span>
+          </div>
+
+          <!-- Dual Flashing Roof Emergency Strobe Beacons (Red & Blue/Cyan) -->
+          <div class="flex items-center justify-center gap-1 my-0.5 z-10">
+            <span class="w-1.5 h-1.5 rounded-full ${isAtDest ? 'bg-emerald-500' : 'bg-rose-600 animate-pulse'} shadow-[0_0_6px_#ef4444]"></span>
+            <span class="text-[6px] font-black font-mono text-slate-900 leading-none tracking-tighter">1122</span>
+            <span class="w-1.5 h-1.5 rounded-full ${isAtDest ? 'bg-emerald-400' : 'bg-cyan-500 animate-pulse'} shadow-[0_0_6px_#06b6d4]"></span>
+          </div>
+
+          <!-- High-Visibility Red / Green Chevron Side Decals -->
+          <div class="w-full h-1 ${isAtDest ? 'bg-emerald-600' : 'bg-red-600'} rounded-none"></div>
+
+          <!-- Rear Bumper & Taillights -->
+          <div class="w-full flex items-center justify-between px-0.5 pb-0.5">
+            <span class="w-1 h-1 rounded-full bg-rose-600 shadow-[0_0_4px_#e11d48]"></span>
+            <div class="w-2.5 h-0.5 bg-slate-700 rounded-sm"></div>
+            <span class="w-1 h-1 rounded-full bg-rose-600 shadow-[0_0_4px_#e11d48]"></span>
+          </div>
+        </div>
+      </div>
+    `,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
+    popupAnchor: [0, -20]
+  });
+};
+
+function AnimatedAmbulanceMarker({ path }: { path: [number, number][] }) {
+  const [currentDist, setCurrentDist] = useState(0);
+  const [isAtDest, setIsAtDest] = useState(false);
+
+  const segmentLengths = useMemo(() => {
+    if (!path || path.length < 2) return [];
+    const lengths: number[] = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const p1 = path[i];
+      const p2 = path[i + 1];
+      const dLat = p2[0] - p1[0];
+      const dLng = p2[1] - p1[1];
+      lengths.push(Math.sqrt(dLat * dLat + dLng * dLng));
+    }
+    return lengths;
+  }, [path]);
+
+  const totalDist = useMemo(() => {
+    return segmentLengths.reduce((sum, len) => sum + len, 0);
+  }, [segmentLengths]);
+
+  useEffect(() => {
+    setCurrentDist(0);
+    setIsAtDest(false);
+  }, [path]);
+
+  useEffect(() => {
+    if (!path || path.length < 2 || totalDist === 0) return;
+
+    if (isAtDest) {
+      const timer = setTimeout(() => {
+        setIsAtDest(false);
+        setCurrentDist(0);
+      }, 2800);
+      return () => clearTimeout(timer);
+    }
+
+    const step = totalDist / 180; // Smooth ~7-9 second traversal
+    const interval = setInterval(() => {
+      setCurrentDist((prev) => {
+        const next = prev + step;
+        if (next >= totalDist) {
+          setIsAtDest(true);
+          return totalDist;
+        }
+        return next;
+      });
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, [path, totalDist, isAtDest]);
+
+  if (!path || path.length < 2 || totalDist === 0) return null;
+
+  let accumulated = 0;
+  let segIndex = 0;
+  let segProgress = 0;
+
+  for (let i = 0; i < segmentLengths.length; i++) {
+    const len = segmentLengths[i];
+    if (currentDist <= accumulated + len || i === segmentLengths.length - 1) {
+      segIndex = i;
+      segProgress = len > 0 ? Math.min(1, Math.max(0, (currentDist - accumulated) / len)) : 0;
+      break;
+    }
+    accumulated += len;
+  }
+
+  const p1 = path[segIndex];
+  const p2 = path[segIndex + 1] || p1;
+
+  const currentLat = p1[0] + (p2[0] - p1[0]) * segProgress;
+  const currentLng = p1[1] + (p2[1] - p1[1]) * segProgress;
+
+  // Real geographic bearing
+  const lat1Rad = (p1[0] * Math.PI) / 180;
+  const lng1Rad = (p1[1] * Math.PI) / 180;
+  const lat2Rad = (p2[0] * Math.PI) / 180;
+  const lng2Rad = (p2[1] * Math.PI) / 180;
+  const dLng = lng2Rad - lng1Rad;
+  const y = Math.sin(dLng) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+  const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+
+  const ambulanceIcon = createAmbulanceIcon(bearing, isAtDest);
+
+  return (
+    <Marker position={[currentLat, currentLng]} icon={ambulanceIcon} zIndexOffset={1200}>
+      <Tooltip direction="top" offset={[0, -22]}>
+        <div className="font-mono text-[11px] font-bold">
+          {isAtDest ? (
+            <span className="text-emerald-700 flex items-center gap-1">
+              🏥 PATIENT DELIVERED TO HOSPITAL ER
+            </span>
+          ) : (
+            <span className="text-slate-900 flex items-center gap-1">
+              🚑 RESCUE 1122 AMBULANCE • DETOUR IN PROGRESS ({Math.round(bearing)}°)
+            </span>
+          )}
+        </div>
+      </Tooltip>
+    </Marker>
+  );
+}
+
 // High-Performance In-Memory Icon Cache
 const iconCache = new Map<string, L.DivIcon>();
 
@@ -886,6 +1034,11 @@ export const MapView: React.FC<MapViewProps> = React.memo(({ onDispatchToSector 
                 position={activeSafeRoute.destination.coords}
                 icon={createRouteWaypointIcon("END", true)}
               />
+            )}
+
+            {/* Live Animated Emergency Ambulance Simulation */}
+            {activeSafeRoute.safePath && activeSafeRoute.safePath.length >= 2 && (
+              <AnimatedAmbulanceMarker path={activeSafeRoute.safePath} />
             )}
           </>
         )}
