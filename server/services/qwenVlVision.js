@@ -745,6 +745,8 @@ export async function analyzeDisasterImage({ imageBase64, imageUrl, presetId, pr
 
   // If user provided a live DashScope API key, attempt real multimodal call
   const apiKey = process.env.DASHSCOPE_API_KEY;
+  let liveApiError = null;
+
   if (apiKey && (imageBase64 || imageUrl)) {
     try {
       const response = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
@@ -790,15 +792,27 @@ export async function analyzeDisasterImage({ imageBase64, imageUrl, presetId, pr
           parsed.isLiveApi = true;
           parsed.latencyMs = Date.now() - startTime;
           parsed.processedAt = new Date().toISOString();
+          if (!parsed.coords) parsed.coords = [33.6844, 73.0479];
           return parsed;
+        }
+      } else {
+        const errJson = await response.json().catch(() => null);
+        console.warn(`[Qwen-VL DashScope Live API] HTTP ${response.status}:`, errJson);
+        if (errJson?.error?.code === 'AccessDenied.Unpurchased') {
+          liveApiError = 'Alibaba DashScope returned 403: Model access unactivated. Activate the Qwen model or free tier in Alibaba Cloud Model Studio console.';
+        } else if (errJson?.error?.message) {
+          liveApiError = `DashScope error (${errJson.error.code || response.status}): ${errJson.error.message}`;
+        } else {
+          liveApiError = `DashScope API HTTP ${response.status} ${response.statusText}`;
         }
       }
     } catch (err) {
       console.warn('Qwen-VL DashScope live API call failed, falling back to transparent local analysis:', err.message);
+      liveApiError = err.message;
     }
   }
 
-  // Transparent Local Vision Heuristic for custom uploaded images (When no live API key is configured)
+  // Transparent Local Vision Heuristic for custom uploaded images (When no live API key is configured or key failed)
   // Derive deterministic properties from image payload length and metadata instead of pure random numbers
   const payloadLen = (imageBase64 || imageUrl || '').length;
   const hashSeed = payloadLen % 100;
@@ -809,6 +823,7 @@ export async function analyzeDisasterImage({ imageBase64, imageUrl, presetId, pr
     id: `vision_local_${Date.now()}`,
     title: 'Custom Incident Photo Analysis',
     location: 'User Uploaded Field Evidence',
+    coords: [33.6844, 73.0479],
     inundationDepthMeters: estimatedDepth,
     inundationGrade: estimatedDepth > 1.8 ? 'GRADE_3_CRITICAL' : estimatedDepth > 1.4 ? 'GRADE_2_HAZARDOUS' : 'GRADE_1_ELEVATED',
     strandedCount: estimatedVictims,
@@ -829,11 +844,16 @@ export async function analyzeDisasterImage({ imageBase64, imageUrl, presetId, pr
       { label: `Inundation Waterline (~${estimatedDepth}m)`, confidence: 0.92, ymin: 50, xmin: 5, ymax: 95, xmax: 95, color: '#06b6d4' },
       { label: 'Submerged Hazard Perimeter', confidence: 0.85, ymin: 65, xmin: 20, ymax: 90, xmax: 55, color: '#f59e0b' }
     ],
-    inferenceEngine: 'Local Computer Vision Heuristic (Offline Demonstration)',
+    inferenceEngine: liveApiError ? 'Local Heuristic (Cloud Key Unactivated)' : 'Local Computer Vision Heuristic (Offline Demonstration)',
     mode: 'LOCAL_HEURISTIC',
     isLiveApi: false,
     apiConfigured: hasLiveApiKey,
-    note: 'To enable live Alibaba Qwen-VL neural reasoning, set DASHSCOPE_API_KEY in server/.env',
+    note: liveApiError
+      ? `Live API Key present, but Alibaba DashScope returned: ${liveApiError}`
+      : hasLiveApiKey
+        ? 'Using local calibrated heuristics.'
+        : 'To enable live Alibaba Qwen-VL neural reasoning, set DASHSCOPE_API_KEY in server/.env',
+    apiError: liveApiError || undefined,
     latencyMs: Date.now() - startTime + 80,
     processedAt: new Date().toISOString()
   };
