@@ -22,6 +22,7 @@ import { fetchCityIntel } from './services/liveIntel.js';
 import { getReports, submitReport, subscribeToReports } from './services/reportStore.js';
 import { emergencyDb } from './services/persistence.js';
 import { analyzeDisasterImage, getPresetDisasterImages, getVisionStatus } from './services/qwenVlVision.js';
+import { processCommanderChatQuery } from './services/qwenChatService.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -363,6 +364,18 @@ app.post('/api/auth/commander-login', (req, res) => {
     success: false,
     error: 'Invalid Commander Passcode. Authorized personnel only.'
   });
+});
+
+// Commander Qwen AI Copilot Intelligent Conversational Endpoint
+app.post('/api/qwen-chat', async (req, res) => {
+  try {
+    const { query, telemetry } = req.body || {};
+    const result = await processCommanderChatQuery({ query, telemetry });
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[Qwen-Chat Error]:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Citizen Report Ingestion
