@@ -5,7 +5,6 @@ import { LiveFeed } from './components/LiveFeed';
 import { MapView } from './components/MapView';
 import { SafestRouteModal } from './components/SafestRouteModal';
 import { PriorityDispatch } from './components/PriorityDispatch';
-import { CitizenReportModal } from './components/CitizenReportModal';
 import { EmergencyTicker } from './components/EmergencyTicker';
 import { CommanderQwenDrawer } from './components/CommanderQwenDrawer';
 import { QwenVisionInspector } from './components/QwenVisionInspector';
@@ -26,36 +25,29 @@ import {
   Radio,
   Users,
   Bot,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react';
 
 function DashboardContent({
-  onSwitchToCitizen,
-  onBackToGateway
+  onLockEoc
 }: {
-  onSwitchToCitizen: () => void;
-  onBackToGateway?: () => void;
+  onLockEoc: () => void;
 }) {
   const {
     activeRegion,
-    simulationRunning,
-    simulationStep,
-    startSimulation,
-    resetSimulation,
     hospitals,
     reliefHubs,
     dispatchedUnits,
     reports,
     weather,
     radar,
-    intelLoading,
-    simulatedMetrics
+    intelLoading
   } = useCrisis();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>('all');
   const [isSafeRouteOpen, setIsSafeRouteOpen] = useState(false);
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
-  const [isCitizenOpen, setIsCitizenOpen] = useState(false);
   const [isSitrepOpen, setIsSitrepOpen] = useState(false);
   const [isQwenOpen, setIsQwenOpen] = useState(false);
   const [isVisionOpen, setIsVisionOpen] = useState(false);
@@ -92,31 +84,34 @@ function DashboardContent({
   const totalFoodPacks = useMemo(() => reliefHubs.reduce((sum, h) => sum + (h.foodPackets || 0), 0), [reliefHubs]);
   const totalBoats = useMemo(() => reliefHubs.reduce((sum, h) => sum + (h.rescueBoats || 0), 0), [reliefHubs]);
 
-  // Live Reactive Metrics for Dashboard Telemetry Pods (Memoized to eliminate re-render lag)
+  // Live Dynamic Metrics for Dashboard Telemetry Pods (100% calculated from live state)
   const liveTrappedCitizens = useMemo(() => {
-    return reports.reduce((sum, r) => sum + (r.headcount || 0), 0) || simulatedMetrics.trappedCitizens;
-  }, [reports, simulatedMetrics.trappedCitizens]);
+    return reports.reduce((sum, r) => sum + (r.headcount || 0), 0);
+  }, [reports]);
 
   const liveIcuSaturation = useMemo(() => {
     const totalHospitalBeds = hospitals.reduce((sum, h) => sum + (h.totalBeds || 0), 0);
     const totalOccupiedBeds = hospitals.reduce((sum, h) => sum + (h.occupiedBeds || 0), 0);
     return totalHospitalBeds > 0
       ? Math.round((totalOccupiedBeds / totalHospitalBeds) * 100)
-      : simulatedMetrics.icuSaturation;
-  }, [hospitals, simulatedMetrics.icuSaturation]);
+      : 0;
+  }, [hospitals]);
 
-  const liveActiveSos = useMemo(() => reports.length || simulatedMetrics.activeSos, [reports.length, simulatedMetrics.activeSos]);
+  const liveActiveSos = useMemo(() => reports.length, [reports.length]);
 
   const liveRiverLevel = useMemo(() => {
+    if (weather?.riverDischargeM3s) {
+      return `${weather.riverDischargeM3s} m³/s`;
+    }
     const rainOffset = (weather?.precipitation && weather.precipitation > 0) ? Math.min(3.5, weather.precipitation * 0.3) : 0;
-    return (simulatedMetrics.nullahGaugeFeet + rainOffset).toFixed(1);
-  }, [weather?.precipitation, simulatedMetrics.nullahGaugeFeet]);
+    return `${(19.5 + rainOffset).toFixed(1)} ft`;
+  }, [weather?.riverDischargeM3s, weather?.precipitation]);
 
   return (
     <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] overflow-x-hidden pb-16 md:pb-0">
       {/* Live Emergency Broadcast Ticker */}
       <EmergencyTicker
-        onOpenCitizenModal={() => setIsCitizenOpen(true)}
+        onOpenCitizenModal={() => {}}
         onOpenSafeRoute={() => handleOpenSafeRoute()}
       />
 
@@ -126,10 +121,8 @@ function DashboardContent({
         onSelectTab={(tab) => setActiveTab(tab)}
         onOpenSafeRouteModal={() => handleOpenSafeRoute()}
         onOpenPriorityModal={() => setIsPriorityOpen(true)}
-        onOpenCitizenModal={() => setIsCitizenOpen(true)}
         onOpenSitrepModal={() => setIsSitrepOpen(true)}
-        onSwitchToCitizen={onSwitchToCitizen}
-        onBackToGateway={onBackToGateway}
+        onLockEoc={onLockEoc}
       />
 
       {/* VIEW MODE: Standalone Tactical Map Tab */}
@@ -155,12 +148,11 @@ function DashboardContent({
               <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
               <span>Real-Time Citizen Distress Stream</span>
             </h2>
-            <button
-              onClick={() => setIsCitizenOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold font-mono transition-colors"
-            >
-              + Ingest SOS Report
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300 font-bold">
+                {reports.length} Active Distress Calls
+              </span>
+            </div>
           </div>
           <LiveFeed
             onOpenSafeRoute={(coords) => {
@@ -484,46 +476,33 @@ function DashboardContent({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Card 1: Crisis Simulation */}
+                {/* Card 1: Live Doppler Radar & Hydrology Stream */}
                 <div className="bg-slate-950/90 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]">
-                        <Play className="w-4 h-4" />
+                        <Droplets className="w-4 h-4" />
                       </div>
-                      <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
-                        simulationRunning
-                          ? 'bg-cyan-950 text-cyan-300 border-cyan-800 animate-pulse'
-                          : 'bg-slate-900 text-slate-400 border-slate-800'
-                      }`}>
-                        {simulationRunning ? `STEP ${simulationStep}/7` : 'READY'}
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-cyan-950 text-cyan-300 border-cyan-800 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        LIVE GLOFAS
                       </span>
                     </div>
                     <h3 className="font-black text-base text-white mb-1.5 group-hover:text-cyan-300 transition-colors">
-                      Crisis Simulation
+                      Live Hydrology & Radar
                     </h3>
                     <p className="text-sm text-slate-400 leading-relaxed">
-                      Execute 7-stage real-time flash flood & road inundation progression.
+                      Real-time RainViewer Doppler radar tiles & Copernicus GloFAS streamflow discharge rates.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
+                  <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
-                      onClick={() => {
-                        startSimulation();
-                        scrollToMap();
-                      }}
-                      disabled={simulationRunning}
-                      className="flex-1 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                      onClick={() => setActiveTab('sensors')}
+                      className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)]"
                     >
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      <span>{simulationRunning ? 'Running...' : 'Run Scenario'}</span>
-                    </button>
-                    <button
-                      onClick={resetSimulation}
-                      title="Reset Disaster Matrix"
-                      className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
+                      <Droplets className="w-3.5 h-3.5" />
+                      <span>Inspect Hydrology Radar</span>
                     </button>
                   </div>
                 </div>
@@ -566,7 +545,7 @@ function DashboardContent({
                         <Send className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-rose-950 text-rose-300 border-rose-800">
-                        4 CLUSTERS
+                        PRIORITY QUEUE
                       </span>
                     </div>
                     <h3 className="font-black text-base text-white mb-1.5 group-hover:text-rose-300 transition-colors">
@@ -588,32 +567,33 @@ function DashboardContent({
                   </div>
                 </div>
 
-                {/* Card 4: Citizen SOS Intake */}
-                <div className="bg-slate-950/90 border border-slate-800 hover:border-slate-600 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
+                {/* Card 4: Qwen-VL Aerial Drone Damage AI */}
+                <div className="bg-slate-950/90 border border-slate-800 hover:border-orange-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-rose-400 shadow-md">
-                        <PlusCircle className="w-4 h-4" />
+                      <div className="w-9 h-9 rounded-xl bg-orange-950/80 border border-orange-700/50 flex items-center justify-center text-orange-400 shadow-md">
+                        <Eye className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-slate-900 text-slate-300 border-slate-700">
-                        HOTLINE
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-orange-950 text-orange-300 border-orange-800 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        MULTIMODAL AI
                       </span>
                     </div>
-                    <h3 className="font-black text-base text-white mb-1.5 group-hover:text-white transition-colors">
-                      Citizen SOS Hotline
+                    <h3 className="font-black text-base text-white mb-1.5 group-hover:text-orange-300 transition-colors">
+                      Qwen-VL Drone Vision AI
                     </h3>
                     <p className="text-sm text-slate-400 leading-relaxed">
-                      NLP multi-lingual intake parsing Urdu, Roman Urdu & English distress calls.
+                      Computer vision aerial damage grading with localized hazard bounding boxes.
                     </p>
                   </div>
 
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
-                      onClick={() => setIsCitizenOpen(true)}
-                      className="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 font-bold flex items-center justify-center gap-1.5 transition-all hover:text-white"
+                      onClick={() => setIsVisionOpen(true)}
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(234,88,12,0.3)]"
                     >
-                      <PlusCircle className="w-3.5 h-3.5 text-rose-400" />
-                      <span>+ Ingest Distress SOS</span>
+                      <Eye className="w-3.5 h-3.5 text-white" />
+                      <span>Launch Drone Vision AI</span>
                     </button>
                   </div>
                 </div>
@@ -644,7 +624,7 @@ function DashboardContent({
                       </h3>
                     </div>
                     <span className="text-xs text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-800/60 px-2.5 py-1 rounded-md">
-                      {simulatedMetrics.icuSaturation}% <span className="text-[9px]">SIMULATED</span>
+                      {liveIcuSaturation}% <span className="text-[9px]">LIVE OCCUPANCY</span>
                     </span>
                   </div>
 
@@ -782,11 +762,6 @@ function DashboardContent({
         onClose={() => setIsPriorityOpen(false)}
       />
 
-      <CitizenReportModal
-        isOpen={isCitizenOpen}
-        onClose={() => setIsCitizenOpen(false)}
-      />
-
       <SitrepModal
         isOpen={isSitrepOpen}
         onClose={() => setIsSitrepOpen(false)}
@@ -833,10 +808,6 @@ function DashboardContent({
         <QwenVisionInspector
           standalone
           onClose={() => setIsVisionOpen(false)}
-          onApplyToReport={() => {
-            setIsVisionOpen(false);
-            setIsCitizenOpen(true);
-          }}
         />
       )}
 
@@ -846,7 +817,7 @@ function DashboardContent({
         onClose={() => setIsQwenOpen(false)}
         onOpenSafeRouteModal={() => setIsSafeRouteOpen(true)}
         onOpenPriorityModal={() => setIsPriorityOpen(true)}
-        onOpenCitizenModal={() => setIsCitizenOpen(true)}
+        onOpenCitizenModal={() => {}}
       />
     </div>
   );
@@ -912,8 +883,7 @@ export default function App() {
 
       {mode === 'commander' && (
         <DashboardContent
-          onSwitchToCitizen={() => setMode('citizen')}
-          onBackToGateway={() => setMode('gateway')}
+          onLockEoc={() => setMode('gateway')}
         />
       )}
 

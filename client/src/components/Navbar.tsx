@@ -9,7 +9,7 @@ import {
   Radio,
   ExternalLink,
   FileText,
-  LifeBuoy
+  Lock
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
@@ -20,20 +20,17 @@ interface NavbarProps {
   onSelectTab: (tab: DashboardTab) => void;
   onOpenSafeRouteModal: () => void;
   onOpenPriorityModal: () => void;
-  onOpenCitizenModal: () => void;
+  onOpenCitizenModal?: () => void;
   onOpenSitrepModal?: () => void;
   onOpenLayersModal?: () => void;
-  onSwitchToCitizen?: () => void;
-  onBackToGateway?: () => void;
+  onLockEoc?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
   activeTab,
   onSelectTab,
-  onOpenCitizenModal,
   onOpenSitrepModal,
-  onSwitchToCitizen,
-  onBackToGateway
+  onLockEoc
 }) => {
   const {
     activeRegion,
@@ -148,36 +145,16 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             </button>
           )}
 
-          {onBackToGateway && (
+          {onLockEoc && (
             <button
-              onClick={onBackToGateway}
-              className="flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-slate-200 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0"
-              title="Return to Main Role Gateway"
+              onClick={onLockEoc}
+              className="flex items-center gap-1.5 bg-slate-900 hover:bg-red-950/80 border border-slate-700/80 hover:border-red-500/50 text-slate-300 hover:text-red-300 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0"
+              title="Lock Terminal & Exit EOC to Gateway"
             >
-              <span className="hidden sm:inline">← Gateway</span>
-              <span className="sm:hidden">←</span>
+              <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-400" />
+              <span>Lock Terminal</span>
             </button>
           )}
-
-          {onSwitchToCitizen && (
-            <button
-              onClick={onSwitchToCitizen}
-              className="flex items-center gap-1.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0 shadow-[0_0_12px_rgba(6,182,212,0.3)] hover:shadow-[0_0_18px_rgba(6,182,212,0.5)]"
-              title="Switch to Lightweight Citizen Survival Portal"
-            >
-              <LifeBuoy className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
-              <span className="hidden xl:inline">Citizen Mode</span>
-            </button>
-          )}
-
-          {/* SOS button — always fully visible */}
-          <button
-            onClick={onOpenCitizenModal}
-            className="flex items-center gap-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0 shadow-[0_0_14px_rgba(244,63,94,0.3)] hover:shadow-[0_0_20px_rgba(244,63,94,0.5)]"
-          >
-            <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-            <span>SOS</span>
-          </button>
         </div>
       </header>
 
