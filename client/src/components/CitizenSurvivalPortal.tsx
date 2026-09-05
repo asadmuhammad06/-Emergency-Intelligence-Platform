@@ -25,6 +25,7 @@ import {
 
 interface CitizenSurvivalPortalProps {
   onSwitchToCommander: () => void;
+  onBackToGateway?: () => void;
 }
 
 const EMERGENCY_PRESETS = [
@@ -63,7 +64,8 @@ const EMERGENCY_PRESETS = [
 ];
 
 export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
-  onSwitchToCommander
+  onSwitchToCommander,
+  onBackToGateway
 }) => {
   const { submitCitizenReport, activeRegion, reliefHubs } = useCrisis();
 
@@ -233,17 +235,29 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
           </div>
         </div>
 
-        {/* EOC Commander Login Button */}
-        <button
-          onClick={onSwitchToCommander}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-cyan-300 hover:text-cyan-200 text-xs font-bold font-mono transition-all shadow-sm hover:border-cyan-500/50"
-          title="Switch to Authenticated EOC Commander View"
-        >
-          <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="hidden xs:inline">EOC Commander Login</span>
-          <span className="xs:hidden">EOC Login</span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-        </button>
+        <div className="flex items-center gap-2">
+          {onBackToGateway && (
+            <button
+              onClick={onBackToGateway}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-slate-200 text-xs font-mono transition-all"
+              title="Return to Role Gateway"
+            >
+              ← Gateway
+            </button>
+          )}
+
+          {/* EOC Commander Login Button */}
+          <button
+            onClick={onSwitchToCommander}
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-cyan-300 hover:text-cyan-200 text-xs font-bold font-mono transition-all shadow-sm hover:border-cyan-500/50"
+            title="Switch to Authenticated EOC Commander View"
+          >
+            <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xs:inline">EOC Commander Login</span>
+            <span className="xs:hidden">EOC Login</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+          </button>
+        </div>
       </header>
 
       {/* Main Content Area */}

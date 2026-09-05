@@ -12,6 +12,7 @@ import { QwenVisionInspector } from './components/QwenVisionInspector';
 import { SitrepModal } from './components/SitrepModal';
 import { CitizenSurvivalPortal } from './components/CitizenSurvivalPortal';
 import { CommanderAuthModal } from './components/CommanderAuthModal';
+import { RoleGateway } from './components/RoleGateway';
 import {
   Navigation,
   Send,
@@ -28,7 +29,13 @@ import {
   Eye
 } from 'lucide-react';
 
-function DashboardContent({ onSwitchToCitizen }: { onSwitchToCitizen: () => void }) {
+function DashboardContent({
+  onSwitchToCitizen,
+  onBackToGateway
+}: {
+  onSwitchToCitizen: () => void;
+  onBackToGateway?: () => void;
+}) {
   const {
     activeRegion,
     simulationRunning,
@@ -122,6 +129,7 @@ function DashboardContent({ onSwitchToCitizen }: { onSwitchToCitizen: () => void
         onOpenCitizenModal={() => setIsCitizenOpen(true)}
         onOpenSitrepModal={() => setIsSitrepOpen(true)}
         onSwitchToCitizen={onSwitchToCitizen}
+        onBackToGateway={onBackToGateway}
       />
 
       {/* VIEW MODE: Standalone Tactical Map Tab */}
@@ -845,16 +853,22 @@ function DashboardContent({ onSwitchToCitizen }: { onSwitchToCitizen: () => void
 }
 
 export default function App() {
-  const [role, setRole] = useState<'citizen' | 'commander'>(() => {
+  type AppMode = 'gateway' | 'citizen' | 'commander';
+
+  const [mode, setMode] = useState<AppMode>(() => {
     if (typeof window !== 'undefined') {
-      const isMobile = window.innerWidth < 768;
       const hash = window.location.hash;
       const search = window.location.search;
-      if (isMobile || hash === '#sos' || hash === '#citizen' || search.includes('role=citizen')) {
+      if (hash === '#sos' || hash === '#citizen' || search.includes('role=citizen')) {
         return 'citizen';
       }
+      if (hash === '#commander' || search.includes('role=commander')) {
+        if (sessionStorage.getItem('eoc_commander_auth') === 'true') {
+          return 'commander';
+        }
+      }
     }
-    return 'commander';
+    return 'gateway';
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -865,9 +879,9 @@ export default function App() {
     return false;
   });
 
-  const handleSwitchToCommander = () => {
+  const handleSelectCommander = () => {
     if (isCommanderAuthenticated) {
-      setRole('commander');
+      setMode('commander');
     } else {
       setIsAuthModalOpen(true);
     }
@@ -876,15 +890,31 @@ export default function App() {
   const handleAuthSuccess = (_officerName: string) => {
     setIsCommanderAuthenticated(true);
     setIsAuthModalOpen(false);
-    setRole('commander');
+    setMode('commander');
   };
 
   return (
     <CrisisProvider>
-      {role === 'citizen' ? (
-        <CitizenSurvivalPortal onSwitchToCommander={handleSwitchToCommander} />
-      ) : (
-        <DashboardContent onSwitchToCitizen={() => setRole('citizen')} />
+      {mode === 'gateway' && (
+        <RoleGateway
+          onSelectCitizen={() => setMode('citizen')}
+          onSelectCommander={handleSelectCommander}
+          isCommanderAuthenticated={isCommanderAuthenticated}
+        />
+      )}
+
+      {mode === 'citizen' && (
+        <CitizenSurvivalPortal
+          onSwitchToCommander={handleSelectCommander}
+          onBackToGateway={() => setMode('gateway')}
+        />
+      )}
+
+      {mode === 'commander' && (
+        <DashboardContent
+          onSwitchToCitizen={() => setMode('citizen')}
+          onBackToGateway={() => setMode('gateway')}
+        />
       )}
 
       {/* Commander Auth Gate Modal */}

@@ -24,6 +24,7 @@ interface NavbarProps {
   onOpenSitrepModal?: () => void;
   onOpenLayersModal?: () => void;
   onSwitchToCitizen?: () => void;
+  onBackToGateway?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -31,7 +32,8 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   onSelectTab,
   onOpenCitizenModal,
   onOpenSitrepModal,
-  onSwitchToCitizen
+  onSwitchToCitizen,
+  onBackToGateway
 }) => {
   const {
     activeRegion,
@@ -143,6 +145,17 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             >
               <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="hidden sm:inline">SITREP</span>
+            </button>
+          )}
+
+          {onBackToGateway && (
+            <button
+              onClick={onBackToGateway}
+              className="flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-slate-200 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0"
+              title="Return to Main Role Gateway"
+            >
+              <span className="hidden sm:inline">← Gateway</span>
+              <span className="sm:hidden">←</span>
             </button>
           )}
 
