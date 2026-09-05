@@ -1,5 +1,5 @@
 // Data: derived dispatch recommendations from live city reports and facilities.
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Send,
@@ -35,10 +35,17 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
     setHighlightedCoords
   } = useCrisis();
 
-  const [activeZoneId, setActiveZoneId] = useState<string>(
-    priorityZones[0]?.id || 'zone_rwp_nullah_lai'
-  );
+  const [activeZoneId, setActiveZoneId] = useState<string | null>(null);
   const [dispatchSuccessZone, setDispatchSuccessZone] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
 
   React.useEffect(() => {
     if (priorityZones.length > 0 && !priorityZones.some(z => z.id === activeZoneId)) {
@@ -60,7 +67,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="bg-[#0b1329] border border-red-500/40 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-[0_0_40px_rgba(239,68,68,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -113,7 +120,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
                   onClick={() => setActiveZoneId(zone.id)}
                   className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-rose-950/40 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)] ring-1 ring-rose-500'
+                      ? 'bg-rose-950/40 border-rose-500/80 ring-1 ring-rose-500/50 shadow-md'
                       : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
                   }`}
                 >
@@ -122,7 +129,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
                       <span
                         className={`w-6 h-6 rounded-lg font-mono font-extrabold text-xs flex items-center justify-center ${
                           isRank1
-                            ? 'bg-rose-600 text-white shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+                            ? 'bg-rose-600 text-white shadow-sm'
                             : 'bg-slate-800 text-slate-300'
                         }`}
                       >
@@ -273,7 +280,7 @@ export const PriorityDispatch: React.FC<PriorityDispatchProps> = ({
 
                 <button
                   onClick={() => handleDispatch(selectedZone)}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-[0_0_20px_rgba(244,63,94,0.5)] flex items-center justify-center gap-2 transition-all transform active:scale-95"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-extrabold shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all transform active:scale-95"
                 >
                   <Send className="w-4 h-4" />
                   <span>

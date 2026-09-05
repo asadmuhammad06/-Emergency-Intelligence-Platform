@@ -11,7 +11,7 @@ html, body, #root {
 
 /* Custom Sleek Vertical Scrollbar (Zero Horizontal Scrollbar) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
   height: 0px !important;
 }
 ::-webkit-scrollbar-track {
@@ -20,10 +20,9 @@ html, body, #root {
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 4px;
-  border: 1px solid #0f172a;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: #334155;
 }
 
 /* Tactical Radar Sonar Pulse Animation */
@@ -186,37 +185,41 @@ html, body, #root {
   animation-play-state: paused;
 }
 
-/* Tactical Glowing HUD Card Animations */
+/* Tactical Refined Elevation Animations */
 @keyframes pulse-glow-rose {
   0%, 100% {
-    box-shadow: 0 0 20px -3px rgba(244, 63, 94, 0.25), inset 0 0 15px rgba(244, 63, 94, 0.05);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
   }
   50% {
-    box-shadow: 0 0 35px 2px rgba(244, 63, 94, 0.45), inset 0 0 25px rgba(244, 63, 94, 0.12);
+    box-shadow: 0 4px 20px -2px rgba(244, 63, 94, 0.15);
   }
 }
 
 @keyframes pulse-glow-amber {
   0%, 100% {
-    box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
   }
   50% {
-    box-shadow: 0 0 35px 2px rgba(245, 158, 11, 0.4), inset 0 0 25px rgba(245, 158, 11, 0.12);
+    box-shadow: 0 4px 20px -2px rgba(245, 158, 11, 0.15);
   }
 }
 
 @keyframes pulse-glow-cyan {
   0%, 100% {
-    box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.2), inset 0 0 15px rgba(6, 182, 212, 0.05);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
   }
   50% {
-    box-shadow: 0 0 35px 2px rgba(6, 182, 212, 0.4), inset 0 0 25px rgba(6, 182, 212, 0.12);
+    box-shadow: 0 4px 20px -2px rgba(6, 182, 212, 0.15);
   }
 }
 
 @keyframes pulse-glow-emerald {
-  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.25), inset 0 0 10px rgba(16, 185, 129, 0.1); }
-  50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.2); }
+  0%, 100% {
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.15);
+  }
 }
 
 /* Tactical Dark Filter for OpenStreetMap Tiles — 100% free, zero watermarks, zero blank squares */

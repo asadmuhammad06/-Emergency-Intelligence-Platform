@@ -252,12 +252,12 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
   }, [reliefHubs, targetUserCoords]);
 
   return (
-    <div className="min-h-screen w-full bg-[#070b14] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col items-center justify-between p-3 sm:p-6 select-none">
+    <div className="min-h-screen w-full bg-[#080d1a] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col items-center justify-between p-3 sm:p-6 select-none">
       {/* Top Header & Role Switcher */}
       <header className="w-full max-w-2xl flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4 sm:mb-6">
         <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-red-950/80 border border-red-500/60 flex items-center justify-center text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.4)]">
-            <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-slate-950 border border-red-500/40 flex items-center justify-center text-red-400 shadow-sm">
+            <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -303,10 +303,10 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
           /* ============================================================== */
           /* POST-SOS RESCUE TRACKER SCREEN                                 */
           /* ============================================================== */
-          <div className="bg-slate-900/95 border border-emerald-500/50 rounded-2xl p-5 sm:p-8 shadow-[0_0_50px_rgba(16,185,129,0.25)] flex flex-col gap-6 animate-in fade-in">
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-5 sm:p-8 shadow-xl flex flex-col gap-6 animate-in fade-in">
             {/* Status Header */}
             <div className="flex items-start gap-4 pb-5 border-b border-slate-800">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-950 border border-emerald-500/80 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_25px_rgba(16,185,129,0.4)]">
+              <div className="w-12 h-12 rounded-2xl bg-slate-950 border border-emerald-500/60 flex items-center justify-center text-emerald-400 shrink-0 shadow-sm">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
               <div className="flex-1">
@@ -353,7 +353,7 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
             </div>
 
             {/* Nearest Safe Relief Shelter (Haversine Distance Calculated) */}
-            <div className="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-500/40 rounded-xl p-4 flex flex-col gap-2.5 shadow-lg">
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2.5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
                   <LifeBuoy className="w-3.5 h-3.5 text-cyan-400" />
@@ -375,7 +375,7 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
                   href={`https://www.google.com/maps/dir/?api=1&destination=${nearestHubData.hub.coords[0]},${nearestHubData.hub.coords[1]}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 w-full py-2.5 rounded-lg bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                  className="mt-1 w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-cyan-500/50 text-cyan-200 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
                 >
                   <Navigation className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Navigate to Shelter via Google Maps (Turn-by-Turn)</span>
@@ -388,9 +388,9 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <a
                 href="tel:1122"
-                className="flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-[0.98] text-white font-extrabold text-sm shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all"
+                className="flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-[0.98] text-white font-bold text-sm shadow-md transition-all"
               >
-                <PhoneCall className="w-4 h-4 animate-bounce" />
+                <PhoneCall className="w-4 h-4" />
                 <span>CALL RESCUE 1122</span>
               </a>
               <a
@@ -419,14 +419,14 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
           /* ============================================================== */
           <form
             onSubmit={handleSubmit}
-            className="bg-slate-900/90 border border-red-500/50 rounded-2xl p-4 sm:p-7 shadow-[0_0_50px_rgba(239,68,68,0.2)] flex flex-col gap-4 sm:gap-5"
+            className="bg-slate-900 border border-red-500/40 rounded-2xl p-4 sm:p-7 shadow-xl flex flex-col gap-4 sm:gap-5"
           >
             {/* High-Precision Interactive GPS Card */}
             <div className={`p-3.5 sm:p-4 rounded-xl border transition-all ${
               gpsStatus === 'LOCKED'
-                ? 'bg-emerald-950/40 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                ? 'bg-emerald-950/30 border-emerald-500/50 shadow-sm'
                 : gpsStatus === 'LOCKING'
-                ? 'bg-amber-950/40 border-amber-500/60 animate-pulse'
+                ? 'bg-amber-950/30 border-amber-500/50 animate-pulse'
                 : 'bg-slate-950/90 border-slate-800'
             }`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -457,7 +457,7 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
                   className={`px-3 py-2 rounded-xl text-xs font-bold font-mono border flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0 shadow-sm ${
                     gpsStatus === 'LOCKED'
                       ? 'bg-slate-900 hover:bg-slate-800 text-emerald-300 border-emerald-600/60'
-                      : 'bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                      : 'bg-red-600 hover:bg-red-500 text-white border-red-500 shadow-sm'
                   }`}
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${gpsStatus === 'LOCKING' ? 'animate-spin' : ''}`} />
@@ -560,7 +560,7 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !reportText.trim()}
-              className="w-full py-3.5 sm:py-4 px-4 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none text-white font-black text-sm sm:text-base tracking-wide flex items-center justify-center gap-2.5 shadow-[0_0_30px_rgba(239,68,68,0.5)] border border-red-400/40 transition-all uppercase"
+              className="w-full py-3.5 sm:py-4 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none text-white font-black text-sm sm:text-base tracking-wide flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all uppercase"
             >
               {isSubmitting ? (
                 <>
@@ -569,7 +569,7 @@ export const CitizenSurvivalPortal: React.FC<CitizenSurvivalPortalProps> = ({
                 </>
               ) : (
                 <>
-                  <Send className="w-5 h-5 animate-bounce" />
+                  <Send className="w-5 h-5" />
                   <span>BROADCAST EMERGENCY SOS (مدد کے لیے بھیجیں)</span>
                 </>
               )}

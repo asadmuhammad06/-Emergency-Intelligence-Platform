@@ -89,6 +89,16 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [previewSeverity, setPreviewSeverity] = useState(9);
   const [previewHeadcount, setPreviewHeadcount] = useState(0);
 
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
+
   // Speech Recognition Setup
   useEffect(() => {
     const SpeechRecognition =
@@ -229,11 +239,11 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in select-none">
-      <div className="bg-[#0e1628] border border-red-500/50 rounded-2xl w-full max-w-xl flex flex-col shadow-[0_0_60px_rgba(239,68,68,0.3)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100 max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-xl flex flex-col shadow-2xl overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/95 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-red-950 border border-red-500/60 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+            <div className="p-2.5 rounded-xl bg-red-950 border border-red-500/60 text-red-400 shadow-sm">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
@@ -266,7 +276,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
         {/* Form Body */}
         {submittedReport ? (
           <div className="p-8 text-center space-y-3">
-            <div className="w-16 h-16 bg-emerald-950 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400 animate-bounce shadow-[0_0_25px_rgba(16,185,129,0.5)]">
+            <div className="w-16 h-16 bg-emerald-950 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400 shadow-md">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h4 className="font-extrabold text-lg text-white">Report Ingested & AI Tagged!</h4>
@@ -305,7 +315,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                   onClick={toggleVoiceRecording}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold font-mono transition-all shrink-0 flex items-center gap-1.5 ${
                     isListening
-                      ? 'bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
+                      ? 'bg-rose-600 text-white shadow-sm animate-pulse'
                       : 'bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-900/60'
                   }`}
                 >
@@ -411,7 +421,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                     visionAssessment
                       ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
                       : showVisionInspector
-                        ? 'bg-cyan-950 border-cyan-500 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                        ? 'bg-cyan-950 border-cyan-500 text-cyan-200 shadow-sm'
                         : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-cyan-700'
                   }`}
                 >
@@ -440,7 +450,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !reportText.trim()}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(239,68,68,0.5)] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 active:scale-[0.99]"
             >
               <Send className="w-4 h-4" />
               <span>{isSubmitting ? 'AI Classifying & Ingesting...' : 'Broadcast SOS Report to CrisisMap'}</span>

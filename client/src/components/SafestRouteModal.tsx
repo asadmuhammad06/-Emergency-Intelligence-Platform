@@ -69,7 +69,7 @@ export const SafestRouteModal: React.FC<SafestRouteModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="bg-[#0e1628] border border-cyan-500/40 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-[0_0_40px_rgba(6,182,212,0.25)] overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden font-['Plus_Jakarta_Sans'] text-slate-100">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
