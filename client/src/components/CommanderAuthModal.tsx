@@ -43,17 +43,6 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Lock background body scroll to eliminate duplicate scrollbars
-  useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   const handleVerify = async (codeToVerify: string) => {
@@ -67,7 +56,6 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
     setError(null);
 
     try {
-      // Try backend verification first
       const res = await fetch(`${API_BASE}/api/auth/commander-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,7 +95,7 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#070c18] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col justify-between p-4 sm:p-6 md:p-8 select-none overflow-y-auto animate-in fade-in">
+    <div className="min-h-screen w-full bg-[#070c18] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col justify-between p-4 sm:p-6 md:p-8 select-none overflow-x-hidden animate-in fade-in">
       {/* Subtle Tactical Radial Background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(30,58,138,0.12),rgba(255,255,255,0))] pointer-events-none" />
 

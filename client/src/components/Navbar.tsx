@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   const tabs = useMemo(() => [
     { id: 'all' as DashboardTab,       label: 'Overview',       shortLabel: 'Overview',  icon: LayoutDashboard },
     { id: 'map' as DashboardTab,       label: 'Tactical Map',   shortLabel: 'Map',       icon: MapPin },
-    { id: 'reports' as DashboardTab,   label: 'Distress Wire',  shortLabel: 'Wire',      icon: Radio,     badge: reports.length,                                      badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
+    { id: 'reports' as DashboardTab,   label: 'Distress Wire',  shortLabel: 'Wire',      icon: Radio,     badge: reports.length,                                      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
     { id: 'hospitals' as DashboardTab, label: 'Hospitals & ICU', shortLabel: 'Hospitals', icon: Hospital, badge: overloadedCount > 0 ? overloadedCount : undefined,   badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
     { id: 'sensors' as DashboardTab,   label: 'Hydrology',      shortLabel: 'Hydrology', icon: Droplets },
   ], [reports.length, overloadedCount]);
@@ -59,14 +59,14 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         {/* ── LEFT: Brand ── */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Logo mark */}
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-orange-950 via-slate-900 to-slate-950 border border-orange-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(234,88,12,0.4)] shrink-0 transition-transform hover:scale-105">
-            <ShieldAlert className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-orange-400" />
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-red-950 via-slate-900 to-slate-950 border border-red-500/60 flex items-center justify-center shadow-md shrink-0 transition-transform hover:scale-105">
+            <ShieldAlert className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-red-500" />
           </div>
 
-          {/* Wordmark */}
+          {/* Wordmark: CRISIS in danger red, MAP in crisp white */}
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="font-black text-[14px] sm:text-[17px] tracking-tight text-white whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-              CRISIS<span className="text-orange-400">MAP</span>
+            <span className="font-black text-[14px] sm:text-[17px] tracking-tight whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              <span className="text-red-500 font-black">CRISIS</span><span className="text-white font-black">MAP</span>
             </span>
             {/* Live status dot */}
             <span className={`w-2 h-2 rounded-full shrink-0 ${isConnectedToServer ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-amber-400'}`} />
@@ -88,11 +88,11 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                 title={tab.label}
                 className={`group relative flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 lg:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs lg:text-[13px] font-medium transition-all duration-150 whitespace-nowrap shrink-0 ${
                   isActive
-                    ? 'bg-orange-500/20 text-orange-200 border border-orange-500/40 shadow-[0_0_14px_rgba(234,88,12,0.25)]'
+                    ? 'bg-red-600/20 text-red-200 border border-red-500/50 shadow-sm'
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-colors ${isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-colors ${isActive ? 'text-red-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
                 <span className="font-semibold tracking-tight">
                   <span className="hidden 2xl:inline">{tab.label}</span>
                   <span className="2xl:hidden">{tab.shortLabel}</span>
@@ -113,7 +113,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
           {/* Region selector */}
           <div className="relative z-30 flex items-center gap-1 bg-white/[0.05] border border-white/[0.08] rounded-lg px-1.5 sm:px-2 py-1 font-mono">
-            <MapPin className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <select
               value={activeRegion.id}
               onChange={(e) => {
@@ -127,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
               ))}
             </select>
             {weather && (
-              <span className="text-orange-400 text-xs font-bold pl-1 border-l border-white/10 hidden lg:inline">
+              <span className="text-slate-300 text-xs font-bold pl-1 border-l border-white/10 hidden lg:inline">
                 {weather.temperature}°
               </span>
             )}

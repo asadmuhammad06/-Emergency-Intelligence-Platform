@@ -631,18 +631,18 @@ function DashboardContent({
                 </div>
 
                 {/* Card 4: Qwen-VL Aerial Drone Damage AI */}
-                <div className="bg-slate-950/90 border border-slate-800 hover:border-orange-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
+                <div className="bg-slate-950/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-orange-950/80 border border-orange-700/50 flex items-center justify-center text-orange-400 shadow-sm">
+                      <div className="w-9 h-9 rounded-xl bg-rose-950/80 border border-rose-700/50 flex items-center justify-center text-rose-400 shadow-sm">
                         <Eye className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-orange-950 text-orange-300 border-orange-800 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-rose-950 text-rose-300 border-rose-800 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-rose-400" />
                         MULTIMODAL AI
                       </span>
                     </div>
-                    <h3 className="font-black text-base text-white mb-1.5 group-hover:text-orange-300 transition-colors">
+                    <h3 className="font-black text-base text-white mb-1.5 group-hover:text-rose-300 transition-colors">
                       Qwen-VL Drone Vision AI
                     </h3>
                     <p className="text-sm text-slate-400 leading-relaxed">
@@ -653,7 +653,7 @@ function DashboardContent({
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
                       onClick={() => setIsVisionOpen(true)}
-                      className="w-full py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-rose-700 to-red-600 hover:from-rose-600 hover:to-red-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
                     >
                       <Eye className="w-3.5 h-3.5 text-white" />
                       <span>Launch Drone Vision AI</span>
@@ -852,11 +852,11 @@ function DashboardContent({
           {/* Floating Commander Qwen AI Copilot Trigger */}
           <button
             onClick={() => setIsQwenOpen(true)}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-xl hover:shadow-2xl border border-orange-400/40 transition-all hover:scale-105 active:scale-95 group"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-red-700 via-rose-700 to-red-800 hover:from-red-600 hover:to-rose-600 text-white font-mono text-xs font-black tracking-wide shadow-xl hover:shadow-2xl border border-red-500/40 transition-all hover:scale-105 active:scale-95 group"
             title="Open Commander Qwen EOC AI Copilot"
           >
             <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
-              <Bot className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <Bot className="w-3.5 h-3.5 text-rose-300 animate-pulse" />
             </div>
             <span className="hidden sm:inline">COMMANDER QWEN (AI COPILOT)</span>
             <span className="sm:hidden">QWEN AI</span>
@@ -931,33 +931,36 @@ export default function App() {
 
   return (
     <CrisisProvider>
-      {mode === 'gateway' && (
-        <RoleGateway
-          onSelectCitizen={() => setMode('citizen')}
-          onSelectCommander={handleSelectCommander}
-          isCommanderAuthenticated={isCommanderAuthenticated}
+      {isAuthModalOpen ? (
+        <CommanderAuthModal
+          isOpen={isAuthModalOpen}
+          onSuccess={handleAuthSuccess}
+          onCancel={() => setIsAuthModalOpen(false)}
         />
-      )}
+      ) : (
+        <>
+          {mode === 'gateway' && (
+            <RoleGateway
+              onSelectCitizen={() => setMode('citizen')}
+              onSelectCommander={handleSelectCommander}
+              isCommanderAuthenticated={isCommanderAuthenticated}
+            />
+          )}
 
-      {mode === 'citizen' && (
-        <CitizenSurvivalPortal
-          onSwitchToCommander={handleSelectCommander}
-          onBackToGateway={() => setMode('gateway')}
-        />
-      )}
+          {mode === 'citizen' && (
+            <CitizenSurvivalPortal
+              onSwitchToCommander={handleSelectCommander}
+              onBackToGateway={() => setMode('gateway')}
+            />
+          )}
 
-      {mode === 'commander' && (
-        <DashboardContent
-          onLockEoc={() => setMode('gateway')}
-        />
+          {mode === 'commander' && (
+            <DashboardContent
+              onLockEoc={() => setMode('gateway')}
+            />
+          )}
+        </>
       )}
-
-      {/* Commander Auth Gate Modal */}
-      <CommanderAuthModal
-        isOpen={isAuthModalOpen}
-        onSuccess={handleAuthSuccess}
-        onCancel={() => setIsAuthModalOpen(false)}
-      />
     </CrisisProvider>
   );
 }

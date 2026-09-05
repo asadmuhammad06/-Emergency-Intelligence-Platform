@@ -42,7 +42,7 @@ export const RoleGateway: React.FC<RoleGatewayProps> = ({
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            Pakistan Emergency <span className="text-amber-400">Crisis Platform</span>
+            Pakistan Emergency <span className="text-red-500">Crisis</span> Platform
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
