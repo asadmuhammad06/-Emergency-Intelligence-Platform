@@ -521,15 +521,15 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/50 flex items-center justify-center shadow-sm">
-              <Bot className="w-5 h-5 text-orange-400" />
+            <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/50 flex items-center justify-center shadow-sm">
+              <Bot className="w-5 h-5 text-red-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-black text-sm text-white tracking-wide">
                   COMMANDER QWEN
                 </h3>
-                <span className="text-[9px] font-mono bg-orange-500/20 text-orange-300 border border-orange-500/40 px-1.5 py-0.2 rounded font-bold">
+                <span className="text-[9px] font-mono bg-red-500/20 text-red-300 border border-red-500/40 px-1.5 py-0.2 rounded font-bold">
                   QWEN-2.5 EOC AI
                 </span>
               </div>
@@ -587,7 +587,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
               className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
             >
               {msg.sender === 'user' ? (
-                <div className="bg-orange-600 text-white rounded-2xl rounded-tr-none px-3.5 py-2 text-xs max-w-[85%] shadow-md font-mono">
+                <div className="bg-red-600 text-white rounded-2xl rounded-tr-none px-3.5 py-2 text-xs max-w-[85%] shadow-md font-mono">
                   {msg.text}
                 </div>
               ) : (
@@ -606,16 +606,16 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
                   )}
 
                   {/* Operational Directive Body */}
-                  <div className="bg-slate-900/90 border border-orange-500/30 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-100 font-mono shadow-lg leading-relaxed whitespace-pre-line">
+                  <div className="bg-slate-900/90 border border-red-500/30 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-100 font-mono shadow-lg leading-relaxed whitespace-pre-line">
                     {msg.text}
 
                     {/* Interactive Action Button */}
                     {msg.action && (
                       <button
                         onClick={() => handleActionClick(msg.action!)}
-                        className="mt-3 w-full py-2 px-3 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-200 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+                        className="mt-3 w-full py-2 px-3 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-200 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                       >
-                        <Navigation className="w-3.5 h-3.5 text-orange-400" />
+                        <Navigation className="w-3.5 h-3.5 text-red-400" />
                         <span>{msg.action.label}</span>
                         <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
                       </button>
@@ -632,8 +632,8 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
           {/* Generating Loading State */}
           {isGenerating && (
             <div className="flex flex-col items-start space-y-1.5">
-              <div className="bg-slate-950/90 border border-orange-500/40 rounded-xl p-3 text-xs font-mono text-orange-300 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 animate-spin text-orange-400" />
+              <div className="bg-slate-950/90 border border-red-500/40 rounded-xl p-3 text-xs font-mono text-red-300 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 animate-spin text-red-400" />
                 <span>Qwen-2.5 retrieving website telemetry & computing directive...</span>
               </div>
             </div>
@@ -655,12 +655,12 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
               }
             }}
             placeholder="Ask about hospitals, beds, roads, water, rescue (or in Urdu)..."
-            className="flex-1 bg-slate-900 border border-slate-700 focus:border-orange-500 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none font-mono"
+            className="flex-1 bg-slate-900 border border-slate-700 focus:border-red-500 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none font-mono"
           />
           <button
             onClick={() => handleSend()}
             disabled={!inputQuery.trim() || isGenerating}
-            className="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white transition-all disabled:opacity-40 shadow-md hover:shadow-lg"
+            className="p-2.5 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white transition-all disabled:opacity-40 shadow-md hover:shadow-lg"
             title="Transmit Query"
           >
             <Send className="w-4 h-4" />
