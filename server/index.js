@@ -343,9 +343,31 @@ app.get('/api/database/status', (req, res) => {
   });
 });
 
+// Commander Authentication Gate
+app.post('/api/auth/commander-login', (req, res) => {
+  const { passcode } = req.body || {};
+  const validCodes = ['ndma-1122', 'rescue-1122', 'commander', 'admin', '1122', 'ndma'];
+  const clean = String(passcode || '').trim().toLowerCase();
+
+  if (validCodes.includes(clean)) {
+    return res.json({
+      success: true,
+      officer: 'Duty Commander — NDMA EOC',
+      rank: 'Grade 19 Incident Commander',
+      clearanceLevel: 'LEVEL_4_OPERATIONAL',
+      token: 'eoc-commander-verified-' + Date.now()
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Invalid Commander Passcode. Authorized personnel only.'
+  });
+});
+
 // Citizen Report Ingestion
 app.post('/api/reports', (req, res) => {
-  const { rawText, coords, callerPhone } = req.body;
+  const { rawText, coords, callerPhone, citizenName, isLiveGps, accuracyMeters } = req.body;
   if (!rawText || !rawText.trim() || !Array.isArray(coords) || coords.length !== 2) {
     return res.status(400).json({ success: false, error: 'Report text and coordinates are required' });
   }
@@ -367,23 +389,30 @@ app.post('/api/reports', (req, res) => {
           ? 'HOSPITAL_CAPACITY'
           : 'RESCUE_NEEDED';
 
-  const isUrgent = text.includes('urgent') || text.includes('trapped') || text.includes('phans') || headcount > 0;
+  const isUrgent = text.includes('urgent') || text.includes('trapped') || text.includes('phans') || headcount > 0 || !!isLiveGps;
+
+  const resolvedLocationName = citizenName
+    ? `Live SOS (${citizenName})`
+    : `Field GPS Beacon (${coords[0].toFixed(4)}, ${coords[1].toFixed(4)})`;
 
   const classifiedReport = {
     id: `rep_live_${Date.now()}`,
     category,
     severity: isUrgent ? 9 : 6,
     headcount,
-    locationName: `Field Report (${coords[0].toFixed(3)}, ${coords[1].toFixed(3)})`,
+    locationName: resolvedLocationName,
     rawText: rawText.trim(),
     title: `${category.replace('_', ' ')}: ${rawText.trim().substring(0, 48)}...`,
     description: rawText.trim(),
     coords,
     timestamp: new Date().toISOString(),
-    status: 'VERIFIED',
-    source: 'CITIZEN_SOS',
+    status: isLiveGps ? 'CRITICAL_ALERT' : 'VERIFIED',
+    source: isLiveGps ? 'CITIZEN_LIVE_GPS' : 'CITIZEN_SOS',
     needs: headcount > 0 ? ['Rescue Boat', 'Paramedic Team'] : ['Field Assessment Team'],
-    callerPhone: callerPhone || '+92 300 1234567'
+    callerPhone: callerPhone || '+92 300 1234567',
+    citizenName: citizenName || undefined,
+    isLiveGps: !!isLiveGps,
+    accuracyMeters: accuracyMeters || undefined
   };
 
   // Prepend to active reports and commit to persistent database

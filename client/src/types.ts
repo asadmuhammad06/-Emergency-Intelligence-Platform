@@ -32,6 +32,9 @@ export interface EmergencyReport {
   status?: string;
   confidence?: number;
   dispatched?: boolean;
+  citizenName?: string;
+  isLiveGps?: boolean;
+  accuracyMeters?: number;
   [key: string]: any;
 }
 
@@ -242,3 +245,12 @@ export interface RadarData {
 }
 
 export type AnyObject = Record<string, any>;
+
+export type AppRole = 'citizen' | 'commander';
+
+export interface CommanderSession {
+  isAuthenticated: boolean;
+  officerName?: string;
+  rank?: string;
+  token?: string;
+}

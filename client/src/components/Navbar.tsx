@@ -8,7 +8,8 @@ import {
   LayoutDashboard,
   Radio,
   ExternalLink,
-  FileText
+  FileText,
+  LifeBuoy
 } from 'lucide-react';
 import { useCrisis } from '../context/CrisisContext';
 
@@ -22,13 +23,15 @@ interface NavbarProps {
   onOpenCitizenModal: () => void;
   onOpenSitrepModal?: () => void;
   onOpenLayersModal?: () => void;
+  onSwitchToCitizen?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
   activeTab,
   onSelectTab,
   onOpenCitizenModal,
-  onOpenSitrepModal
+  onOpenSitrepModal,
+  onSwitchToCitizen
 }) => {
   const {
     activeRegion,
@@ -140,6 +143,17 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             >
               <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span className="hidden sm:inline">SITREP</span>
+            </button>
+          )}
+
+          {onSwitchToCitizen && (
+            <button
+              onClick={onSwitchToCitizen}
+              className="flex items-center gap-1.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-all shrink-0 shadow-[0_0_12px_rgba(6,182,212,0.3)] hover:shadow-[0_0_18px_rgba(6,182,212,0.5)]"
+              title="Switch to Lightweight Citizen Survival Portal"
+            >
+              <LifeBuoy className="w-3.5 h-3.5 text-cyan-400 shrink-0 animate-pulse" />
+              <span className="hidden xl:inline">Citizen Mode</span>
             </button>
           )}
 
