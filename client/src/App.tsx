@@ -767,41 +767,43 @@ function DashboardContent({
         onClose={() => setIsSitrepOpen(false)}
       />
 
-      {/* Floating Dual AI Copilot Triggers */}
-      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5">
-        {/* Qwen-VL Vision Intelligence Trigger */}
-        <button
-          onClick={() => setIsVisionOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 hover:from-cyan-500 hover:to-teal-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(6,182,212,0.6)] border border-cyan-400/50 transition-all hover:scale-105 active:scale-95 group"
-          title="Open Qwen-VL Vision Multimodal Damage Assessment Engine"
-        >
-          <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
-            <Eye className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
-          </div>
-          <span className="hidden sm:inline">QWEN-VL VISION</span>
-          <span className="sm:hidden">VISION</span>
-          <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded border border-white/20 text-cyan-200 font-bold">
-            72B
-          </span>
-        </button>
+      {/* Floating Dual AI Copilot Triggers (Hidden when any modal is open to avoid blocking actions) */}
+      {!isSafeRouteOpen && !isPriorityOpen && !isSitrepOpen && !isVisionOpen && !isQwenOpen && (
+        <div className="fixed bottom-5 right-5 z-30 flex items-center gap-2.5">
+          {/* Qwen-VL Vision Intelligence Trigger */}
+          <button
+            onClick={() => setIsVisionOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 hover:from-cyan-500 hover:to-teal-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(6,182,212,0.6)] border border-cyan-400/50 transition-all hover:scale-105 active:scale-95 group"
+            title="Open Qwen-VL Vision Multimodal Damage Assessment Engine"
+          >
+            <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
+              <Eye className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+            </div>
+            <span className="hidden sm:inline">QWEN-VL VISION</span>
+            <span className="sm:hidden">VISION</span>
+            <span className="text-[9px] bg-black/40 px-1.5 py-0.5 rounded border border-white/20 text-cyan-200 font-bold">
+              72B
+            </span>
+          </button>
 
-        {/* Floating Commander Qwen AI Copilot Trigger */}
-        <button
-          onClick={() => setIsQwenOpen(true)}
-          className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(234,88,12,0.6)] border border-orange-400/50 transition-all hover:scale-105 active:scale-95 group"
-          title="Open Commander Qwen EOC AI Copilot"
-        >
-          <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
-            <Bot className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-          </div>
-          <span className="hidden sm:inline">COMMANDER QWEN (AI COPILOT)</span>
-          <span className="sm:hidden">QWEN AI</span>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-        </button>
-      </div>
+          {/* Floating Commander Qwen AI Copilot Trigger */}
+          <button
+            onClick={() => setIsQwenOpen(true)}
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(234,88,12,0.6)] border border-orange-400/50 transition-all hover:scale-105 active:scale-95 group"
+            title="Open Commander Qwen EOC AI Copilot"
+          >
+            <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
+              <Bot className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            </div>
+            <span className="hidden sm:inline">COMMANDER QWEN (AI COPILOT)</span>
+            <span className="sm:hidden">QWEN AI</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Standalone Qwen-VL Multimodal Vision Modal */}
       {isVisionOpen && (
