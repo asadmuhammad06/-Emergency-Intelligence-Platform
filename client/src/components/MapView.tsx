@@ -215,13 +215,8 @@ function AnimatedAmbulanceMarker({ path }: { path: [number, number][] }) {
   useEffect(() => {
     if (!path || path.length < 2 || totalDist === 0) return;
 
-    if (isAtDest) {
-      const timer = setTimeout(() => {
-        setIsAtDest(false);
-        setCurrentDist(0);
-      }, 2800);
-      return () => clearTimeout(timer);
-    }
+    // Once completed, stay parked at hospital triage gate without repeating
+    if (isAtDest) return;
 
     const step = totalDist / 180; // Smooth ~7-9 second traversal
     const interval = setInterval(() => {
@@ -287,6 +282,30 @@ function AnimatedAmbulanceMarker({ path }: { path: [number, number][] }) {
           )}
         </div>
       </Tooltip>
+      <Popup className="custom-dark-popup">
+        <div className="p-3 bg-slate-950 text-slate-100 rounded-xl font-mono text-xs max-w-xs select-none">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className={`w-2.5 h-2.5 rounded-full ${isAtDest ? 'bg-emerald-400' : 'bg-rose-500 animate-pulse'}`} />
+            <span className="font-bold text-white text-sm">Rescue 1122 Rapid Fleet</span>
+          </div>
+          <p className="text-[11px] text-slate-300 mb-2.5">
+            {isAtDest
+              ? '✅ Patient transfer complete. Unit stationed at hospital emergency triage bay.'
+              : '⚡ In-transit rapid response bypassing submerged arterial roads.'}
+          </p>
+          {isAtDest && (
+            <button
+              onClick={() => {
+                setIsAtDest(false);
+                setCurrentDist(0);
+              }}
+              className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-colors shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+            >
+              ↺ Re-run Route Simulation
+            </button>
+          )}
+        </div>
+      </Popup>
     </Marker>
   );
 }
