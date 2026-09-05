@@ -507,14 +507,21 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
     }
   };
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="w-full sm:w-[540px] h-full bg-[#080d1a] border-l border-orange-500/40 shadow-[-10px_0_40px_rgba(0,0,0,0.8)] flex flex-col font-['Plus_Jakarta_Sans'] text-slate-100 animate-in slide-in-from-right duration-200">
+      <div className="w-full sm:w-[540px] h-full bg-[#080d1a] border-l border-slate-700/80 shadow-2xl flex flex-col font-['Plus_Jakarta_Sans'] text-slate-100 animate-in slide-in-from-right duration-200">
         
         {/* Header */}
-        <div className="p-4 border-b border-orange-500/20 bg-gradient-to-r from-orange-950/70 via-slate-900 to-slate-950 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/50 flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.4)]">
+            <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/50 flex items-center justify-center shadow-sm">
               <Bot className="w-5 h-5 text-orange-400" />
             </div>
             <div>
@@ -606,7 +613,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
                     {msg.action && (
                       <button
                         onClick={() => handleActionClick(msg.action!)}
-                        className="mt-3 w-full py-2 px-3 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-200 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(234,88,12,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                        className="mt-3 w-full py-2 px-3 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-200 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Navigation className="w-3.5 h-3.5 text-orange-400" />
                         <span>{msg.action.label}</span>
@@ -653,7 +660,7 @@ export const CommanderQwenDrawer: React.FC<CommanderQwenDrawerProps> = ({
           <button
             onClick={() => handleSend()}
             disabled={!inputQuery.trim() || isGenerating}
-            className="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white transition-all disabled:opacity-40 shadow-[0_0_12px_rgba(234,88,12,0.4)]"
+            className="p-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white transition-all disabled:opacity-40 shadow-md hover:shadow-lg"
             title="Transmit Query"
           >
             <Send className="w-4 h-4" />

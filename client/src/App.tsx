@@ -167,7 +167,7 @@ function DashboardContent({
                 setHighlightedCoords(latestIncomingSos.coords);
                 scrollToMap();
               }}
-              className="px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all active:scale-95"
+              className="px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all active:scale-95"
             >
               <Navigation className="w-3.5 h-3.5" />
               <span>🎯 Locate on Map</span>
@@ -176,7 +176,7 @@ function DashboardContent({
               onClick={() => {
                 handleOpenSafeRoute(latestIncomingSos.coords);
               }}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all active:scale-95"
+              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all active:scale-95"
             >
               <Send className="w-3.5 h-3.5" />
               <span>🚑 Calculate Safe Route</span>
@@ -394,11 +394,10 @@ function DashboardContent({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {/* Card 1: Citizens Trapped */}
-              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-rose-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-rose hover:border-rose-400 transition-all group">
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-rose-500/15 blur-xl group-hover:bg-rose-500/25 transition-all"></div>
+              <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-4 shadow-md hover:shadow-lg transition-all group">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                     <span className="text-[10px] font-mono font-bold tracking-wider text-rose-400 uppercase">
                       PRIORITY ZERO
                     </span>
@@ -408,13 +407,13 @@ function DashboardContent({
                   </span>
                 </div>
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-rose-950/90 border border-rose-600/50 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_16px_rgba(244,63,94,0.35)] group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-xl bg-slate-950 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     <Users className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Trapped Civilians</span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.5)]">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight">
                         {liveTrappedCitizens}
                       </span>
                       <span className="text-[10px] text-rose-400 font-mono font-bold">SO-1122</span>
@@ -424,11 +423,10 @@ function DashboardContent({
               </div>
 
               {/* Card 2: ICU Saturation */}
-              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-amber-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-amber hover:border-amber-400 transition-all group">
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/15 blur-xl group-hover:bg-amber-500/25 transition-all"></div>
+              <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-4 shadow-md hover:shadow-lg transition-all group">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                     <span className="text-[10px] font-mono font-bold tracking-wider text-amber-400 uppercase">
                       HOSPITAL SURGE
                     </span>
@@ -438,13 +436,13 @@ function DashboardContent({
                   </span>
                 </div>
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-amber-950/90 border border-amber-600/50 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_16px_rgba(245,158,11,0.35)] group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-xl bg-slate-950 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     <Hospital className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">ICU Saturation</span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight">
                         {liveIcuSaturation}%
                       </span>
                       <span className="text-[10px] text-amber-400 font-mono font-bold">{availableIcu} Beds Free</span>
@@ -454,11 +452,10 @@ function DashboardContent({
               </div>
 
               {/* Card 3: Active SOS Signals */}
-              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-cyan-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-cyan hover:border-cyan-400 transition-all group">
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cyan-500/15 blur-xl group-hover:bg-cyan-500/25 transition-all"></div>
+              <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 shadow-md hover:shadow-lg transition-all group">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                     <span className="text-[10px] font-mono font-bold tracking-wider text-cyan-400 uppercase">
                       DISTRESS MESH
                     </span>
@@ -468,13 +465,13 @@ function DashboardContent({
                   </span>
                 </div>
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-cyan-950/90 border border-cyan-600/50 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_16px_rgba(6,182,212,0.35)] group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-xl bg-slate-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     <Radio className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Active SOS Beacons</span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(6,182,212,0.5)]">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight">
                         {liveActiveSos}
                       </span>
                       <span className="text-[10px] text-cyan-400 font-mono font-bold">{reports.length} Total Logs</span>
@@ -484,11 +481,10 @@ function DashboardContent({
               </div>
 
               {/* Card 4: River Hydrology Gauge */}
-              <div className="relative overflow-hidden bg-slate-950/85 backdrop-blur-xl border border-emerald-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] tactical-glow-emerald hover:border-emerald-400 transition-all group">
-                <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/15 blur-xl group-hover:bg-emerald-500/25 transition-all"></div>
+              <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-4 shadow-md hover:shadow-lg transition-all group">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-400 uppercase">
                       HYDROLOGY GAUGE
                     </span>
@@ -498,7 +494,7 @@ function DashboardContent({
                   </span>
                 </div>
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-emerald-950/90 border border-emerald-600/50 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_16px_rgba(16,185,129,0.35)] group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-xl bg-slate-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     <Droplets className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
@@ -506,7 +502,7 @@ function DashboardContent({
                       {activeRegion.riverBasin || 'Basin Hydrology Level'}
                     </span>
                     <div className="flex items-baseline gap-1 flex-wrap">
-                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]">
+                      <span className="font-black text-2xl sm:text-3xl text-white font-mono leading-none tracking-tight">
                         {liveRiverLevel}
                       </span>
                       <span className="text-sm font-bold text-emerald-400 font-mono ml-0.5">ft</span>
@@ -547,7 +543,7 @@ function DashboardContent({
                 <div className="bg-slate-950/90 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]">
+                      <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center text-cyan-400 shadow-sm">
                         <Droplets className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-cyan-950 text-cyan-300 border-cyan-800 flex items-center gap-1">
@@ -566,7 +562,7 @@ function DashboardContent({
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
                       onClick={() => setActiveTab('sensors')}
-                      className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                      className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
                     >
                       <Droplets className="w-3.5 h-3.5" />
                       <span>Inspect Hydrology Radar</span>
@@ -578,7 +574,7 @@ function DashboardContent({
                 <div className="bg-slate-950/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-950/80 border border-emerald-700/50 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-950/80 border border-emerald-700/50 flex items-center justify-center text-emerald-400 shadow-sm">
                         <Navigation className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-emerald-950 text-emerald-300 border-emerald-800">
@@ -596,7 +592,7 @@ function DashboardContent({
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
                       onClick={() => handleOpenSafeRoute()}
-                      className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                      className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
                     >
                       <Navigation className="w-3.5 h-3.5" />
                       <span>Calculate Safe Route</span>
@@ -608,7 +604,7 @@ function DashboardContent({
                 <div className="bg-slate-950/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-rose-950/80 border border-rose-700/50 flex items-center justify-center text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)]">
+                      <div className="w-9 h-9 rounded-xl bg-rose-950/80 border border-rose-700/50 flex items-center justify-center text-rose-400 shadow-sm">
                         <Send className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-rose-950 text-rose-300 border-rose-800">
@@ -626,7 +622,7 @@ function DashboardContent({
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
                       onClick={() => setIsPriorityOpen(true)}
-                      className="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(244,63,94,0.3)]"
+                      className="w-full py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Open Dispatch Matrix</span>
@@ -638,7 +634,7 @@ function DashboardContent({
                 <div className="bg-slate-950/90 border border-slate-800 hover:border-orange-500/50 rounded-2xl p-4 transition-all shadow-xl flex flex-col justify-between group">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-orange-950/80 border border-orange-700/50 flex items-center justify-center text-orange-400 shadow-md">
+                      <div className="w-9 h-9 rounded-xl bg-orange-950/80 border border-orange-700/50 flex items-center justify-center text-orange-400 shadow-sm">
                         <Eye className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-mono font-bold px-2 py-0.5 rounded border bg-orange-950 text-orange-300 border-orange-800 flex items-center gap-1">
@@ -657,7 +653,7 @@ function DashboardContent({
                   <div className="mt-3 pt-3 border-t border-slate-900 font-mono text-xs">
                     <button
                       onClick={() => setIsVisionOpen(true)}
-                      className="w-full py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-[0_0_12px_rgba(234,88,12,0.3)]"
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg"
                     >
                       <Eye className="w-3.5 h-3.5 text-white" />
                       <span>Launch Drone Vision AI</span>
@@ -840,7 +836,7 @@ function DashboardContent({
           {/* Qwen-VL Vision Intelligence Trigger */}
           <button
             onClick={() => setIsVisionOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 hover:from-cyan-500 hover:to-teal-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(6,182,212,0.6)] border border-cyan-400/50 transition-all hover:scale-105 active:scale-95 group"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 via-teal-600 to-cyan-700 hover:from-cyan-500 hover:to-teal-500 text-white font-mono text-xs font-black tracking-wide shadow-xl hover:shadow-2xl border border-cyan-400/40 transition-all hover:scale-105 active:scale-95 group"
             title="Open Qwen-VL Vision Multimodal Damage Assessment Engine"
           >
             <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">
@@ -856,7 +852,7 @@ function DashboardContent({
           {/* Floating Commander Qwen AI Copilot Trigger */}
           <button
             onClick={() => setIsQwenOpen(true)}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-[0_0_25px_rgba(234,88,12,0.6)] border border-orange-400/50 transition-all hover:scale-105 active:scale-95 group"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 hover:from-orange-500 hover:to-amber-500 text-white font-mono text-xs font-black tracking-wide shadow-xl hover:shadow-2xl border border-orange-400/40 transition-all hover:scale-105 active:scale-95 group"
             title="Open Commander Qwen EOC AI Copilot"
           >
             <div className="w-5 h-5 rounded-lg bg-black/40 flex items-center justify-center border border-white/20">

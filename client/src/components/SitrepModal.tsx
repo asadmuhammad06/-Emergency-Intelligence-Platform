@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Printer,
@@ -36,6 +36,15 @@ export const SitrepModal: React.FC<SitrepModalProps> = ({ isOpen, onClose }) => 
   } = useCrisis();
 
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -124,10 +133,10 @@ AUTHORIZED BY: NEOC DUTY INCIDENT COMMANDER | VERIFICATION: VALIDATED BY CRISIS-
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
       {/* Modal Card */}
-      <div className="relative w-full max-w-4xl bg-[#090e1a] border border-white/20 rounded-2xl shadow-[0_20px_70px_rgba(0,0,0,0.9)] overflow-hidden my-auto text-slate-200">
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-auto text-slate-200">
 
         {/* Top Control Bar (Hidden when printing) */}
-        <div className="print:hidden bg-[#0d1424] border-b border-white/10 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <div className="print:hidden bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400">
               <FileText className="w-4 h-4" />
@@ -146,7 +155,7 @@ AUTHORIZED BY: NEOC DUTY INCIDENT COMMANDER | VERIFICATION: VALIDATED BY CRISIS-
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyText}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-semibold transition-colors border border-white/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-semibold transition-colors border border-slate-700"
               title="Copy Briefing Text to Clipboard"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -155,7 +164,7 @@ AUTHORIZED BY: NEOC DUTY INCIDENT COMMANDER | VERIFICATION: VALIDATED BY CRISIS-
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold transition-all shadow-[0_0_12px_rgba(37,99,235,0.4)]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold transition-all shadow-md hover:shadow-lg"
               title="Print or Save as PDF"
             >
               <Printer className="w-3.5 h-3.5" />

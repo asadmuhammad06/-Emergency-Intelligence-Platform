@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Lock,
@@ -42,6 +42,17 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Lock background body scroll to eliminate duplicate scrollbars
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -96,16 +107,15 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#060a14] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col justify-between p-4 sm:p-8 select-none overflow-y-auto animate-in fade-in">
-      {/* Background Cybernetic Tactical Grid Glows */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[140px] pointer-events-none" />
+    <div className="fixed inset-0 z-50 bg-[#070c18] text-slate-100 font-['Plus_Jakarta_Sans'] flex flex-col justify-between p-4 sm:p-6 md:p-8 select-none overflow-y-auto animate-in fade-in">
+      {/* Subtle Tactical Radial Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(30,58,138,0.12),rgba(255,255,255,0))] pointer-events-none" />
 
       {/* ── TOP MILITARY HEADER BAR ── */}
-      <header className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80 z-10 shrink-0">
+      <header className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-800/80 z-10 shrink-0">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 border border-cyan-500/60 flex items-center justify-center text-cyan-400 shadow-[0_0_25px_rgba(6,182,212,0.4)] shrink-0">
-            <ShieldAlert className="w-7 h-7 animate-pulse text-cyan-400" />
+          <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 shadow-sm shrink-0">
+            <ShieldAlert className="w-6 h-6 text-cyan-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -248,9 +258,9 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
         </div>
 
         {/* RIGHT COLUMN: Official Passcode Authentication Terminal (~40% width) */}
-        <div className="lg:col-span-5 flex flex-col justify-center bg-[#0b1220] border border-cyan-500/50 rounded-2xl p-6 sm:p-9 shadow-[0_0_60px_rgba(6,182,212,0.25)] relative overflow-hidden">
+        <div className="lg:col-span-5 flex flex-col justify-center bg-slate-900/80 border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-md relative overflow-hidden">
           <div className="flex items-center gap-3 pb-5 border-b border-slate-800 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-cyan-950 border border-cyan-500/70 flex items-center justify-center text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+            <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-cyan-400 shadow-sm">
               <Lock className="w-6 h-6" />
             </div>
             <div>
@@ -292,7 +302,7 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder="Enter passcode (e.g. NDMA-1122)"
                   autoFocus
-                  className="w-full bg-slate-950 border border-slate-700 focus:border-cyan-500 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 outline-none font-mono shadow-inner transition-colors"
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 outline-none font-mono shadow-inner transition-colors"
                 />
               </div>
             </div>
@@ -301,7 +311,7 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
             <button
               type="submit"
               disabled={isLoading || !passcode.trim()}
-              className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-700 hover:from-cyan-500 hover:to-blue-500 active:scale-[0.98] disabled:opacity-50 text-white font-bold text-xs sm:text-sm font-mono tracking-wide flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(6,182,212,0.4)] border border-cyan-400/40 transition-all uppercase"
+              className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] disabled:opacity-50 text-white font-bold text-xs sm:text-sm font-mono tracking-wide flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all uppercase"
             >
               {isLoading ? (
                 <span>VERIFYING CLEARANCE LEVEL...</span>
@@ -314,12 +324,12 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
             </button>
 
             {/* Divider for Judges */}
-            <div className="relative my-2">
+            <div className="relative my-1.5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-800" />
               </div>
               <div className="relative flex justify-center text-[10px] font-mono uppercase">
-                <span className="bg-[#0b1220] px-3 text-slate-500 font-semibold">
+                <span className="bg-slate-900 px-3 text-slate-500 font-semibold">
                   FOR EVALUATORS & HACKATHON JUDGES
                 </span>
               </div>
@@ -329,9 +339,9 @@ export const CommanderAuthModal: React.FC<CommanderAuthModalProps> = ({
             <button
               type="button"
               onClick={handleDemoAccess}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600/25 via-orange-600/25 to-amber-600/25 hover:from-amber-600/40 hover:to-orange-600/40 border border-amber-500/60 text-amber-300 font-extrabold text-xs sm:text-sm font-mono flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+              className="w-full py-3 px-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-amber-500/50 hover:border-amber-400 text-amber-300 font-bold text-xs sm:text-sm font-mono flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] shadow-sm"
             >
-              <Zap className="w-4 h-4 text-amber-400 animate-bounce" />
+              <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
               <span>⚡ 1-CLICK DEMO COMMANDER ACCESS</span>
             </button>
             <span className="text-[10px] text-center font-mono text-slate-500">
