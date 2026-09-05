@@ -27,21 +27,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Allow the Vite dev client at localhost:5173 (and production builds)
-const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:4173',  // vite preview
-  'http://127.0.0.1:5173',
-];
-
 const io = new Server(server, {
   cors: {
-    origin: ALLOWED_ORIGINS,
+    origin: (origin, callback) => callback(null, true),
     methods: ['GET', 'POST']
   }
 });
 
 app.use(cors({
-  origin: ALLOWED_ORIGINS,
+  origin: (origin, callback) => callback(null, true),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
